@@ -1,0 +1,12 @@
+{
+  "name": "mobilekollen-online",
+  "version": "1.0.0",
+  "description": "School phone check-in system — online version",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
