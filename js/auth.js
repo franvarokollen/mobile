@@ -1,8 +1,67 @@
 // ─── AUTH (Google via Supabase) ─────────────────────────────
 
-let _supabaseClient = null;
+let _supabaseClient  = null;
 let _currentSession  = null;
 let _meInfo          = null;   // { user, school } from /api/me
+let _presenceChannel = null;
+
+// ── Presence helpers ─────────────────────────────────────────
+const _PRESENCE_COLORS = ['#4f7ef8','#e04f4f','#27a872','#f0922b','#7c5cbf','#0ea5a0','#d4469a','#647987'];
+
+function _presenceColor(uid) {
+  let h = 0;
+  for (let i = 0; i < uid.length; i++) h = uid.charCodeAt(i) + ((h << 5) - h);
+  return _PRESENCE_COLORS[Math.abs(h) % _PRESENCE_COLORS.length];
+}
+
+function _initials(name, email) {
+  if (name && name !== email) {
+    const p = name.trim().split(/\s+/);
+    return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+  }
+  return (email || '??').slice(0, 2).toUpperCase();
+}
+
+function renderPresenceAvatars(presences, myId) {
+  const container = document.getElementById('presenceAvatars');
+  if (!container) return;
+  const others = presences.filter(p => p.user_id !== myId);
+  if (!others.length) { container.innerHTML = ''; return; }
+  const shown = others.slice(0, 6);
+  const extra = others.length - shown.length;
+  container.innerHTML = shown.map(p =>
+    `<div class="presence-avatar" style="background:${_presenceColor(p.user_id || p.email)}" title="${p.name || p.email}">${_initials(p.name, p.email)}</div>`
+  ).join('') + (extra > 0 ? `<div class="presence-avatar" style="background:rgba(255,255,255,0.15)" title="${extra} more">+${extra}</div>` : '');
+}
+
+async function startPresence(schoolId, user) {
+  if (_presenceChannel) { try { await _supabaseClient.removeChannel(_presenceChannel); } catch(e){} }
+  const meta = user.user_metadata || {};
+  const name = meta.full_name || meta.name || user.email;
+
+  _presenceChannel = _supabaseClient.channel(`school-presence:${schoolId}`, {
+    config: { presence: { key: user.id } }
+  });
+
+  _presenceChannel.on('presence', { event: 'sync' }, () => {
+    const presences = Object.values(_presenceChannel.presenceState()).flat();
+    renderPresenceAvatars(presences, user.id);
+  });
+
+  await _presenceChannel.subscribe(async status => {
+    if (status === 'SUBSCRIBED') {
+      await _presenceChannel.track({ user_id: user.id, name, email: user.email });
+    }
+  });
+}
+
+async function stopPresence() {
+  if (_presenceChannel && _supabaseClient) {
+    try { await _supabaseClient.removeChannel(_presenceChannel); } catch(e) {}
+    _presenceChannel = null;
+  }
+  renderPresenceAvatars([], null);
+}
 
 /**
  * Fetch runtime config, initialise the Supabase browser client, restore any
@@ -69,6 +128,7 @@ async function initAuth() {
   hideLoginOverlay();
   hideInviteOverlay();
   _updateUserDisplay(session.user);
+  startPresence(_meInfo.school.id, session.user);
   return session;
 }
 
@@ -100,8 +160,10 @@ async function signInWithGoogle() {
 
 /** Sign out of Supabase and show the login screen. */
 async function signOut() {
+  await stopPresence();
   if (_supabaseClient) await _supabaseClient.auth.signOut();
   _currentSession = null;
+  _meInfo = null;
   _updateUserDisplay(null);
   showLoginOverlay();
 }
