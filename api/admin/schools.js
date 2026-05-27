@@ -1,64 +1,103 @@
+// GET  /api/admin/schools  → list all schools with live stats
+// POST /api/admin/schools  → create a new school
+
 const { supabase } = require('../_lib/supabase');
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+function checkToken(req, res) {
+  const header = req.headers.authorization || '';
+  const token  = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  if (!token || token !== process.env.ADMIN_TOKEN) {
+    res.status(401).json({ error: 'unauthorized' });
+    return false;
+  }
+  return true;
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).end();
+  if (!checkToken(req, res)) return;
 
-  const token = (req.headers.authorization || '').replace('Bearer ', '');
-  if (!ADMIN_TOKEN || token !== ADMIN_TOKEN) return res.status(401).json({ error: 'Unauthorized' });
+  // ── GET: list all schools with stats ────────────────────────
+  if (req.method === 'GET') {
+    const { data: schools, error } = await supabase
+      .from('schools')
+      .select('id, name, slug, meta, created_at')
+      .order('created_at', { ascending: false });
 
-  try {
-    const [studentsRes, settingsRes, logsRes, metaRes] = await Promise.all([
-      supabase.from('students').select('school_id, id, data'),
-      supabase.from('settings').select('school_id, data'),
-      supabase.from('status_logs').select('school_id, date').order('date', { ascending: false }),
-      supabase.from('admin_school_meta').select('*'),
-    ]);
+    if (error) return res.status(500).json({ error: error.message });
 
-    const map = {};
+    const results = await Promise.all((schools || []).map(async school => {
+      // Active student count
+      const { data: studs } = await supabase
+        .from('students')
+        .select('data')
+        .eq('school_id', school.id);
+      const activeStudents = (studs || []).filter(s => s.data?.active !== false).length;
 
-    const ensure = id => {
-      if (!map[id]) map[id] = { school_id: id, activeStudents: 0, totalStudents: 0, settings: {}, lastActive: null, meta: null };
-    };
+      // Most recent log date
+      const { data: lastLog } = await supabase
+        .from('status_logs')
+        .select('date')
+        .eq('school_id', school.id)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    (studentsRes.data || []).forEach(row => {
-      ensure(row.school_id);
-      map[row.school_id].totalStudents++;
-      if (row.data?.active !== false) map[row.school_id].activeStudents++;
-    });
+      // School settings
+      const { data: settingsRow } = await supabase
+        .from('settings')
+        .select('data')
+        .eq('school_id', school.id)
+        .maybeSingle();
 
-    (settingsRes.data || []).forEach(row => {
-      ensure(row.school_id);
-      map[row.school_id].settings = row.data || {};
-    });
+      // User count
+      const { count: userCount } = await supabase
+        .from('school_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('school_id', school.id);
 
-    const seenLog = new Set();
-    (logsRes.data || []).forEach(row => {
-      if (!seenLog.has(row.school_id)) {
-        seenLog.add(row.school_id);
-        ensure(row.school_id);
-        map[row.school_id].lastActive = row.date;
-      }
-    });
+      return {
+        school_id:     school.id,
+        name:          school.name,
+        slug:          school.slug,
+        meta:          school.meta   || {},
+        settings:      settingsRow?.data || {},
+        activeStudents,
+        lastActive:    lastLog?.date   || null,
+        userCount:     userCount || 0,
+        createdAt:     school.created_at,
+      };
+    }));
 
-    (metaRes.data || []).forEach(row => {
-      ensure(row.school_id);
-      map[row.school_id].meta = row;
-    });
-
-    const schools = Object.values(map).sort((a, b) => {
-      const na = a.meta?.display_name || a.settings?.schoolName || a.school_id;
-      const nb = b.meta?.display_name || b.settings?.schoolName || b.school_id;
-      return na.localeCompare(nb, 'sv');
-    });
-
-    return res.status(200).json(schools);
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.json(results);
   }
+
+  // ── POST: create a new school ────────────────────────────────
+  if (req.method === 'POST') {
+    const { name, slug, ...metaFields } = req.body || {};
+    if (!name) return res.status(400).json({ error: 'name required' });
+
+    const cleanSlug = (slug || name)
+      .toLowerCase()
+      .replace(/å/g, 'a').replace(/ä/g, 'a').replace(/ö/g, 'o')
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .slice(0, 60) || 'school';
+
+    const meta = { status: 'trial', ...metaFields };
+
+    const { data, error } = await supabase
+      .from('schools')
+      .insert({ name, slug: cleanSlug, meta })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true, school_id: data.id, slug: data.slug });
+  }
+
+  res.status(405).end();
 };

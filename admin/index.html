@@ -384,10 +384,6 @@ body {
   <div class="modal-box">
     <div class="modal-title"><i class="ti ti-school" style="color:var(--accent);margin-right:6px"></i><span data-t="register_school"></span></div>
     <div class="modal-field">
-      <label data-t="school_id_label"></label>
-      <input id="newSchoolId" data-t-placeholder="school_id_placeholder" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'-')">
-    </div>
-    <div class="modal-field">
       <label data-t="school_name_label"></label>
       <input id="newSchoolName" data-t-placeholder="school_name_placeholder">
     </div>
@@ -529,7 +525,8 @@ const TR = {
     no_schools: 'Inga skolor registrerade ännu',
     api_error: 'Kunde inte nå API', server_error: 'Serverfel: ',
     save_failed: 'Sparning misslyckades', school_registered: 'Skola registrerad',
-    school_id_required: 'School ID krävs', wrong_token: 'Fel token — försök igen',
+    school_name_required: 'Skolnamn krävs', wrong_token: 'Fel token — försök igen',
+    users_chip: 'lärare',
     fmt_letter: 'Bokstav (5A)', fmt_dot: 'Punkt (5.1)',
     fmt_number: 'Nummer (51)', fmt_none: 'Enbart år',
     edit_settings: 'Redigera inställningar', configure: 'Konfigurera',
@@ -570,7 +567,8 @@ const TR = {
     no_schools: 'No schools registered yet',
     api_error: 'Could not reach API', server_error: 'Server error: ',
     save_failed: 'Save failed', school_registered: 'School registered',
-    school_id_required: 'School ID is required', wrong_token: 'Wrong token — try again',
+    school_name_required: 'School name is required', wrong_token: 'Wrong token — try again',
+    users_chip: 'teachers',
     fmt_letter: 'Letter (5A)', fmt_dot: 'Dot (5.1)',
     fmt_number: 'Number (51)', fmt_none: 'Year only',
     edit_settings: 'Edit settings', configure: 'Configure',
@@ -653,10 +651,11 @@ async function apiFetch(path, opts = {}) {
 
 async function saveMeta(schoolId, patch) {
   try {
-    await apiFetch('/api/admin/school-meta', {
+    const r = await apiFetch('/api/admin/school-meta', {
       method: 'POST',
       body: JSON.stringify({ school_id: schoolId, ...patch })
     });
+    if (!r.ok) throw new Error();
     flashSave(schoolId);
   } catch(e) { toast(t('save_failed')); }
 }
@@ -775,14 +774,14 @@ function renderCard(school) {
   const id   = school.school_id;
   const meta = school.meta || {};
   const s    = school.settings || {};
-  const name = meta.display_name || s.schoolName || id;
+  const name = meta.display_name || s.schoolName || school.name || school.slug || id;
   const status = meta.status || 'trial';
 
   return `<div class="card" id="card-${id}">
     <div class="card-head">
       ${statusPill(status)}
       <div class="school-name" title="${name}">${name}</div>
-      <div class="school-id-chip">${id}</div>
+      <div class="school-id-chip" title="${id}">${school.slug || id.slice(0,8)}</div>
       <div class="last-seen">${relativeDate(school.lastActive)}</div>
     </div>
 
@@ -791,6 +790,7 @@ function renderCard(school) {
         <div class="block-label">${t('stats')}</div>
         <div class="stat-chips">
           <div class="stat-chip"><i class="ti ti-users"></i>${school.activeStudents || 0} ${t('students_chip')}</div>
+          <div class="stat-chip"><i class="ti ti-user-check"></i>${school.userCount || 0} ${t('users_chip')}</div>
           <div class="stat-chip"><i class="ti ti-calendar"></i>${school.lastActive || '—'}</div>
         </div>
 
@@ -870,21 +870,26 @@ function openAddSchool()  { document.getElementById('addModal').classList.add('o
 function closeAddSchool() { document.getElementById('addModal').classList.remove('open'); }
 
 async function addSchool() {
-  const schoolId   = document.getElementById('newSchoolId').value.trim();
   const schoolName = document.getElementById('newSchoolName').value.trim();
   const contact    = document.getElementById('newContact').value.trim();
   const email      = document.getElementById('newEmail').value.trim();
-  if (!schoolId) { toast(t('school_id_required')); return; }
-  await saveMeta(schoolId, {
-    display_name:  schoolName || schoolId,
-    contact_name:  contact,
-    contact_email: email,
-    status:        'trial'
-  });
-  closeAddSchool();
-  ['newSchoolId','newSchoolName','newContact','newEmail'].forEach(id => document.getElementById(id).value = '');
-  await loadSchools();
-  toast(t('school_registered'));
+  if (!schoolName) { toast(t('school_name_required')); return; }
+
+  try {
+    const r = await apiFetch('/api/admin/schools', {
+      method: 'POST',
+      body: JSON.stringify({
+        name:          schoolName,
+        contact_name:  contact  || undefined,
+        contact_email: email    || undefined,
+      })
+    });
+    if (!r.ok) { const d = await r.json().catch(()=>({})); toast(d.error || t('save_failed')); return; }
+    closeAddSchool();
+    ['newSchoolName','newContact','newEmail'].forEach(id => document.getElementById(id).value = '');
+    await loadSchools();
+    toast(t('school_registered'));
+  } catch(e) { toast(t('save_failed')); }
 }
 
 // ── Utils ─────────────────────────────────────────────────────
