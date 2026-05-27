@@ -448,6 +448,22 @@ function handleSmartImport(input) {
   input.value = '';
 }
 
+function importFromPaste() {
+  const ta = document.getElementById('csvPasteArea');
+  const text = ta ? ta.value.trim() : '';
+  if (!text) { showToast(t('toast.parse_error')); return; }
+  const { headers, rows } = parseCSVUniversal(text);
+  if (headers.length < 2) { showToast(t('toast.parse_error')); return; }
+  const mapped = headers.map(h => detectField(h));
+  const allMapped = mapped.every(m => m !== null);
+  if (allMapped) {
+    confirmMappingAuto(headers, rows, mapped);
+  } else {
+    showMappingUI(headers, rows, confirmMapping);
+  }
+  if (ta) ta.value = '';
+}
+
 async function confirmMappingAuto(headers, rows, mappings) {
   const mapping = {};
   headers.forEach((h, i) => { if (mappings[i]) mapping[i] = mappings[i]; });

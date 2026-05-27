@@ -9,7 +9,7 @@ function setExtra(id, patch) {
   if (Object.keys(all[id]).length === 0) delete all[id];
   saveExtra(all);
   _extraDirtyUntil = Date.now() + 10000;
-  if (SERVER) fetch(`${API}/extra`, {
+  if (SERVER) authFetch(`${API}/extra`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, ...patch })

@@ -6,7 +6,7 @@ function getSettings() { return _settings; }
 
 async function fetchSettingsFromServer() {
   try {
-    const r = await fetch('/api/settings');
+    const r = await authFetch('/api/settings');
     if (!r.ok) return;
     const d = await r.json();
     if (d && typeof d === 'object') {
@@ -18,7 +18,7 @@ async function fetchSettingsFromServer() {
 
 async function saveSettingsToServer(data) {
   try {
-    await fetch('/api/settings', {
+    await authFetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -120,16 +120,15 @@ function renderSettings() {
   const sectionSelect = (y) => {
     const cur = yearSections[y] || 0;
     const active = cur > 0;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${active?'var(--surface2)':'var(--surface)'};border:0.5px solid ${active?'var(--border2)':'var(--border)'};border-radius:var(--radius);transition:all 0.15s" id="yearRow_${y}">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1">
-        <input type="checkbox" value="${y}" ${active?'checked':''} onchange="settingsYearToggle(this,'${y}')" style="width:16px;height:16px;cursor:pointer">
-        <span style="font-size:14px;font-weight:600;min-width:24px">${t('settings.year')} ${y}</span>
+    return `<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:${active?'var(--surface2)':'transparent'};border:0.5px solid ${active?'var(--border2)':'transparent'};border-radius:6px;transition:all 0.15s" id="yearRow_${y}">
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;min-width:54px">
+        <input type="checkbox" value="${y}" ${active?'checked':''} onchange="settingsYearToggle(this,'${y}')" style="width:14px;height:14px;cursor:pointer;flex-shrink:0">
+        <span style="font-size:12px;font-weight:600;color:${active?'var(--text)':'var(--text3)'}">${t('settings.year')} ${y}</span>
       </label>
-      <div style="display:flex;align-items:center;gap:6px;${active?'':'opacity:0.3;pointer-events:none'}" id="yearControls_${y}">
-        <span style="font-size:12px;color:var(--text3)">${t('settings.sections')}</span>
+      <div style="display:flex;align-items:center;gap:3px;${active?'':'opacity:0.25;pointer-events:none'}" id="yearControls_${y}">
         ${[1,2,3,4,5,6,7,8].map(n =>
           `<button onclick="settingsSetSections('${y}',${n})" id="sec_${y}_${n}"
-            style="width:28px;height:28px;border-radius:6px;border:0.5px solid var(--border2);background:${cur===n?'var(--text)':'var(--surface)'};color:${cur===n?'var(--bg)':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer">${n}</button>`
+            style="width:22px;height:22px;border-radius:4px;border:0.5px solid var(--border2);background:${cur===n?'var(--text)':'var(--surface)'};color:${cur===n?'var(--bg)':'var(--text3)'};font-size:11px;font-weight:600;cursor:pointer;line-height:1">${n}</button>`
         ).join('')}
       </div>
     </div>`;
@@ -178,8 +177,10 @@ function renderSettings() {
           <div class="settings-card">
             <div class="settings-card-title">${t('settings.section_classes')}</div>
             <div class="settings-card-sub">${t('settings.classes_sub')}</div>
-            <div class="settings-field">
-              <label>${t('settings.class_format')}</label>
+
+            <!-- Format pills — full width -->
+            <div class="settings-field" style="margin-bottom:12px">
+              <label style="margin-bottom:6px">${t('settings.class_format')}</label>
               <div style="display:flex;flex-wrap:wrap;gap:6px">
                 ${fmtOpt('letter','5A, 5B, 5C')}
                 ${fmtOpt('dot','5.1, 5.2, 5.3')}
@@ -187,24 +188,36 @@ function renderSettings() {
                 ${fmtOpt('none', t('settings.fmt_none'))}
               </div>
             </div>
-            <div class="settings-field">
-              <label>${t('settings.year_groups')}</label>
-              <div class="hint" style="margin-bottom:10px">${t('settings.year_hint')}</div>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                ${ALL_YEARS.map(y => sectionSelect(y)).join('')}
+
+            <!-- Two-column: year list left, preview+custom right -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+              <!-- Left: year groups -->
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">${t('settings.year_groups')}</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${t('settings.year_hint')}</div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  ${ALL_YEARS.map(y => sectionSelect(y)).join('')}
+                </div>
               </div>
-            </div>
-            <div class="settings-field">
-              <label>${t('settings.preview')}</label>
-              <div id="classPreview" style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--surface2);border-radius:var(--radius);border:0.5px solid var(--border);min-height:40px">
-                ${preview.length ? preview.map(c => `<span style="padding:3px 10px;background:var(--surface);border:0.5px solid var(--border2);border-radius:12px;font-size:12px;font-weight:500">${c}</span>`).join('') : `<span style="font-size:12px;color:var(--text3)">${t('settings.preview_empty')}</span>`}
+
+              <!-- Right: preview + custom override -->
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px">${t('settings.preview')}</div>
+                  <div id="classPreview" style="display:flex;flex-wrap:wrap;gap:4px;padding:10px;background:var(--surface2);border-radius:var(--radius);border:0.5px solid var(--border);min-height:48px">
+                    ${preview.length ? preview.map(c => `<span style="padding:2px 8px;background:var(--surface);border:0.5px solid var(--border2);border-radius:10px;font-size:12px;font-weight:500">${c}</span>`).join('') : `<span style="font-size:12px;color:var(--text3)">${t('settings.preview_empty')}</span>`}
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">${t('settings.custom')} <span style="font-weight:400;color:var(--text3);font-size:11px">${t('settings.custom_sub')}</span></div>
+                  <input id="setting_classOverride" value="${escHtml(s.classOverride || '')}" placeholder="${t('settings.custom_ph')}" oninput="settingsUpdatePreview()" style="width:100%">
+                  <div style="font-size:11px;color:var(--text3);margin-top:4px">${t('settings.custom_hint')}</div>
+                </div>
               </div>
+
             </div>
-            <div class="settings-field">
-              <label>${t('settings.custom')} <span style="font-weight:400;color:var(--text3)">${t('settings.custom_sub')}</span></label>
-              <input id="setting_classOverride" value="${escHtml(s.classOverride || '')}" placeholder="${t('settings.custom_ph')}" oninput="settingsUpdatePreview()">
-              <div class="hint">${t('settings.custom_hint')}</div>
-            </div>
+
             <div class="settings-save-bar">
               <button class="btn" onclick="saveSettings()" style="padding:9px 22px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border-color:var(--text)">
                 <i class="ti ti-device-floppy"></i>${t('settings.save')}
@@ -308,11 +321,42 @@ function renderSettings() {
           <div class="settings-card">
             <div class="settings-card-title">${t('settings.section_data')}</div>
             <div class="settings-card-sub">${t('settings.data_sub')}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-              <button class="btn" onclick="createBackup()" style="font-size:13px"><i class="ti ti-device-floppy"></i>${t('backup.create_btn')}</button>
-              <button class="btn" onclick="showBackups()" style="font-size:13px"><i class="ti ti-history"></i>${t('backup.restore_lnk')}</button>
-              <button onclick="openPrivacyModal()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 0">${t('privacy.link')}</button>
+
+            <!-- Students -->
+            <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:0.5px solid var(--border)">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">${t('settings.students_heading') || 'Elever'}</div>
+              <div style="font-size:12px;color:var(--text3);margin-bottom:10px">${t('settings.students_csv_hint') || 'CSV-format: id, förnamn, efternamn, klass — kolumnnamn identifieras automatiskt.'}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
+                <button class="btn" onclick="openImportModal()" style="font-size:13px">
+                  <i class="ti ti-upload"></i>${t('topbar.import') || 'Importera elever'}
+                </button>
+                <button class="btn" onclick="settingsGoAddStudent()" style="font-size:13px">
+                  <i class="ti ti-user-plus"></i>${t('students.add_btn') || '+ Lägg till elev'}
+                </button>
+              </div>
+              <div style="margin-top:4px">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:5px">
+                  ${t('settings.csv_paste_label') || 'Eller klistra in CSV direkt:'} <span style="font-family:\'DM Mono\',monospace;color:var(--text3);opacity:0.7">id, förnamn, efternamn, klass</span>
+                </div>
+                <textarea id="csvPasteArea" rows="4"
+                  placeholder="12345678, Anna, Andersson, 7A&#10;87654321, Erik, Eriksson, 7B"
+                  style="width:100%;box-sizing:border-box;padding:8px 10px;font-family:'DM Mono',monospace;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);resize:vertical;line-height:1.6"></textarea>
+                <button class="btn" onclick="importFromPaste()" style="margin-top:6px;font-size:12px">
+                  <i class="ti ti-table-import"></i>${t('settings.csv_paste_btn') || 'Importera inklistrad data'}
+                </button>
+              </div>
             </div>
+
+            <!-- Backup & Privacy -->
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">${t('backup.section') || 'Säkerhetskopiering'}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button class="btn" onclick="createBackup()" style="font-size:13px"><i class="ti ti-device-floppy"></i>${t('backup.create_btn')}</button>
+                <button class="btn" onclick="showBackups()" style="font-size:13px"><i class="ti ti-history"></i>${t('backup.restore_lnk')}</button>
+                <button onclick="openPrivacyModal()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 0">${t('privacy.link')}</button>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -622,6 +666,14 @@ function pickEmoji(i, emoji) {
 document.addEventListener('click', function() {
   document.querySelectorAll('[id^="emojiPicker_"]').forEach(p => p.style.display = 'none');
 });
+
+function settingsGoAddStudent() {
+  switchView('students');
+  setTimeout(() => {
+    const p = document.getElementById('addPanel');
+    if (p) p.classList.add('open');
+  }, 80);
+}
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');

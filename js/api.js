@@ -3,6 +3,18 @@
 
 const API = '/api';
 
+/**
+ * Wrapper around fetch() that automatically attaches the current user's
+ * Bearer token so every API request is authenticated.
+ */
+async function authFetch(url, opts = {}) {
+  const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
+  if (token) {
+    opts = { ...opts, headers: { ...(opts.headers || {}), 'Authorization': `Bearer ${token}` } };
+  }
+  return fetch(url, opts);
+}
+
 function setServerIndicator(online, networkUrl) {
   serverOnline = online;
   const el = document.getElementById('serverIndicator');
@@ -18,7 +30,7 @@ function setServerIndicator(online, networkUrl) {
 
 async function fetchNetworkUrl() {
   try {
-    const r = await fetch(`${API}/ping`);
+    const r = await authFetch(`${API}/ping`);
     if (r.ok) setServerIndicator(true);
   } catch(e) {
     setServerIndicator(false);
@@ -27,7 +39,7 @@ async function fetchNetworkUrl() {
 
 async function serverGet(date) {
   try {
-    const r = await fetch(`${API}/status?date=${date}`);
+    const r = await authFetch(`${API}/status?date=${date}`);
     if (!r.ok) return null;
     return await r.json();
   } catch(e) { return null; }
@@ -35,7 +47,7 @@ async function serverGet(date) {
 
 async function serverSet(date, id, status) {
   try {
-    await fetch(`${API}/status`, {
+    await authFetch(`${API}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date, id, status }),
@@ -45,7 +57,7 @@ async function serverSet(date, id, status) {
 
 async function serverGetAllLogs() {
   try {
-    const r = await fetch(`${API}/logs`);
+    const r = await authFetch(`${API}/logs`);
     if (!r.ok) return null;
     return await r.json();
   } catch(e) { return null; }
@@ -74,7 +86,7 @@ function startPolling() {
 
 async function fetchStudentsFromServer() {
   try {
-    const r = await fetch(`${API}/students`);
+    const r = await authFetch(`${API}/students`);
     if (!r.ok) return;
     const data = await r.json();
     // Only overwrite local cache if Supabase returned at least one student.
@@ -89,7 +101,7 @@ async function fetchStudentsFromServer() {
 
 async function saveStudentToServer(s) {
   try {
-    await fetch(`${API}/students`, {
+    await authFetch(`${API}/students`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(s),
@@ -101,7 +113,7 @@ async function patchStudentOnServer(id, patch) {
   try {
     const students = loadStudents();
     const merged = { ...(students[id] || {}), ...patch };
-    await fetch(`${API}/students`, {
+    await authFetch(`${API}/students`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(merged),
@@ -113,7 +125,7 @@ async function bulkUploadToServer(arr) {
   try {
     const obj = {};
     arr.forEach(s => { obj[s.id] = s; });
-    const r = await fetch(`${API}/students-bulk`, {
+    const r = await authFetch(`${API}/students-bulk`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(obj),
@@ -132,7 +144,7 @@ async function saveFlagsToServer(logs, dates) {
       });
     }
     try {
-      await fetch(`${API}/flags`, {
+      await authFetch(`${API}/flags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date, flags }),
@@ -143,7 +155,7 @@ async function saveFlagsToServer(logs, dates) {
 
 async function loadFlagsFromServer() {
   try {
-    const r = await fetch(`${API}/flags`);
+    const r = await authFetch(`${API}/flags`);
     if (!r.ok) return;
     const data = await r.json();
     if (!data) return;
@@ -159,7 +171,7 @@ async function loadFlagsFromServer() {
 async function fetchExtraFromServer() {
   if (Date.now() < _extraDirtyUntil) return;
   try {
-    const r = await fetch(`${API}/extra`);
+    const r = await authFetch(`${API}/extra`);
     if (!r.ok) return;
     const data = await r.json();
     if (data && typeof data === 'object') saveExtra(data);
@@ -168,7 +180,7 @@ async function fetchExtraFromServer() {
 
 async function fetchGuardiansFromServer() {
   try {
-    const r = await fetch(`${API}/guardians`);
+    const r = await authFetch(`${API}/guardians`);
     if (!r.ok) return;
     const data = await r.json();
     if (data && typeof data === 'object') saveGuardians(data);
@@ -177,7 +189,7 @@ async function fetchGuardiansFromServer() {
 
 async function saveGuardiansToServer(d) {
   try {
-    await fetch(`${API}/guardians`, {
+    await authFetch(`${API}/guardians`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(d),

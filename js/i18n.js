@@ -137,6 +137,11 @@ const TRANSLATIONS = {
     'settings.statuses_sub':       'Anpassa statusar och flaggor för elevkort.',
     'settings.automation_sub':     'Automatiska åtgärder och datahantering.',
     'settings.data_sub':           'Säkerhetskopiera och återställ din data.',
+    'settings.students_heading':   'Elever',
+    'settings.students_csv_hint':  'CSV-format: id, förnamn, efternamn, klass — kolumnnamn identifieras automatiskt.',
+    'settings.csv_paste_label':    'Eller klistra in CSV direkt:',
+    'settings.csv_paste_btn':      'Importera inklistrad data',
+    'backup.section':              'Säkerhetskopiering',
     'settings.school_hint':        'Visas i sidofältet och i exporterade rapporter.',
     'nav.section':                 'Navigation',
 
@@ -272,7 +277,7 @@ const TRANSLATIONS = {
 
     // Notes
     'notes.label':  'Notering',
-    'notes.ph':     't.ex. 🤒 eller Sjuk',
+    'notes.ph':     'Anteckning...',
     'notes.clear':  'Rensa notering',
 
     // EOD reset
@@ -448,6 +453,11 @@ const TRANSLATIONS = {
     'settings.statuses_sub':       'Customise statuses and flags on student cards.',
     'settings.automation_sub':     'Automatic actions and data management.',
     'settings.data_sub':           'Back up and restore your data.',
+    'settings.students_heading':   'Students',
+    'settings.students_csv_hint':  'CSV format: id, first name, last name, class — column names are detected automatically.',
+    'settings.csv_paste_label':    'Or paste CSV directly:',
+    'settings.csv_paste_btn':      'Import pasted data',
+    'backup.section':              'Backup',
     'settings.school_hint':        'Shown in the sidebar and in exported reports.',
     'nav.section':                 'Navigation',
 
@@ -583,7 +593,7 @@ const TRANSLATIONS = {
 
     // Notes
     'notes.label': 'Note',
-    'notes.ph':    'e.g. 🤒 or Sick',
+    'notes.ph':    'Note...',
     'notes.clear': 'Clear note',
 
     // EOD reset

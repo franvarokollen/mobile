@@ -114,48 +114,54 @@ document.addEventListener('keydown', e => {
 })();
 
 // ── Startup ─────────────────────────────────────────────────
-if (SERVER) {
-  // Show loading state in grid before fetches begin
-  const _grid = document.getElementById('studentGrid');
-  if (_grid) _grid.innerHTML = `
-    <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;gap:12px;color:var(--text3)">
-      <i class="ti ti-loader-2 spin" style="font-size:28px"></i>
-      <div style="font-size:13px">${t('loading.students')}</div>
-    </div>`;
-  (async () => {
-    await fetchSettingsFromServer();
-    await fetchStudentsFromServer();
-    await fetchExtraFromServer();
-    await loadFlagsFromServer();
-    const remote = await serverGet(currentDate);
+(async () => {
+  // Apply translations immediately so the login screen renders correctly
+  applyI18n();
+
+  // Sync sidebar lang buttons
+  const _sv = document.getElementById('langBtnSV');
+  const _en = document.getElementById('langBtnEN');
+  if (_sv) _sv.classList.toggle('active', currentLang === 'sv');
+  if (_en) _en.classList.toggle('active', currentLang === 'en');
+
+  // Gate everything behind authentication
+  const session = await initAuth();
+  if (!session) return; // login overlay is visible; page will reload after OAuth redirect
+
+  if (SERVER) {
+    // Show loading spinner in grid while fetches run
+    const _grid = document.getElementById('studentGrid');
+    if (_grid) _grid.innerHTML = `
+      <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;gap:12px;color:var(--text3)">
+        <i class="ti ti-loader-2 spin" style="font-size:28px"></i>
+        <div style="font-size:13px">${t('loading.students')}</div>
+      </div>`;
+    // Fire all fetches in parallel — cuts load time to the slowest single request
+    const [,,,, remote] = await Promise.all([
+      fetchSettingsFromServer(),
+      fetchStudentsFromServer(),
+      fetchExtraFromServer(),
+      loadFlagsFromServer(),
+      serverGet(currentDate)
+    ]);
     if (remote !== null) {
       const logs = loadLogs();
       logs[currentDate] = remote;
       saveLogs(logs);
     }
-    // Refresh CLASSES from newly-fetched students
     CLASSES = getClasses(loadStudents()) || CLASSES;
     startPolling();
     updateDateDisplay();
     renderDash();
     if (!hasStudents()) showUploadScreen();
-  })();
-} else {
-  setServerIndicator(false);
-  if (!hasStudents()) showUploadScreen();
-}
+  } else {
+    setServerIndicator(false);
+    if (!hasStudents()) showUploadScreen();
+  }
 
-// ── Feature startup ──────────────────────────────────────────
-checkPrivacyNotice();
-purgeOldLogs();
-checkEndOfDay();
-setInterval(checkEndOfDay, 60000);
-
-
-// Sync sidebar lang buttons on initial load
-(function() {
-  const sv = document.getElementById('langBtnSV');
-  const en = document.getElementById('langBtnEN');
-  if (sv) sv.classList.toggle('active', currentLang === 'sv');
-  if (en) en.classList.toggle('active', currentLang === 'en');
+  // Feature startup (runs only after successful login)
+  checkPrivacyNotice();
+  purgeOldLogs();
+  checkEndOfDay();
+  setInterval(checkEndOfDay, 60000);
 })();

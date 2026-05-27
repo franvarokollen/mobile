@@ -123,7 +123,7 @@ async function showBackups() {
   const list = document.getElementById('backupList');
   list.innerHTML = `<div style="color:var(--text2);font-size:13px">${t('loading.students')}</div>`;
   try {
-    const r = await fetch(`${API}/backups`);
+    const r = await authFetch(`${API}/backups`);
     const files = await r.json();
     if (!files.length) { list.innerHTML = `<div style="color:var(--text2);font-size:13px">${t('backup.hint')}</div>`; return; }
     list.innerHTML = '';
@@ -149,7 +149,7 @@ async function showBackups() {
 async function restoreBackup(name) {
   if (!confirm(t('backup.hint') + '\n' + name)) return;
   try {
-    const r = await fetch(`${API}/backups/restore/${name}`, { method: 'POST' });
+    const r = await authFetch(`${API}/backups/restore/${name}`, { method: 'POST' });
     const d = await r.json();
     if (d.ok) {
       showToast('✓ ' + name.slice(7, 19));
