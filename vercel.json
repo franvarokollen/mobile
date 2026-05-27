@@ -3,11 +3,11 @@
   "headers": [
     {
       "source": "/js/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, stale-while-revalidate=600" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=30, stale-while-revalidate=60" }]
     },
     {
       "source": "/css/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, stale-while-revalidate=600" }]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=30, stale-while-revalidate=60" }]
     }
   ],
   "routes": [
