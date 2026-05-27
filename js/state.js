@@ -1,13 +1,12 @@
 // ─── STATE ─────────────────────────────────────────────────
 
-// Auth / PIN state
-let currentRole = null; // 'view'|'staff'|'guardian'
-let pinMode = null;
-let pinBuf = '';
+// Auth state
+let currentRole = 'staff';
 let inactivityTimer = null;
 let warningTimer = null;
 let countdownInterval = null;
 let warningActive = false;
+
 
 // Server is always available in the online version (Vercel API routes)
 const SERVER = true;
@@ -21,7 +20,7 @@ let pollCount = 0;
 let currentDate = (function(){ return new Date().toISOString().slice(0, 10); })();
 let currentClass = 'ALL';
 let currentStudentClass = 'ALL';
-let statusFilter = 'ALL'; // ALL | out | late | ok
+let statusFilter = 'ALL';
 let trendClass = 'ALL';
 let trendPeriod = 'week';
 
@@ -37,3 +36,6 @@ let toastTimer = null;
 
 // View navigation history
 let viewHistory = [];
+
+// EOD reset tracking
+let _eodCheckedToday = localStorage.getItem('phc_eod_checked') === new Date().toISOString().slice(0, 10);

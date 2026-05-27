@@ -42,6 +42,28 @@
 .chip-icon:active { transform: scale(0.85); }
 .chip-icon.active { opacity: 1; filter: none; }
 
+/* SETTINGS LAYOUT */
+.settings-layout { display: flex; gap: 16px; padding: 1rem 0; align-items: flex-start; }
+.settings-nav { width: 180px; flex-shrink: 0; background: var(--surface2); border-radius: var(--radius-lg); border: 0.5px solid var(--border); overflow: hidden; }
+.settings-nav-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); padding: 14px 16px 8px; }
+.settings-nav-item { display: block; width: 100%; text-align: left; padding: 10px 16px; font-size: 13px; font-weight: 500; color: var(--text2); background: none; border: none; border-left: 2.5px solid transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.12s; }
+.settings-nav-item:hover { color: var(--text); background: var(--surface3); }
+.settings-nav-item.active { color: var(--text); background: var(--surface); font-weight: 600; border-left-color: #e84040; }
+.settings-content { flex: 1; min-width: 0; }
+.settings-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 24px 28px; }
+.settings-card-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 4px; letter-spacing: -0.01em; }
+.settings-card-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+.settings-section { display: none; }
+.settings-section.active { display: block; }
+.settings-field { margin-bottom: 16px; }
+.settings-field label { font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 5px; }
+.settings-field .hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.settings-field input, .settings-field select { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--surface2); color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif; height: 38px; }
+.settings-field input:focus, .settings-field select:focus { outline: 2px solid var(--text); outline-offset: 1px; }
+.settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.settings-save-bar { margin-top: 20px; padding-top: 16px; border-top: 0.5px solid var(--border); }
+@media (max-width: 700px) { .settings-layout { flex-direction: column; } .settings-nav { width: 100%; } .settings-row { grid-template-columns: 1fr; } }
+
 /* ADD PANEL */
 .add-panel { background: var(--surface2); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 1rem; display: none; gap: 10px; flex-wrap: wrap; align-items: flex-end; border: 0.5px solid var(--border); }
 .add-panel.open { display: flex; }
@@ -93,9 +115,8 @@
 .report-phones { font-size: 12px; color: var(--text2); line-height: 1.8; font-family: 'DM Mono', monospace; text-align: right; }
 .upload-guardian-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 
-/* PIN SCREEN */
-.dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border2); background: transparent; transition: background 0.15s; }
-.dot.filled { background: var(--text); border-color: var(--text); }
-.pinkey { height: 68px; border-radius: var(--radius-lg); border: 0.5px solid var(--border2); background: var(--surface); color: var(--text); font-size: 22px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.12s; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.pinkey:hover { background: var(--surface2); }
-.pinkey:active { background: var(--surface3); transform: scale(0.97); }
+/* VIEW-ONLY BANNER */
+.viewonly-banner { background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); border-radius: var(--radius); padding: 7px 14px; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+
+/* NOTE BADGE on chips */
+.chip-note { font-size: 15px; line-height: 1; flex-shrink: 0; }

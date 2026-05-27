@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobilkollen — Visning</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23162032'/><rect x='10' y='4' width='12' height='20' rx='3' fill='none' stroke='%23ffffff' stroke-width='2'/><circle cx='16' cy='21' r='1' fill='%23ffffff'/><line x1='8' y1='27' x2='24' y2='27' stroke='%23e84040' stroke-width='2.5' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f0f4f8;
+  --surface:   #ffffff;
+  --surface2:  #f5f7fa;
+  --surface3:  #e8edf3;
+  --border:    rgba(15,40,80,0.08);
+  --border2:   rgba(15,40,80,0.14);
+  --text:      #0f2547;
+  --text2:     #4a6080;
+  --text3:     #8fa3bc;
+  --navy:      #162032;
+  --accent:    #e84040;
+  --radius:    10px;
+  --radius-lg: 14px;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── HEADER ───────────────────────────────────────────────── */
+.header {
+  background: var(--navy);
+  color: #fff;
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.header-brand i { color: var(--accent); font-size: 18px; }
+
+.header-school {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.header-spacer { flex: 1; }
+
+.header-date {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+}
+
+.header-refresh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  white-space: nowrap;
+}
+
+.view-badge {
+  background: rgba(232,64,64,0.18);
+  border: 0.5px solid rgba(232,64,64,0.4);
+  color: #ff8080;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── STATS BAR ────────────────────────────────────────────── */
+.stats-bar {
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--border);
+  padding: 12px 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.stat-lbl {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 500;
+}
+.stat-num.red   { color: #dc2626; }
+.stat-num.amber { color: #d97706; }
+.stat-num.green { color: #16a34a; }
+
+.stat-divider {
+  width: 0.5px;
+  height: 28px;
+  background: var(--border2);
+}
+
+/* ── CONTROLS ─────────────────────────────────────────────── */
+.controls {
+  padding: 14px 1.5rem 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  height: 36px;
+  padding: 0 12px 0 34px;
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  width: 220px;
+  position: relative;
+}
+.search-wrap {
+  position: relative;
+}
+.search-wrap i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 15px;
+  pointer-events: none;
+}
+.search-box:focus { outline: 2px solid var(--navy); outline-offset: 1px; }
+
+.tab-bar {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.tab {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.tab:hover { background: var(--surface2); color: var(--text); }
+.tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* ── GRID ─────────────────────────────────────────────────── */
+.grid-wrap {
+  padding: 1rem 1.5rem 2rem;
+}
+
+.student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+/* ── CARD ─────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  user-select: none;
+}
+
+.card.s-out       { border-color: #f87171; background: #fff5f5; }
+.card.s-late      { border-color: #fbbf24; background: #fffbeb; }
+.card.s-confirmed { border-color: #86efac; background: #f0fdf4; }
+
+
+.card-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.card-lname {
+  font-weight: 400;
+  opacity: 0.65;
+}
+.card-cls {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+}
+.card-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.badge-out       { background: #fee2e2; color: #b91c1c; }
+.badge-late      { background: #fef9c3; color: #92400e; }
+.badge-confirmed { background: #dcfce7; color: #15803d; }
+.badge-other     { background: var(--surface2); color: var(--text2); }
+
+/* ── EMPTY ────────────────────────────────────────────────── */
+.empty {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 3rem;
+  color: var(--text3);
+  font-size: 14px;
+}
+.empty i { font-size: 36px; display: block; margin-bottom: 10px; }
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .header { padding: 0 1rem; gap: 8px; }
+  .header-school { display: none; }
+  .stats-bar { padding: 10px 1rem; gap: 12px; }
+  .controls { padding: 10px 1rem 0; }
+  .grid-wrap { padding: 10px 1rem 2rem; }
+  .student-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 0.8s linear infinite; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <i class="ti ti-device-mobile"></i>
+    Mobilkollen
+  </div>
+  <div class="header-school" id="schoolName">—</div>
+  <div class="header-spacer"></div>
+  <div class="header-date" id="dateLabel"></div>
+  <div class="header-refresh" id="refreshLabel">
+    <i class="ti ti-refresh" id="refreshIcon"></i>
+    <span id="refreshCountdown"></span>
+  </div>
+  <div class="view-badge"><i class="ti ti-eye" style="margin-right:4px;font-size:10px"></i>Visning</div>
+</header>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num" id="statTotal">–</div>
+    <div class="stat-lbl">elever</div>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <div class="stat-num" id="statIn">–</div>
+    <div class="stat-lbl">inlämnade</div>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <div class="stat-num red" id="statOut">–</div>
+    <div class="stat-lbl">ej inlämnade</div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="search-wrap">
+    <i class="ti ti-search"></i>
+    <input class="search-box" id="searchBox" placeholder="Sök elev…" oninput="applyFilter()">
+  </div>
+  <div class="tab-bar" id="classTabs"></div>
+</div>
+
+<!-- GRID -->
+<div class="grid-wrap">
+  <div class="student-grid" id="grid">
+    <div class="empty"><i class="ti ti-loader-2 spin"></i>Hämtar data…</div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────
+let _students  = {};   // { id: studentObj }
+let _statuses  = {};   // { id: 'out'|'late'|... }
+let _settings  = {};   // { schoolName, statuses, ... }
+let _classes   = [];   // sorted class list
+let _activeClass = 'ALL';
+let _countdown = 30;
+let _countdownTimer = null;
+
+const TODAY = new Date().toISOString().slice(0, 10);
+
+// ── Date label ─────────────────────────────────────────────
+(function() {
+  const d = new Date();
+  const days = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+  const months = ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  document.getElementById('dateLabel').textContent =
+    days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()];
+})();
+
+// ── Fetch helpers ──────────────────────────────────────────
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function loadAll() {
+  const [students, statuses, settings] = await Promise.all([
+    fetchJSON('/api/students'),
+    fetchJSON('/api/status?date=' + TODAY),
+    fetchJSON('/api/settings'),
+  ]);
+  _students = students || {};
+  _statuses = statuses || {};
+  _settings = settings || {};
+
+  // School name
+  const name = _settings.schoolName || '';
+  document.getElementById('schoolName').textContent = name;
+  if (name) document.title = 'Mobilkollen — ' + name;
+
+  // Build class list
+  const clsSet = new Set();
+  Object.values(_students).forEach(s => { if (s.active !== false && s.cls) clsSet.add(s.cls); });
+  _classes = [...clsSet].sort((a, b) => a.localeCompare(b, 'sv'));
+
+  renderTabs();
+  renderGrid();
+  updateStats();
+}
+
+// ── Tabs ───────────────────────────────────────────────────
+function renderTabs() {
+  const bar = document.getElementById('classTabs');
+  const all = ['ALL', ..._classes];
+  bar.innerHTML = all.map(c => `
+    <button class="tab${c === _activeClass ? ' active' : ''}"
+      onclick="setClass('${c}')">
+      ${c === 'ALL' ? 'Alla klasser' : c}
+    </button>`).join('');
+}
+
+function setClass(cls) {
+  _activeClass = cls;
+  renderTabs();
+  applyFilter();
+}
+
+// ── Filter & render ────────────────────────────────────────
+function applyFilter() {
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const active = Object.values(_students).filter(s => {
+    if (s.active === false) return false;
+    if (_activeClass !== 'ALL' && s.cls !== _activeClass) return false;
+    if (q) {
+      const full = (s.name || ((s.fname || '') + ' ' + (s.lname || ''))).toLowerCase();
+      if (!full.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Sort: not handed in first, then by name
+  active.sort((a, b) => {
+    const aIn = !_statuses[a.id];
+    const bIn = !_statuses[b.id];
+    if (aIn !== bIn) return aIn ? 1 : -1;
+    return (a.lname || a.name || '').localeCompare(b.lname || b.name || '', 'sv');
+  });
+
+  const grid = document.getElementById('grid');
+  if (!active.length) {
+    grid.innerHTML = `<div class="empty"><i class="ti ti-users-off"></i>Inga elever hittades</div>`;
+    return;
+  }
+
+  grid.innerHTML = active.map(s => renderCard(s)).join('');
+}
+
+function getStatusDef(key) {
+  // Check custom statuses from settings first
+  const custom = (_settings.statuses || []).find(st => st.key === key);
+  if (custom) {
+    if (custom.isConfirmed) {
+      return { label: custom.label || 'Inlämnad', cls: 'badge-confirmed', cardCls: 's-confirmed' };
+    }
+    // Custom non-confirmed — use the status colour inline
+    return {
+      label:   custom.label || key,
+      cls:     'badge-other',
+      cardCls: '',
+      style:   `border-color:${custom.color}60;background:${custom.color}10`
+    };
+  }
+  // Built-in defaults
+  if (key === 'out')  return { label: 'Ej inlämnad', cls: 'badge-out',  cardCls: 's-out' };
+  if (key === 'late') return { label: 'Försenad',    cls: 'badge-late', cardCls: 's-late' };
+  return { label: key, cls: 'badge-other', cardCls: '' };
+}
+
+function renderCard(s) {
+  const statusKey = _statuses[s.id];
+  const def = statusKey ? getStatusDef(statusKey) : { label: '', cls: '', cardCls: '' };
+
+  const fname = s.fname || (s.name || '').split(' ')[0] || '';
+  const lname = s.lname || (s.name || '').split(' ').slice(1).join(' ') || '';
+
+  return `<div class="card ${def.cardCls}">
+    <div class="card-name">${esc(fname)} <span class="card-lname">${esc(lname)}</span></div>
+    <div class="card-cls">${esc(s.cls || '—')}</div>
+    ${def.label ? `<div class="card-status ${def.cls}">${def.label}</div>` : ''}
+  </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+}
+
+// ── Stats ──────────────────────────────────────────────────
+function updateStats() {
+  const active = Object.values(_students).filter(s => s.active !== false);
+  const total  = active.length;
+  const out    = active.filter(s => _statuses[s.id]).length;
+  const inN    = total - out;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statIn').textContent    = inN;
+  document.getElementById('statOut').textContent   = out;
+}
+
+// ── Render grid ────────────────────────────────────────────
+function renderGrid() { applyFilter(); }
+
+// ── Auto-refresh ───────────────────────────────────────────
+function startCountdown() {
+  _countdown = 30;
+  clearInterval(_countdownTimer);
+  _countdownTimer = setInterval(() => {
+    _countdown--;
+    document.getElementById('refreshCountdown').textContent = _countdown + 's';
+    if (_countdown <= 0) {
+      clearInterval(_countdownTimer);
+      document.getElementById('refreshIcon').classList.add('spin');
+      document.getElementById('refreshCountdown').textContent = '…';
+      loadAll().then(() => {
+        document.getElementById('refreshIcon').classList.remove('spin');
+        startCountdown();
+      }).catch(() => {
+        document.getElementById('refreshIcon').classList.remove('spin');
+        startCountdown();
+      });
+    }
+  }, 1000);
+}
+
+// ── Boot ───────────────────────────────────────────────────
+loadAll().then(startCountdown).catch(() => {
+  document.getElementById('grid').innerHTML =
+    `<div class="empty"><i class="ti ti-wifi-off"></i>Kunde inte ansluta till servern</div>`;
+});
+</script>
+</body>
+</html>

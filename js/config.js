@@ -1,8 +1,5 @@
 // ─── CONFIG ────────────────────────────────────────────────
-const PIN_STAFF = '202601';
-const PIN_GUARDIAN = '202609';
-const INACTIVITY_MS = 4.5 * 60 * 1000; // 4.5 min then show 30s warning
-const WARNING_S = 30;
+// Auth is handled by SSO (Supabase). PIN system removed.
 
 const STORAGE_KEYS = {
   students: 'phc_students',

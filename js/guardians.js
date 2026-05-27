@@ -24,7 +24,7 @@ async function handleGuardianUpload(input) {
     const sidIdx = headers.indexOf('studentid');
     const fn1Idx = headers.indexOf('fname1'), ln1Idx = headers.indexOf('lname1');
     const mob1Idx = headers.indexOf('mobile1'), work1Idx = headers.indexOf('workphone1'), home1Idx = headers.indexOf('homephone');
-    if (sidIdx < 0) { showToast('studentid column not found'); return; }
+    if (sidIdx < 0) { showToast(t('toast.guardian_column_error')); return; }
     lines.slice(1).forEach(line => {
       const cols = line.split('\t');
       const sidRaw = (cols[sidIdx] || '').trim();
@@ -35,18 +35,18 @@ async function handleGuardianUpload(input) {
   }
 
   const count = Object.keys(guardians).length;
-  if (count === 0) { showToast('No guardian records found'); return; }
+  if (count === 0) { showToast(t('toast.no_guardians_found')); return; }
   saveGuardians(guardians);
   await saveGuardiansToServer(guardians);
-  showToast('Guardians loaded for ' + count + ' students');
+  showToast(t('toast.guardians_loaded', { n: count }));
   input.value = '';
 }
 
 function guardianBlock(logId, students, guardians, barcodeMap) {
   var s = resolveStudent(logId, students, barcodeMap);
-  if (!s) return '<div style="font-size:12px;color:var(--text3);margin-top:6px">No guardian data on file</div>';
+  if (!s) return '<div style="font-size:12px;color:var(--text3);margin-top:6px">${t('report.no_guardian_inline')}</div>';
   var arr = guardians[s.id];
-  if (!arr || !arr.length) return '<div style="font-size:12px;color:var(--text3);margin-top:6px">No guardian data on file</div>';
+  if (!arr || !arr.length) return '<div style="font-size:12px;color:var(--text3);margin-top:6px">${t('report.no_guardian_inline')}</div>';
   return arr.map(function(g) {
     var name = ((g.fname || g.fname1 || '') + ' ' + (g.lname || g.lname1 || '')).trim();
     var phones = [];

@@ -1,0 +1,628 @@
+// ─── SETTINGS ──────────────────────────────────────────────
+
+var _settings = {};
+
+function getSettings() { return _settings; }
+
+async function fetchSettingsFromServer() {
+  try {
+    const r = await fetch('/api/settings');
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d && typeof d === 'object') {
+      _settings = d;
+      applySettings();
+    }
+  } catch(e) {}
+}
+
+async function saveSettingsToServer(data) {
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) {}
+}
+
+// ── Curated emoji set for flag picker ────────────────────────
+const EMOJI_PICKS = [
+  // Alerts & priority
+  '⭐','🔴','🟡','🟢','🚨','⚠️',
+  // Health & absence
+  '🏠','🤒','💊','🏥','🩺','🛏️',
+  // School & work
+  '📚','🎒','📝','📋','📌','✏️',
+  // Communication
+  '📞','📱','💬','📧','🔔','🔕',
+  // People & interaction
+  '✋','🙋','👍','👪','❤️','😴',
+  // Activities
+  '🏃','🎵','🎨','🚌','🚗','⚽',
+  // Symbols
+  '✅','❌','💡','🔒','⏰','⚡',
+];
+
+// ── Default keys/colors (labels come from t() so they respect language) ─────
+const DEFAULT_STATUSES = [
+  { key: 'out',  color: '#ef4444' },
+  { key: 'late', color: '#f59e0b' }
+];
+const DEFAULT_FLAGS = [
+  { key: 'starred',   emoji: '⭐', activeColor: '#f59e0b' },
+  { key: 'athome',    emoji: '🏠', activeColor: '#6366f1' },
+  { key: 'keepphone', emoji: '📱', activeColor: '#0ea5e9' }
+];
+
+const _defaultStatusLabels = { out: 'default.status.out', late: 'default.status.late' };
+const _defaultFlagLabels   = { starred: 'default.flag.starred', athome: 'default.flag.athome', keepphone: 'default.flag.keepphone' };
+
+function getStatuses() {
+  const base = (_settings.statuses && _settings.statuses.length) ? _settings.statuses : DEFAULT_STATUSES;
+  return base.map(st => ({ ...st, label: _defaultStatusLabels[st.key] ? t(_defaultStatusLabels[st.key]) : st.label }));
+}
+function getFlags() {
+  const base = (_settings.flags && _settings.flags.length) ? _settings.flags : DEFAULT_FLAGS;
+  return base.map(fl => ({ ...fl, label: _defaultFlagLabels[fl.key] ? t(_defaultFlagLabels[fl.key]) : fl.label }));
+}
+
+function applySettings() {
+  const generated = buildClassList(_settings);
+  if (generated.length > 0) CLASSES = generated;
+  const sn = document.getElementById('sidebarSchoolName');
+  if (sn && _settings.schoolName) sn.textContent = _settings.schoolName;
+}
+
+function buildClassList(s) {
+  const override = (s.classOverride || '').trim();
+  if (override) return override.split(',').map(c => c.trim()).filter(Boolean);
+
+  const yearSections = s.yearSections || {};
+  const years = Object.keys(yearSections).filter(y => yearSections[y] > 0);
+  if (!years.length) return [];
+
+  const ALL_YEARS = ['F','1','2','3','4','5','6','7','8','9'];
+  years.sort((a, b) => ALL_YEARS.indexOf(a) - ALL_YEARS.indexOf(b));
+
+  const format = s.classFormat || 'letter';
+  const result = [];
+  years.forEach(y => {
+    const count = parseInt(yearSections[y]) || 1;
+    const suffixes = generateSuffixes(format, count);
+    suffixes.forEach(sfx => {
+      if (!sfx) result.push(String(y));
+      else if (format === 'dot') result.push(y + '.' + sfx);
+      else result.push(y + sfx);
+    });
+  });
+  return result;
+}
+
+function generateSuffixes(format, count) {
+  if (format === 'none') return [''];
+  if (format === 'letter') return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0, count).split('');
+  if (format === 'number' || format === 'dot') return Array.from({length: count}, (_, i) => String(i + 1));
+  return [''];
+}
+
+function renderSettings() {
+  const s = _settings;
+  const yearSections = s.yearSections || {};
+  const format = s.classFormat || 'letter';
+  const ALL_YEARS = ['F','1','2','3','4','5','6','7','8','9'];
+
+  const fmtOpt = (val, label) =>
+    `<label style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:0.5px solid var(--border2);border-radius:20px;cursor:pointer;font-size:13px;background:${format===val?'var(--text)':'var(--surface)'};color:${format===val?'var(--bg)':'var(--text2)'}">
+      <input type="radio" name="classFormat" value="${val}" ${format===val?'checked':''} onchange="settingsFormatChange(this)" style="display:none">${label}
+    </label>`;
+
+  const sectionSelect = (y) => {
+    const cur = yearSections[y] || 0;
+    const active = cur > 0;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${active?'var(--surface2)':'var(--surface)'};border:0.5px solid ${active?'var(--border2)':'var(--border)'};border-radius:var(--radius);transition:all 0.15s" id="yearRow_${y}">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1">
+        <input type="checkbox" value="${y}" ${active?'checked':''} onchange="settingsYearToggle(this,'${y}')" style="width:16px;height:16px;cursor:pointer">
+        <span style="font-size:14px;font-weight:600;min-width:24px">${t('settings.year')} ${y}</span>
+      </label>
+      <div style="display:flex;align-items:center;gap:6px;${active?'':'opacity:0.3;pointer-events:none'}" id="yearControls_${y}">
+        <span style="font-size:12px;color:var(--text3)">${t('settings.sections')}</span>
+        ${[1,2,3,4,5,6,7,8].map(n =>
+          `<button onclick="settingsSetSections('${y}',${n})" id="sec_${y}_${n}"
+            style="width:28px;height:28px;border-radius:6px;border:0.5px solid var(--border2);background:${cur===n?'var(--text)':'var(--surface)'};color:${cur===n?'var(--bg)':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer">${n}</button>`
+        ).join('')}
+      </div>
+    </div>`;
+  };
+
+  const preview = buildClassList(s);
+
+  const container = document.getElementById('viewSettings');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="settings-layout">
+
+      <!-- Left nav -->
+      <nav class="settings-nav">
+        <div class="settings-nav-title">${t('settings.title')}</div>
+        <button class="settings-nav-item active" onclick="switchSettingsSection('school',this)">${t('settings.section_school')}</button>
+        <button class="settings-nav-item" onclick="switchSettingsSection('classes',this)">${t('settings.section_classes')}</button>
+        <button class="settings-nav-item" onclick="switchSettingsSection('statuses',this)">${t('settings.section_statuses')}</button>
+        <button class="settings-nav-item" onclick="switchSettingsSection('automation',this)">${t('settings.section_automation')}</button>
+        <button class="settings-nav-item" onclick="switchSettingsSection('data',this)">${t('settings.section_data')}</button>
+      </nav>
+
+      <!-- Right content -->
+      <div class="settings-content">
+
+        <!-- School section -->
+        <div class="settings-section active" id="settingsSec_school">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_school')}</div>
+            <div class="settings-card-sub">${t('settings.school_sub')}</div>
+            <div class="settings-field">
+              <label>${t('settings.school_name')}</label>
+              <input id="setting_schoolName" value="${escHtml(s.schoolName || '')}" placeholder="${t('settings.school_ph')}">
+              <div class="hint">${t('settings.school_hint')}</div>
+            </div>
+            <div class="settings-save-bar">
+              <button class="btn" onclick="saveSettings()" style="padding:9px 22px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border-color:var(--text)">
+                <i class="ti ti-device-floppy"></i>${t('settings.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classes section -->
+        <div class="settings-section" id="settingsSec_classes">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_classes')}</div>
+            <div class="settings-card-sub">${t('settings.classes_sub')}</div>
+            <div class="settings-field">
+              <label>${t('settings.class_format')}</label>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                ${fmtOpt('letter','5A, 5B, 5C')}
+                ${fmtOpt('dot','5.1, 5.2, 5.3')}
+                ${fmtOpt('number','51, 52, 53')}
+                ${fmtOpt('none', t('settings.fmt_none'))}
+              </div>
+            </div>
+            <div class="settings-field">
+              <label>${t('settings.year_groups')}</label>
+              <div class="hint" style="margin-bottom:10px">${t('settings.year_hint')}</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                ${ALL_YEARS.map(y => sectionSelect(y)).join('')}
+              </div>
+            </div>
+            <div class="settings-field">
+              <label>${t('settings.preview')}</label>
+              <div id="classPreview" style="display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--surface2);border-radius:var(--radius);border:0.5px solid var(--border);min-height:40px">
+                ${preview.length ? preview.map(c => `<span style="padding:3px 10px;background:var(--surface);border:0.5px solid var(--border2);border-radius:12px;font-size:12px;font-weight:500">${c}</span>`).join('') : `<span style="font-size:12px;color:var(--text3)">${t('settings.preview_empty')}</span>`}
+              </div>
+            </div>
+            <div class="settings-field">
+              <label>${t('settings.custom')} <span style="font-weight:400;color:var(--text3)">${t('settings.custom_sub')}</span></label>
+              <input id="setting_classOverride" value="${escHtml(s.classOverride || '')}" placeholder="${t('settings.custom_ph')}" oninput="settingsUpdatePreview()">
+              <div class="hint">${t('settings.custom_hint')}</div>
+            </div>
+            <div class="settings-save-bar">
+              <button class="btn" onclick="saveSettings()" style="padding:9px 22px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border-color:var(--text)">
+                <i class="ti ti-device-floppy"></i>${t('settings.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statuses & Flags section -->
+        <div class="settings-section" id="settingsSec_statuses">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_statuses')}</div>
+            <div class="settings-card-sub">${t('settings.statuses_sub')}</div>
+            <div class="settings-row">
+              <div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px">${t('settings.statuses')}</div>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:10px">${t('settings.statuses_hint')}</div>
+                <div id="statusList" style="display:flex;flex-direction:column;gap:8px">
+                  ${getStatuses().map((st, i) => renderStatusRow(st, i)).join('')}
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                  <button class="btn" onclick="settingsAddStatus()" style="font-size:12px">
+                    <i class="ti ti-plus"></i>${t('settings.add_status')}
+                  </button>
+                  <button class="btn" onclick="settingsAddConfirmed()" style="font-size:12px;color:#16a34a;border-color:#86efac">
+                    ${t('settings.add_confirmed')}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px">${t('settings.flags')}</div>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:10px">${t('settings.flags_hint')}</div>
+                <div id="flagList" style="display:flex;flex-direction:column;gap:8px">
+                  ${getFlags().map((fl, i) => renderFlagRow(fl, i)).join('')}
+                </div>
+                <button class="btn" onclick="settingsAddFlag()" style="margin-top:8px;font-size:12px">
+                  <i class="ti ti-plus"></i>${t('settings.add_flag')}
+                </button>
+              </div>
+            </div>
+            <div class="settings-save-bar">
+              <button class="btn" onclick="saveSettings()" style="padding:9px 22px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border-color:var(--text)">
+                <i class="ti ti-device-floppy"></i>${t('settings.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Automation section -->
+        <div class="settings-section" id="settingsSec_automation">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_automation')}</div>
+            <div class="settings-card-sub">${t('settings.automation_sub')}</div>
+            <div class="settings-row">
+              <div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:12px">${t('eod.section')}</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                    <input type="checkbox" id="setting_eodEnabled" ${s.eodEnabled ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
+                    ${t('eod.enable')}
+                  </label>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <label for="setting_eodTime" style="font-size:12px;color:var(--text2);min-width:50px">${t('eod.time')}</label>
+                    <input type="time" id="setting_eodTime" value="${s.eodTime || '16:00'}" style="height:34px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;width:auto">
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <label for="setting_eodAction" style="font-size:12px;color:var(--text2);min-width:50px">${t('eod.action')}</label>
+                    <select id="setting_eodAction" style="height:34px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;width:auto">
+                      <option value="clear" ${(s.eodAction || 'clear') === 'clear' ? 'selected' : ''}>${t('eod.clear')}</option>
+                      <option value="remind" ${s.eodAction === 'remind' ? 'selected' : ''}>${t('eod.remind')}</option>
+                    </select>
+                  </div>
+                  <button class="btn" onclick="manualEodReset()" style="font-size:12px;align-self:flex-start">
+                    <i class="ti ti-restore"></i>${t('eod.manual_btn')}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:12px">${t('retention.section')}</div>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:10px">${t('retention.label')}</div>
+                <select id="setting_retentionDays" style="width:100%;height:36px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px">
+                  <option value="30"  ${(s.dataRetentionDays || 90) == 30  ? 'selected' : ''}>${t('retention.30')}</option>
+                  <option value="60"  ${(s.dataRetentionDays || 90) == 60  ? 'selected' : ''}>${t('retention.60')}</option>
+                  <option value="90"  ${(s.dataRetentionDays || 90) == 90  ? 'selected' : ''}>${t('retention.90')}</option>
+                  <option value="180" ${(s.dataRetentionDays || 90) == 180 ? 'selected' : ''}>${t('retention.180')}</option>
+                  <option value="365" ${(s.dataRetentionDays || 90) == 365 ? 'selected' : ''}>${t('retention.365')}</option>
+                  <option value="0"   ${(s.dataRetentionDays || 90) == 0   ? 'selected' : ''}>${t('retention.never')}</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-save-bar">
+              <button class="btn" onclick="saveSettings()" style="padding:9px 22px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border-color:var(--text)">
+                <i class="ti ti-device-floppy"></i>${t('settings.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data section -->
+        <div class="settings-section" id="settingsSec_data">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_data')}</div>
+            <div class="settings-card-sub">${t('settings.data_sub')}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+              <button class="btn" onclick="createBackup()" style="font-size:13px"><i class="ti ti-device-floppy"></i>${t('backup.create_btn')}</button>
+              <button class="btn" onclick="showBackups()" style="font-size:13px"><i class="ti ti-history"></i>${t('backup.restore_lnk')}</button>
+              <button onclick="openPrivacyModal()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;padding:4px 0">${t('privacy.link')}</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  `;
+}
+
+function switchSettingsSection(name, btn) {
+  document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('settingsSec_' + name);
+  if (sec) sec.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function settingsGetCurrentYearSections() {
+  const ys = Object.assign({}, _settings.yearSections || {});
+  document.querySelectorAll('[id^="yearRow_"]').forEach(row => {
+    const y = row.id.replace('yearRow_', '');
+    const cb = row.querySelector('input[type="checkbox"]');
+    if (!cb.checked) { ys[y] = 0; return; }
+    let active = 0;
+    for (let n = 1; n <= 8; n++) {
+      const btn = document.getElementById(`sec_${y}_${n}`);
+      if (btn && btn.style.background.includes('var(--text)')) { active = n; break; }
+    }
+    ys[y] = active || 1;
+  });
+  return ys;
+}
+
+function settingsUpdatePreview() {
+  const override = document.getElementById('setting_classOverride')?.value.trim() || '';
+  const format   = document.querySelector('input[name="classFormat"]:checked')?.value || 'letter';
+  const yearSections = settingsGetCurrentYearSections();
+  const preview  = buildClassList({ yearSections, classFormat: format, classOverride: override });
+  const el = document.getElementById('classPreview');
+  if (!el) return;
+  el.innerHTML = preview.length
+    ? preview.map(c => `<span style="padding:3px 10px;background:var(--surface);border:0.5px solid var(--border2);border-radius:12px;font-size:12px;font-weight:500">${c}</span>`).join('')
+    : `<span style="font-size:12px;color:var(--text3)">${t('settings.preview_empty')}</span>`;
+}
+
+function settingsYearToggle(cb, y) {
+  const controls = document.getElementById('yearControls_' + y);
+  const row = document.getElementById('yearRow_' + y);
+  if (controls) controls.style.cssText = cb.checked ? 'display:flex;align-items:center;gap:6px' : 'display:flex;align-items:center;gap:6px;opacity:0.3;pointer-events:none';
+  if (row) { row.style.background = cb.checked ? 'var(--surface2)' : 'var(--surface)'; row.style.borderColor = cb.checked ? 'var(--border2)' : 'var(--border)'; }
+  if (cb.checked) settingsSetSections(y, _settings.yearSections?.[y] || 1);
+  settingsUpdatePreview();
+}
+
+function settingsSetSections(y, n) {
+  for (let i = 1; i <= 8; i++) {
+    const btn = document.getElementById(`sec_${y}_${i}`);
+    if (!btn) continue;
+    btn.style.background = i === n ? 'var(--text)' : 'var(--surface)';
+    btn.style.color = i === n ? 'var(--bg)' : 'var(--text2)';
+  }
+  settingsUpdatePreview();
+}
+
+function settingsFormatChange(radio) {
+  document.querySelectorAll('input[name="classFormat"]').forEach(r => {
+    const lbl = r.closest('label');
+    lbl.style.background = r.checked ? 'var(--text)' : 'var(--surface)';
+    lbl.style.color = r.checked ? 'var(--bg)' : 'var(--text2)';
+  });
+  settingsUpdatePreview();
+}
+
+async function saveSettings() {
+  const schoolName    = document.getElementById('setting_schoolName').value.trim();
+  const classOverride = document.getElementById('setting_classOverride').value.trim();
+  const format        = document.querySelector('input[name="classFormat"]:checked')?.value || 'letter';
+  const yearSections  = settingsGetCurrentYearSections();
+
+  const statuses = [];
+  document.querySelectorAll('#statusList [data-status-idx]').forEach(row => {
+    const i   = row.dataset.statusIdx;
+    const labelEl = row.querySelector('[data-status-label]');
+    const colorEl = row.querySelector('[data-status-color]');
+    const label = labelEl ? labelEl.value.trim() : '';
+    if (!label) return;
+    statuses.push({
+      key:         row.dataset.statusKey || ('status_' + i),
+      label,
+      color:       colorEl ? colorEl.value : '#ef4444',
+      isConfirmed: row.dataset.statusConfirmed === '1'
+    });
+  });
+
+  const flags = [];
+  document.querySelectorAll('#flagList [data-flag-idx]').forEach((row, i) => {
+    const label    = (row.querySelector('[data-flag-label]')?.value || '').trim();
+    const emojiEl  = row.querySelector('[id^="emojiVal_"]');
+    const colorEl  = row.querySelector('[data-flag-color]');
+    if (!label) return;
+    flags.push({
+      key:         row.dataset.flagKey || ('flag_' + i),
+      label,
+      emoji:       emojiEl ? emojiEl.value.trim() || '⭐' : '⭐',
+      activeColor: colorEl ? colorEl.value : '#6366f1'
+    });
+  });
+
+  const eodEnabled       = document.getElementById('setting_eodEnabled')?.checked || false;
+  const eodTime          = document.getElementById('setting_eodTime')?.value || '16:00';
+  const eodAction        = document.getElementById('setting_eodAction')?.value || 'clear';
+  const dataRetentionDays = parseInt(document.getElementById('setting_retentionDays')?.value) || 90;
+
+  const data = {
+    schoolName,
+    yearSections,
+    classFormat: format,
+    classOverride,
+    statuses,
+    flags,
+    eodEnabled,
+    eodTime,
+    eodAction,
+    dataRetentionDays
+  };
+
+  _settings = data;
+  applySettings();
+  await saveSettingsToServer(data);
+  showToast(t('toast.settings_saved'));
+  renderStudentList();
+  renderDash();
+}
+
+function renderStatusRow(st, i) {
+  const confirmedBadge = st.isConfirmed
+    ? `<span style="font-size:10px;font-weight:600;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0">${t('settings.confirmed_badge')}</span>`
+    : '';
+  return `<div style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius);border:0.5px solid var(--border)"
+    id="statusRow_${i}"
+    data-status-idx="${i}"
+    data-status-key="${escHtml(st.key || '')}"
+    data-status-confirmed="${st.isConfirmed ? '1' : '0'}">
+    <div style="width:20px;height:20px;border-radius:50%;background:var(--surface3);color:var(--text3);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i + 1}</div>
+    <div id="colorSwatch_${i}" style="width:12px;height:12px;border-radius:50%;background:${st.color || '#ef4444'};flex-shrink:0"></div>
+    <input value="${escHtml(st.label)}" placeholder="${t('settings.status_ph')}" data-status-label="${i}"
+      style="flex:1;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px">
+    ${confirmedBadge}
+    <input type="color" value="${st.color || '#ef4444'}" data-status-color="${i}"
+      onchange="document.getElementById('colorSwatch_${i}').style.background=this.value"
+      style="width:28px;height:28px;border:0.5px solid var(--border2);border-radius:4px;padding:2px;cursor:pointer;background:var(--surface)">
+    <button onclick="settingsMoveStatus(${i},-1)" title="${t('settings.move_up') || '↑'}"
+      style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:12px;width:24px;height:26px;display:flex;align-items:center;justify-content:center">↑</button>
+    <button onclick="settingsMoveStatus(${i},1)" title="${t('settings.move_down') || '↓'}"
+      style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:12px;width:24px;height:26px;display:flex;align-items:center;justify-content:center">↓</button>
+    <button onclick="settingsRemoveStatus(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 5px" title="Remove">✕</button>
+  </div>`;
+}
+
+function renderFlagRow(fl, i) {
+  const pickerEmojis = EMOJI_PICKS.map(e =>
+    `<button type="button" onclick="pickEmoji(${i},'${e}')"
+      style="font-size:19px;background:none;border:none;cursor:pointer;padding:3px 4px;border-radius:6px;line-height:1;transition:background 0.1s"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">${e}</button>`
+  ).join('');
+
+  return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius);border:0.5px solid var(--border)"
+    id="flagRow_${i}"
+    data-flag-idx="${i}"
+    data-flag-key="${escHtml(fl.key || '')}">
+    <!-- Emoji picker trigger -->
+    <div style="position:relative;flex-shrink:0">
+      <button type="button" id="emojiBtn_${i}" onclick="openEmojiPicker(${i},event)"
+        style="font-size:20px;width:38px;height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">
+        ${fl.emoji}
+      </button>
+      <input type="hidden" data-flag-emoji="${i}" id="emojiVal_${i}" value="${escHtml(fl.emoji)}">
+      <!-- Picker dropdown -->
+      <div id="emojiPicker_${i}"
+        style="display:none;position:absolute;top:38px;left:0;z-index:200;background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:8px;box-shadow:0 6px 24px rgba(0,0,0,0.13);width:228px">
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px">
+          ${pickerEmojis}
+        </div>
+      </div>
+    </div>
+    <input value="${escHtml(fl.label)}" placeholder="${t('settings.flag_ph')}" data-flag-label="${i}"
+      style="flex:1;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px">
+    <input type="color" value="${fl.activeColor}" data-flag-color="${i}"
+      style="width:32px;height:28px;border:0.5px solid var(--border2);border-radius:4px;padding:2px;cursor:pointer;background:var(--surface)">
+    <button onclick="settingsMoveFlag(${i},-1)" title="${t('settings.move_up') || '↑'}"
+      style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:12px;width:24px;height:26px;display:flex;align-items:center;justify-content:center">↑</button>
+    <button onclick="settingsMoveFlag(${i},1)" title="${t('settings.move_down') || '↓'}"
+      style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:12px;width:24px;height:26px;display:flex;align-items:center;justify-content:center">↓</button>
+    <button type="button" onclick="settingsRemoveFlag(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 6px" title="Remove">✕</button>
+  </div>`;
+}
+
+function settingsAddStatus() {
+  const list = document.getElementById('statusList');
+  const i = list.children.length;
+  const div = document.createElement('div');
+  div.innerHTML = renderStatusRow({ key: 'status_new_' + i, label: '', color: '#6366f1' }, i);
+  list.appendChild(div.firstElementChild);
+}
+
+function settingsAddConfirmed() {
+  // Only allow one confirmed status
+  const existing = document.querySelector('#statusList [data-status-confirmed="1"]');
+  if (existing) { existing.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  const list = document.getElementById('statusList');
+  const i = list.children.length;
+  const div = document.createElement('div');
+  div.innerHTML = renderStatusRow({
+    key: 'confirmed',
+    label: currentLang === 'en' ? 'Handed in' : 'Inlämnad',
+    color: '#16a34a',
+    isConfirmed: true
+  }, i);
+  list.appendChild(div.firstElementChild);
+}
+
+function settingsMoveStatus(i, dir) {
+  const rows = [...document.querySelectorAll('#statusList [data-status-idx]')];
+  const j = i + dir;
+  if (j < 0 || j >= rows.length) return;
+  // Read all current state from DOM
+  const data = rows.map(row => ({
+    key:         row.dataset.statusKey || '',
+    label:       row.querySelector('[data-status-label]').value,
+    color:       row.querySelector('[data-status-color]').value,
+    isConfirmed: row.dataset.statusConfirmed === '1'
+  }));
+  [data[i], data[j]] = [data[j], data[i]];
+  const list = document.getElementById('statusList');
+  list.innerHTML = data.map((st, idx) => renderStatusRow(st, idx)).join('');
+}
+
+function settingsRemoveStatus(i) {
+  const el = document.getElementById('statusRow_' + i);
+  if (el) el.remove();
+  // Re-number remaining rows
+  const rows = [...document.querySelectorAll('#statusList [data-status-idx]')];
+  const data = rows.map(row => ({
+    key:         row.dataset.statusKey || '',
+    label:       row.querySelector('[data-status-label]').value,
+    color:       row.querySelector('[data-status-color]').value,
+    isConfirmed: row.dataset.statusConfirmed === '1'
+  }));
+  const list = document.getElementById('statusList');
+  list.innerHTML = data.map((st, idx) => renderStatusRow(st, idx)).join('');
+}
+
+function settingsAddFlag() {
+  const list = document.getElementById('flagList');
+  const i = list.children.length;
+  const div = document.createElement('div');
+  div.innerHTML = renderFlagRow({ key: 'flag_new_' + i, label: '', emoji: '⭐', activeColor: '#6366f1' }, i);
+  list.appendChild(div.firstElementChild);
+}
+
+function _readFlagRows() {
+  return [...document.querySelectorAll('#flagList [data-flag-idx]')].map(row => ({
+    key:         row.dataset.flagKey || '',
+    label:       row.querySelector('[data-flag-label]').value,
+    emoji:       row.querySelector('[id^="emojiVal_"]').value || '⭐',
+    activeColor: row.querySelector('[data-flag-color]').value
+  }));
+}
+
+function settingsMoveFlag(i, dir) {
+  const data = _readFlagRows();
+  const j = i + dir;
+  if (j < 0 || j >= data.length) return;
+  [data[i], data[j]] = [data[j], data[i]];
+  document.getElementById('flagList').innerHTML = data.map((fl, idx) => renderFlagRow(fl, idx)).join('');
+}
+
+function settingsRemoveFlag(i) {
+  const el = document.getElementById('flagRow_' + i);
+  if (el) el.remove();
+  const data = _readFlagRows();
+  document.getElementById('flagList').innerHTML = data.map((fl, idx) => renderFlagRow(fl, idx)).join('');
+}
+
+// ── Emoji picker ──────────────────────────────────────────────
+function openEmojiPicker(i, e) {
+  e.stopPropagation();
+  // Close any other open pickers
+  document.querySelectorAll('[id^="emojiPicker_"]').forEach(p => {
+    if (p.id !== 'emojiPicker_' + i) p.style.display = 'none';
+  });
+  const picker = document.getElementById('emojiPicker_' + i);
+  if (!picker) return;
+  picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+}
+
+function pickEmoji(i, emoji) {
+  const btn = document.getElementById('emojiBtn_' + i);
+  const val = document.getElementById('emojiVal_' + i);
+  const picker = document.getElementById('emojiPicker_' + i);
+  if (btn) btn.textContent = emoji;
+  if (val) val.value = emoji;
+  if (picker) picker.style.display = 'none';
+}
+
+// Close all emoji pickers when clicking outside
+document.addEventListener('click', function() {
+  document.querySelectorAll('[id^="emojiPicker_"]').forEach(p => p.style.display = 'none');
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}

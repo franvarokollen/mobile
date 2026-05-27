@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobilkollen — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── FK BRAND LIGHT THEME (always) ───────────────────────── */
+:root {
+  --bg:        #f0f4f8;
+  --surface:   #ffffff;
+  --surface2:  #f5f7fa;
+  --surface3:  #e8edf3;
+  --border:    rgba(15,40,80,0.07);
+  --border2:   rgba(15,40,80,0.13);
+  --text:      #0f2547;
+  --text2:     #4a6080;
+  --text3:     #8fa3bc;
+  --navy:      #162032;
+  --accent:    #e84040;
+  --indigo:    #1e3a5f;
+  --indigo-bg: rgba(30,58,95,0.07);
+  --green:     #16a34a;
+  --green-bg:  rgba(22,163,74,0.08);
+  --amber:     #d97706;
+  --amber-bg:  rgba(217,119,6,0.08);
+  --red:       #dc2626;
+  --red-bg:    rgba(220,38,38,0.08);
+  --slate:     #64748b;
+  --slate-bg:  rgba(100,116,139,0.08);
+  --radius:    8px;
+  --radius-lg: 12px;
+  --topbar-bg: rgba(255,255,255,0.95);
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* ── AUTH GATE ─────────────────────────────────────────────── */
+#authGate {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); z-index: 999;
+}
+.auth-box {
+  background: var(--surface);
+  border: 0.5px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 2rem 2.5rem;
+  width: 100%; max-width: 360px;
+  text-align: center;
+}
+.auth-logo {
+  font-size: 22px; font-weight: 700; margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+.auth-sub { font-size: 13px; color: var(--text3); margin-bottom: 1.5rem; }
+.auth-box input {
+  width: 100%; padding: 10px 14px; border-radius: var(--radius);
+  border: 0.5px solid var(--border2); background: var(--surface2);
+  color: var(--text); font-size: 14px; font-family: 'DM Mono', monospace;
+  letter-spacing: 0.1em; margin-bottom: 10px;
+}
+.auth-box input:focus { outline: none; border-color: var(--accent); }
+.auth-btn {
+  width: 100%; padding: 10px; border-radius: var(--radius); border: none;
+  background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: opacity 0.15s;
+}
+.auth-btn:hover { opacity: 0.85; }
+.auth-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 18px; }
+
+/* ── MAIN LAYOUT ───────────────────────────────────────────── */
+#app { display: none; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+  padding: 0 1.5rem;
+  display: flex; align-items: center; gap: 1rem; height: 52px;
+}
+.topbar-brand {
+  font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--navy);
+  margin-right: 0.5rem; white-space: nowrap;
+}
+.topbar-stat {
+  font-size: 12px; color: var(--text2);
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  border: 0.5px solid var(--border); background: var(--surface);
+  white-space: nowrap;
+}
+.topbar-stat strong { color: var(--text); font-weight: 600; }
+.topbar-spacer { flex: 1; }
+.topbar-btn {
+  height: 30px; padding: 0 12px; border-radius: 20px;
+  border: 0.5px solid var(--border2); background: var(--surface);
+  color: var(--text2); font-size: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-weight: 500;
+  display: flex; align-items: center; gap: 5px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.topbar-btn:hover { color: var(--text); border-color: var(--accent); }
+.topbar-btn i { font-size: 14px; }
+.topbar-btn.active { color: var(--accent); border-color: var(--accent); }
+
+/* ── GRID ──────────────────────────────────────────────────── */
+.grid-wrap { padding: 1.5rem; }
+.school-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 14px;
+}
+
+/* ── CARD ──────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--border2); }
+
+.card-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px 10px;
+  border-bottom: 0.5px solid var(--border);
+}
+.school-name {
+  font-size: 15px; font-weight: 700; flex: 1;
+  letter-spacing: -0.01em; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.school-id-chip {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--text3); background: var(--surface2);
+  border: 0.5px solid var(--border); border-radius: 4px;
+  padding: 2px 6px; flex-shrink: 0;
+}
+.last-seen { font-size: 11px; color: var(--text3); white-space: nowrap; flex-shrink: 0; }
+
+.card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+
+.card-left { padding: 12px 14px; border-right: 0.5px solid var(--border); }
+.card-right { padding: 12px 14px; }
+
+.block-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--text3); text-transform: uppercase; margin-bottom: 8px;
+}
+
+.stat-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.stat-chip {
+  font-size: 11px; padding: 3px 8px; border-radius: 20px;
+  border: 0.5px solid var(--border); background: var(--surface2);
+  color: var(--text2); display: flex; align-items: center; gap: 4px;
+}
+.stat-chip i { font-size: 12px; }
+
+.settings-list { display: flex; flex-direction: column; gap: 5px; }
+.setting-row {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 12px; color: var(--text2);
+}
+.setting-key { white-space: nowrap; }
+.setting-val {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--text); background: var(--surface2);
+  border-radius: 4px; padding: 1px 6px;
+  border: 0.5px solid var(--border);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+/* ── ADMIN FIELDS ──────────────────────────────────────────── */
+.check-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  margin-bottom: 10px;
+}
+.check-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; cursor: pointer; color: var(--text2);
+  user-select: none;
+}
+.check-item input[type=checkbox] { display: none; }
+.check-box {
+  width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+  border: 1.5px solid var(--border2); background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.check-item.checked .check-box {
+  background: var(--green); border-color: var(--green);
+}
+.check-item.checked .check-box::after {
+  content: ''; display: block;
+  width: 9px; height: 5px;
+  border-left: 2px solid #fff; border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
+.check-item.checked { color: var(--text); }
+
+.admin-input {
+  width: 100%; padding: 5px 8px; margin-bottom: 6px;
+  border: 0.5px solid var(--border); border-radius: var(--radius);
+  background: var(--surface2); color: var(--text2);
+  font-size: 12px; font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.12s, color 0.12s;
+}
+.admin-input:focus { outline: none; border-color: var(--accent); color: var(--text); }
+.admin-input::placeholder { color: var(--text3); }
+
+.admin-notes {
+  width: 100%; min-height: 52px; padding: 6px 8px;
+  border: 0.5px solid var(--border); border-radius: var(--radius);
+  background: var(--surface2); color: var(--text2);
+  font-size: 12px; font-family: 'DM Sans', sans-serif;
+  resize: vertical; line-height: 1.5;
+  transition: border-color 0.12s, color 0.12s;
+}
+.admin-notes:focus { outline: none; border-color: var(--accent); color: var(--text); }
+.admin-notes::placeholder { color: var(--text3); }
+
+/* ── CARD FOOTER ───────────────────────────────────────────── */
+.card-foot {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  border-top: 0.5px solid var(--border);
+  background: var(--surface2);
+}
+.status-select {
+  flex: 1; height: 28px; padding: 0 8px;
+  border: 0.5px solid var(--border2); border-radius: 20px;
+  background: var(--surface); color: var(--text);
+  font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; appearance: none; text-align: center;
+}
+.status-select:focus { outline: none; border-color: var(--accent); }
+.seats-input {
+  width: 80px; height: 28px; padding: 0 8px;
+  border: 0.5px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text2);
+  font-size: 12px; font-family: 'DM Mono', monospace;
+  text-align: center;
+}
+.seats-input:focus { outline: none; border-color: var(--accent); color: var(--text); }
+.seats-label { font-size: 11px; color: var(--text3); white-space: nowrap; }
+.save-indicator {
+  font-size: 11px; color: var(--green); opacity: 0;
+  transition: opacity 0.3s; white-space: nowrap;
+}
+
+/* ── STATUS PILLS ──────────────────────────────────────────── */
+.pill {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 20px;
+  flex-shrink: 0; white-space: nowrap;
+}
+.pill-active    { background: var(--green-bg);  color: var(--green);  border: 0.5px solid rgba(74,222,128,0.25); }
+.pill-trial     { background: var(--amber-bg);  color: var(--amber);  border: 0.5px solid rgba(251,191,36,0.25); }
+.pill-suspended { background: var(--red-bg);    color: var(--red);    border: 0.5px solid rgba(248,113,113,0.25); }
+.pill-churned   { background: var(--slate-bg);  color: var(--slate);  border: 0.5px solid rgba(100,116,139,0.25); }
+
+/* ── ADD SCHOOL MODAL ──────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-lg); padding: 1.5rem;
+  width: 100%; max-width: 400px;
+}
+.modal-title { font-size: 15px; font-weight: 700; margin-bottom: 1rem; }
+.modal-field { margin-bottom: 10px; }
+.modal-field label { font-size: 11px; color: var(--text3); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.modal-field input {
+  width: 100%; padding: 8px 10px; border-radius: var(--radius);
+  border: 0.5px solid var(--border2); background: var(--surface2);
+  color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif;
+}
+.modal-field input:focus { outline: none; border-color: var(--accent); }
+.modal-actions { display: flex; gap: 8px; margin-top: 1rem; justify-content: flex-end; }
+.btn-ghost {
+  padding: 8px 16px; border-radius: var(--radius);
+  border: 0.5px solid var(--border2); background: none;
+  color: var(--text2); font-size: 13px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-primary {
+  padding: 8px 16px; border-radius: var(--radius);
+  border: none; background: var(--accent); color: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── SETTINGS MODAL TABS ───────────────────────────────────── */
+.stab {
+  padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border);
+  background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 12px;
+  font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.12s;
+  display: flex; align-items: center; gap: 5px;
+}
+.stab:hover { background: var(--surface3); color: var(--text); }
+.stab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.ssec { display: none; }
+.ssec.active { display: block; }
+.year-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.year-cell label { font-size: 10px; color: var(--text3); font-weight: 600; text-align: center; }
+.year-cell input { width: 100%; text-align: center; height: 30px; font-family: 'DM Mono', monospace; font-size: 13px; }
+
+/* ── EMPTY / LOADING ───────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 4rem 2rem; color: var(--text3);
+  grid-column: 1/-1;
+}
+.empty-state i { font-size: 40px; display: block; margin-bottom: 12px; }
+.spinner { animation: spin 0.9s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast-admin {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  background: var(--surface); border: 0.5px solid var(--accent);
+  color: var(--text); font-size: 13px; padding: 10px 16px;
+  border-radius: var(--radius); z-index: 999;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="authGate">
+  <div class="auth-box">
+    <div class="auth-logo"><i class="ti ti-device-mobile" style="color:var(--accent)"></i> Mobilkollen</div>
+    <div class="auth-sub">Admin — Command Center</div>
+    <input type="password" id="tokenInput" placeholder="Admin token" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')authenticate()">
+    <button class="auth-btn" onclick="authenticate()" id="loginBtn">Log in</button>
+    <div class="auth-error" id="authError"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand"><i class="ti ti-device-mobile" style="color:var(--accent)"></i> Mobilkollen Admin</div>
+    <button class="topbar-btn" id="langBtn" onclick="toggleLang()"><i class="ti ti-language"></i> <span id="langLabel">EN</span></button>
+    <div class="topbar-stat" id="statTotal"><strong id="cntTotal">–</strong> <span data-t="schools"></span></div>
+    <div class="topbar-stat" style="color:var(--green)"><strong id="cntActive" style="color:var(--green)">–</strong> <span data-t="active"></span></div>
+    <div class="topbar-stat" style="color:var(--amber)"><strong id="cntTrial" style="color:var(--amber)">–</strong> <span data-t="trial"></span></div>
+    <div class="topbar-stat" id="statStudents"><strong id="cntStudents">–</strong> <span data-t="students_total"></span></div>
+    <div class="topbar-spacer"></div>
+    <button class="topbar-btn" onclick="openAddSchool()"><i class="ti ti-plus"></i> <span data-t="add_school"></span></button>
+    <button class="topbar-btn" onclick="loadSchools()"><i class="ti ti-refresh"></i> <span data-t="refresh"></span></button>
+  </div>
+
+  <div class="grid-wrap">
+    <div class="school-grid" id="schoolGrid">
+      <div class="empty-state"><i class="ti ti-loader-2 spinner"></i><span data-t="loading"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SCHOOL MODAL -->
+<div class="overlay" id="addModal" onclick="if(event.target===this)closeAddSchool()">
+  <div class="modal-box">
+    <div class="modal-title"><i class="ti ti-school" style="color:var(--accent);margin-right:6px"></i><span data-t="register_school"></span></div>
+    <div class="modal-field">
+      <label data-t="school_id_label"></label>
+      <input id="newSchoolId" data-t-placeholder="school_id_placeholder" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'-')">
+    </div>
+    <div class="modal-field">
+      <label data-t="school_name_label"></label>
+      <input id="newSchoolName" data-t-placeholder="school_name_placeholder">
+    </div>
+    <div class="modal-field">
+      <label data-t="contact_label"></label>
+      <input id="newContact" data-t-placeholder="contact_placeholder">
+    </div>
+    <div class="modal-field">
+      <label data-t="email_label"></label>
+      <input id="newEmail" data-t-placeholder="email_placeholder" type="email">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeAddSchool()" data-t="cancel"></button>
+      <button class="btn-primary" onclick="addSchool()" data-t="register"></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-admin" id="adminToast"></div>
+
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="settingsModal" onclick="if(event.target===this)closeSettingsModal()">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div class="modal-title">
+        <i class="ti ti-adjustments-horizontal" style="color:var(--accent);margin-right:6px"></i>
+        <span id="settingsModalTitle"></span>
+      </div>
+      <button class="btn-ghost" style="padding:4px 10px;font-size:12px" onclick="closeSettingsModal()">✕</button>
+    </div>
+
+    <!-- Tab bar -->
+    <div style="display:flex;gap:5px;margin-bottom:1.25rem;border-bottom:0.5px solid var(--border);padding-bottom:10px">
+      <button class="stab active" data-sec="school" onclick="switchStab(this,'school')">🏫 <span id="stab_school"></span></button>
+      <button class="stab" data-sec="classes" onclick="switchStab(this,'classes')">📋 <span id="stab_classes"></span></button>
+      <button class="stab" data-sec="eod" onclick="switchStab(this,'eod')">⏰ <span id="stab_eod"></span></button>
+      <button class="stab" data-sec="retention" onclick="switchStab(this,'retention')">🗄️ <span id="stab_retention"></span></button>
+    </div>
+
+    <!-- School section -->
+    <div class="ssec active" id="ssec_school">
+      <div class="modal-field">
+        <label id="lbl_schoolName"></label>
+        <input id="sf_schoolName" style="width:100%">
+      </div>
+      <div class="modal-field">
+        <label id="lbl_classFormat"></label>
+        <select id="sf_classFormat" style="width:100%;height:34px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+          <option value="letter"></option>
+          <option value="dot"></option>
+          <option value="number"></option>
+          <option value="none"></option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Classes section -->
+    <div class="ssec" id="ssec_classes">
+      <div class="modal-field">
+        <label id="lbl_classOverride"></label>
+        <input id="sf_classOverride" style="width:100%" id="lbl_classOverridePh">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">If filled, overrides the year grid below</div>
+      </div>
+      <div class="modal-field" style="margin-top:14px">
+        <label id="lbl_yearSections"></label>
+        <div id="sf_yearGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- EOD section -->
+    <div class="ssec" id="ssec_eod">
+      <div class="modal-field">
+        <label class="check-item" id="eodToggleLabel" onclick="toggleEodEnable(this)" style="cursor:pointer;gap:8px;display:inline-flex;align-items:center">
+          <input type="checkbox" id="sf_eodEnabled" style="display:none">
+          <div class="check-box" id="eodCheckBox"></div>
+          <span id="lbl_eodEnable"></span>
+        </label>
+      </div>
+      <div id="eodFields" style="display:none;margin-top:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="modal-field">
+            <label id="lbl_eodTime"></label>
+            <input type="time" id="sf_eodTime" style="width:100%">
+          </div>
+          <div class="modal-field">
+            <label id="lbl_eodAction"></label>
+            <select id="sf_eodAction" style="width:100%;height:34px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+              <option value="remind" id="opt_remind"></option>
+              <option value="clear" id="opt_clear"></option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Retention section -->
+    <div class="ssec" id="ssec_retention">
+      <div class="modal-field">
+        <label id="lbl_retainDays"></label>
+        <input type="number" id="sf_retainDays" min="0" style="width:100%">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">0 = never automatically purge old records</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1.5rem;padding-top:1rem;border-top:0.5px solid var(--border)">
+      <button class="btn-ghost" onclick="closeSettingsModal()"><span data-t="cancel"></span></button>
+      <button class="btn-primary" onclick="saveSchoolSettings()" id="saveSettingsBtn"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Translations ──────────────────────────────────────────────
+const TR = {
+  sv: {
+    schools: 'skolor', active: 'aktiva', trial: 'trial',
+    students_total: 'elever totalt', add_school: 'Lägg till skola',
+    refresh: 'Uppdatera', loading: 'Hämtar data…',
+    register_school: 'Registrera ny skola',
+    school_id_label: 'School ID (används i Vercel env)',
+    school_id_placeholder: 't.ex. vasaskolan',
+    school_name_label: 'Skolnamn', school_name_placeholder: 't.ex. Vasaskolan',
+    contact_label: 'Kontaktperson', contact_placeholder: 'Namn',
+    email_label: 'E-post', email_placeholder: 'kontakt@skolan.se',
+    cancel: 'Avbryt', register: 'Registrera',
+    stats: 'Stats', settings_lbl: 'Inställningar', admin_lbl: 'Administration',
+    no_settings: 'Inga inställningar sparade',
+    school_name_key: 'Skolnamn', class_format: 'Klassformat',
+    classes: 'Klasser', years: 'År', eod: 'EOD', retain: 'Behåll',
+    statuses_key: 'Statusar', eod_off: 'Av', never_purge: 'Aldrig rensa',
+    days: 'dagar', remind: 'påminn', clear: 'rensa', eod: 'Avsl.dagen',
+    students_chip: 'elever', last_active: '—',
+    contract: 'Avtal', gdpr: 'GDPR', invoice: 'Faktura', onboarding: 'Onboarding',
+    contact_ph: 'Kontaktperson', email_ph: 'E-post', notes_ph: 'Anteckningar…',
+    seats_label: 'Platser:', saved: '✓ Sparat',
+    status_active: '● Aktiv', status_trial: '◐ Trial',
+    status_suspended: '⏸ Pausad', status_churned: '✕ Avslutad',
+    today: 'idag', yesterday: 'igår', days_ago: 'd sedan', weeks_ago: 'v sedan',
+    no_schools: 'Inga skolor registrerade ännu',
+    api_error: 'Kunde inte nå API', server_error: 'Serverfel: ',
+    save_failed: 'Sparning misslyckades', school_registered: 'Skola registrerad',
+    school_id_required: 'School ID krävs', wrong_token: 'Fel token — försök igen',
+    fmt_letter: 'Bokstav (5A)', fmt_dot: 'Punkt (5.1)',
+    fmt_number: 'Nummer (51)', fmt_none: 'Enbart år',
+    edit_settings: 'Redigera inställningar', configure: 'Konfigurera',
+    settings_saved: 'Inställningar sparade',
+    sect_school: 'Skola', sect_classes: 'Klasser', sect_eod: 'Avsl.dagen', sect_retention: 'Datahållning',
+    eod_enable: 'Aktivera EOD', eod_time_lbl: 'Tid', eod_action_lbl: 'Åtgärd',
+    eod_remind: 'Påminn', eod_clear: 'Rensa',
+    retain_days: 'Behåll i dagar (0 = aldrig rensa)',
+    class_override_lbl: 'Anpassade klasser (kommaseparerade)',
+    class_override_ph: 't.ex. 7A,7B,8A,8B,9A',
+    year_sections_lbl: 'Sektioner per år (0 = dölj år)',
+    save_settings: 'Spara inställningar',
+  },
+  en: {
+    schools: 'schools', active: 'active', trial: 'trial',
+    students_total: 'students total', add_school: 'Add school',
+    refresh: 'Refresh', loading: 'Loading data…',
+    register_school: 'Register new school',
+    school_id_label: 'School ID (used in Vercel env)',
+    school_id_placeholder: 'e.g. vasaskolan',
+    school_name_label: 'School name', school_name_placeholder: 'e.g. Vasaskolan',
+    contact_label: 'Contact person', contact_placeholder: 'Name',
+    email_label: 'Email', email_placeholder: 'contact@school.com',
+    cancel: 'Cancel', register: 'Register',
+    stats: 'Stats', settings_lbl: 'Settings', admin_lbl: 'Administration',
+    no_settings: 'No settings saved yet',
+    school_name_key: 'School name', class_format: 'Class format',
+    classes: 'Classes', years: 'Years', eod: 'EOD', retain: 'Retain',
+    statuses_key: 'Statuses', eod_off: 'Off', never_purge: 'Never purge',
+    days: 'days', remind: 'remind', clear: 'clear',
+    students_chip: 'students', last_active: '—',
+    contract: 'Contract', gdpr: 'GDPR', invoice: 'Invoice', onboarding: 'Onboarding',
+    contact_ph: 'Contact person', email_ph: 'Email', notes_ph: 'Notes…',
+    seats_label: 'Seats:', saved: '✓ Saved',
+    status_active: '● Active', status_trial: '◐ Trial',
+    status_suspended: '⏸ Suspended', status_churned: '✕ Churned',
+    today: 'today', yesterday: 'yesterday', days_ago: 'd ago', weeks_ago: 'w ago',
+    no_schools: 'No schools registered yet',
+    api_error: 'Could not reach API', server_error: 'Server error: ',
+    save_failed: 'Save failed', school_registered: 'School registered',
+    school_id_required: 'School ID is required', wrong_token: 'Wrong token — try again',
+    fmt_letter: 'Letter (5A)', fmt_dot: 'Dot (5.1)',
+    fmt_number: 'Number (51)', fmt_none: 'Year only',
+    edit_settings: 'Edit settings', configure: 'Configure',
+    settings_saved: 'Settings saved',
+    sect_school: 'School', sect_classes: 'Classes', sect_eod: 'EOD', sect_retention: 'Retention',
+    eod_enable: 'Enable EOD', eod_time_lbl: 'Time', eod_action_lbl: 'Action',
+    eod_remind: 'Remind', eod_clear: 'Clear',
+    retain_days: 'Retain for days (0 = never purge)',
+    class_override_lbl: 'Custom classes (comma-separated)',
+    class_override_ph: 'e.g. 7A,7B,8A,8B,9A',
+    year_sections_lbl: 'Sections per year (0 = hide year)',
+    save_settings: 'Save settings',
+  }
+};
+
+let LANG = localStorage.getItem('mk_admin_lang') || 'sv';
+
+function t(key) { return (TR[LANG] || TR.sv)[key] || key; }
+
+function applyTranslations() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-t'));
+  });
+  document.querySelectorAll('[data-t-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-t-placeholder'));
+  });
+  document.getElementById('langLabel').textContent = LANG === 'sv' ? 'EN' : 'SV';
+  document.getElementById('loginBtn').textContent = LANG === 'sv' ? 'Logga in' : 'Log in';
+}
+
+function toggleLang() {
+  LANG = LANG === 'sv' ? 'en' : 'sv';
+  localStorage.setItem('mk_admin_lang', LANG);
+  applyTranslations();
+  // Re-render cards with new language
+  if (window._lastSchools) renderSchools(window._lastSchools);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  applyTranslations();
+});
+
+// ── Auth ──────────────────────────────────────────────────────
+let TOKEN = sessionStorage.getItem('mk_admin_token') || '';
+
+function authenticate() {
+  const val = document.getElementById('tokenInput').value.trim();
+  if (!val) return;
+  TOKEN = val;
+  loadSchools().then(ok => {
+    if (ok) {
+      sessionStorage.setItem('mk_admin_token', TOKEN);
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    } else {
+      document.getElementById('authError').textContent = t('wrong_token');
+      TOKEN = '';
+    }
+  });
+}
+
+if (TOKEN) {
+  loadSchools().then(ok => {
+    if (ok) {
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    } else {
+      sessionStorage.removeItem('mk_admin_token');
+      TOKEN = '';
+    }
+  });
+}
+
+// ── API helpers ───────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN, ...(opts.headers || {}) };
+  const r = await fetch(path, { ...opts, headers });
+  return r;
+}
+
+async function saveMeta(schoolId, patch) {
+  try {
+    await apiFetch('/api/admin/school-meta', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: schoolId, ...patch })
+    });
+    flashSave(schoolId);
+  } catch(e) { toast(t('save_failed')); }
+}
+
+function flashSave(schoolId) {
+  const el = document.querySelector(`[data-save="${schoolId}"]`);
+  if (!el) return;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.opacity = '0', 1500);
+}
+
+function toast(msg) {
+  const el = document.getElementById('adminToast');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.opacity = '0', 2200);
+}
+
+// ── Load schools ──────────────────────────────────────────────
+async function loadSchools() {
+  try {
+    const r = await apiFetch('/api/admin/schools');
+    if (r.status === 401) return false;
+    if (!r.ok) { toast(t('server_error') + r.status); return true; }
+    const schools = await r.json();
+    window._lastSchools = schools;
+    renderSchools(schools);
+    updateTopStats(schools);
+    return true;
+  } catch(e) {
+    document.getElementById('schoolGrid').innerHTML = `<div class="empty-state"><i class="ti ti-wifi-off"></i>${t('api_error')}</div>`;
+    return true;
+  }
+}
+
+// ── Top stats ─────────────────────────────────────────────────
+function updateTopStats(schools) {
+  document.getElementById('cntTotal').textContent    = schools.length;
+  document.getElementById('cntActive').textContent   = schools.filter(s => (s.meta?.status || 'trial') === 'active').length;
+  document.getElementById('cntTrial').textContent    = schools.filter(s => (s.meta?.status || 'trial') === 'trial').length;
+  document.getElementById('cntStudents').textContent = schools.reduce((n, s) => n + (s.activeStudents || 0), 0);
+}
+
+// ── Render ────────────────────────────────────────────────────
+function relativeDate(d) {
+  if (!d) return '—';
+  const diff = Math.floor((Date.now() - new Date(d)) / 86400000);
+  if (diff === 0) return t('today');
+  if (diff === 1) return t('yesterday');
+  if (diff < 7) return diff + t('days_ago');
+  if (diff < 30) return Math.floor(diff / 7) + t('weeks_ago');
+  return new Date(d).toLocaleDateString('sv-SE');
+}
+
+function statusPill(st) {
+  const map = {
+    active:    ['pill-active',    t('status_active')],
+    trial:     ['pill-trial',     t('status_trial')],
+    suspended: ['pill-suspended', t('status_suspended')],
+    churned:   ['pill-churned',   t('status_churned')],
+  };
+  const [cls, label] = map[st] || map.trial;
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+
+function settingsSummary(s) {
+  if (!s || !Object.keys(s).length) return `<div class="setting-row" style="color:var(--text3);font-size:11px">${t('no_settings')}</div>`;
+  const rows = [];
+
+  if (s.schoolName) rows.push([t('school_name_key'), s.schoolName]);
+
+  const format = s.classFormat || 'letter';
+  const fmtLabel = {
+    letter: t('fmt_letter'), dot: t('fmt_dot'),
+    number: t('fmt_number'), none: t('fmt_none')
+  }[format] || format;
+  rows.push([t('class_format'), fmtLabel]);
+
+  if (s.classOverride) {
+    rows.push([t('classes'), s.classOverride.split(',').slice(0, 6).join(' ') + (s.classOverride.split(',').length > 6 ? '…' : '')]);
+  } else if (s.yearSections) {
+    const active = Object.entries(s.yearSections).filter(([, n]) => n > 0).map(([y]) => y).join(' ');
+    if (active) rows.push([t('years'), active]);
+  }
+
+  if (s.eodEnabled && s.eodTime) {
+    const action = s.eodAction === 'remind' ? t('remind') : t('clear');
+    rows.push([t('eod'), s.eodTime + ' → ' + action]);
+  } else {
+    rows.push([t('eod'), t('eod_off')]);
+  }
+
+  const ret = s.dataRetentionDays;
+  if (ret === 0) rows.push([t('retain'), t('never_purge')]);
+  else rows.push([t('retain'), (ret || 90) + ' ' + t('days')]);
+
+  const statuses = s.statuses;
+  if (statuses && statuses.length) {
+    rows.push([t('statuses_key'), statuses.map(x => x.label || x.key).join(' · ')]);
+  }
+
+  return rows.map(([k, v]) =>
+    `<div class="setting-row"><span class="setting-key">${k}</span><span class="setting-val" title="${v}">${v}</span></div>`
+  ).join('');
+}
+
+function checkItem(schoolId, field, label, checked) {
+  return `<label class="check-item${checked ? ' checked' : ''}" onclick="toggleCheck(this,'${schoolId}','${field}')">
+    <input type="checkbox" ${checked ? 'checked' : ''}><div class="check-box"></div>${label}
+  </label>`;
+}
+
+function renderCard(school) {
+  const id   = school.school_id;
+  const meta = school.meta || {};
+  const s    = school.settings || {};
+  const name = meta.display_name || s.schoolName || id;
+  const status = meta.status || 'trial';
+
+  return `<div class="card" id="card-${id}">
+    <div class="card-head">
+      ${statusPill(status)}
+      <div class="school-name" title="${name}">${name}</div>
+      <div class="school-id-chip">${id}</div>
+      <div class="last-seen">${relativeDate(school.lastActive)}</div>
+    </div>
+
+    <div class="card-body">
+      <div class="card-left">
+        <div class="block-label">${t('stats')}</div>
+        <div class="stat-chips">
+          <div class="stat-chip"><i class="ti ti-users"></i>${school.activeStudents || 0} ${t('students_chip')}</div>
+          <div class="stat-chip"><i class="ti ti-calendar"></i>${school.lastActive || '—'}</div>
+        </div>
+
+        <div class="block-label">${t('settings_lbl')}</div>
+        <div class="settings-list">${settingsSummary(s)}</div>
+      </div>
+
+      <div class="card-right">
+        <div class="block-label">${t('admin_lbl')}</div>
+        <div class="check-grid">
+          ${checkItem(id, 'contract_signed', t('contract'),    !!meta.contract_signed)}
+          ${checkItem(id, 'gdpr_signed',     t('gdpr'),        !!meta.gdpr_signed)}
+          ${checkItem(id, 'billing_added',   t('invoice'),     !!meta.billing_added)}
+          ${checkItem(id, 'onboarded',       t('onboarding'),  !!meta.onboarded)}
+        </div>
+        <input class="admin-input" placeholder="${t('contact_ph')}"
+          value="${esc(meta.contact_name)}"
+          onblur="saveMeta('${id}',{contact_name:this.value})">
+        <input class="admin-input" placeholder="${t('email_ph')}"
+          value="${esc(meta.contact_email)}"
+          onblur="saveMeta('${id}',{contact_email:this.value})">
+        <textarea class="admin-notes" placeholder="${t('notes_ph')}"
+          onblur="saveMeta('${id}',{notes:this.value})">${esc(meta.notes)}</textarea>
+      </div>
+    </div>
+
+    <div class="card-foot">
+      <select class="status-select" onchange="changeStatus('${id}',this.value)">
+        <option value="trial"     ${status==='trial'     ?'selected':''}>${t('status_trial')}</option>
+        <option value="active"    ${status==='active'    ?'selected':''}>${t('status_active')}</option>
+        <option value="suspended" ${status==='suspended' ?'selected':''}>${t('status_suspended')}</option>
+        <option value="churned"   ${status==='churned'   ?'selected':''}>${t('status_churned')}</option>
+      </select>
+      <span class="seats-label">${t('seats_label')}</span>
+      <input class="seats-input" type="number" min="0" placeholder="—"
+        value="${meta.license_seats || ''}"
+        onblur="saveMeta('${id}',{license_seats:parseInt(this.value)||0})">
+      <div style="flex:1"></div>
+      <span class="save-indicator" data-save="${id}">${t('saved')}</span>
+      <button class="topbar-btn" style="height:28px;font-size:11px;padding:0 10px;gap:4px"
+        onclick="openSettingsModal('${id}')">
+        <i class="ti ti-adjustments-horizontal"></i> ${t('configure')}
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderSchools(schools) {
+  const grid = document.getElementById('schoolGrid');
+  if (!schools.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="ti ti-school-off"></i>${t('no_schools')}</div>`;
+    return;
+  }
+  grid.innerHTML = schools.map(renderCard).join('');
+}
+
+// ── Inline interactions ───────────────────────────────────────
+function toggleCheck(label, schoolId, field) {
+  const isChecked = label.classList.toggle('checked');
+  saveMeta(schoolId, { [field]: isChecked });
+  const cb = label.querySelector('input[type=checkbox]');
+  if (cb) cb.checked = isChecked;
+}
+
+function changeStatus(schoolId, value) {
+  const card = document.getElementById('card-' + schoolId);
+  if (card) {
+    const head = card.querySelector('.card-head');
+    const oldPill = head.querySelector('.pill');
+    if (oldPill) oldPill.outerHTML = statusPill(value);
+  }
+  saveMeta(schoolId, { status: value });
+}
+
+// ── Add school ────────────────────────────────────────────────
+function openAddSchool()  { document.getElementById('addModal').classList.add('open'); }
+function closeAddSchool() { document.getElementById('addModal').classList.remove('open'); }
+
+async function addSchool() {
+  const schoolId   = document.getElementById('newSchoolId').value.trim();
+  const schoolName = document.getElementById('newSchoolName').value.trim();
+  const contact    = document.getElementById('newContact').value.trim();
+  const email      = document.getElementById('newEmail').value.trim();
+  if (!schoolId) { toast(t('school_id_required')); return; }
+  await saveMeta(schoolId, {
+    display_name:  schoolName || schoolId,
+    contact_name:  contact,
+    contact_email: email,
+    status:        'trial'
+  });
+  closeAddSchool();
+  ['newSchoolId','newSchoolName','newContact','newEmail'].forEach(id => document.getElementById(id).value = '');
+  await loadSchools();
+  toast(t('school_registered'));
+}
+
+// ── Utils ─────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+// ── Settings modal ────────────────────────────────────────────
+const ALL_YEARS = ['F','1','2','3','4','5','6','7','8','9'];
+let _settingsModalId = null;
+
+function openSettingsModal(schoolId) {
+  _settingsModalId = schoolId;
+  const school = (window._lastSchools || []).find(s => s.school_id === schoolId);
+  const s = school?.settings || {};
+  const name = school?.meta?.display_name || s.schoolName || schoolId;
+
+  // Header
+  document.getElementById('settingsModalTitle').textContent = name;
+
+  // Populate labels with current lang
+  populateSettingsLabels();
+
+  // School tab
+  document.getElementById('sf_schoolName').value   = s.schoolName || '';
+  document.getElementById('sf_classFormat').value  = s.classFormat || 'letter';
+
+  // Classes tab
+  document.getElementById('sf_classOverride').value = s.classOverride || '';
+
+  // Year grid
+  const grid = document.getElementById('sf_yearGrid');
+  grid.innerHTML = ALL_YEARS.map(y => `
+    <div class="year-cell">
+      <label>${y}</label>
+      <input type="number" min="0" max="20" data-year="${y}"
+        value="${(s.yearSections || {})[y] || 0}"
+        style="border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);padding:0 4px">
+    </div>`).join('');
+
+  // EOD tab
+  const eodOn = !!s.eodEnabled;
+  const eodLabel = document.getElementById('eodToggleLabel');
+  const eodBox   = document.getElementById('eodCheckBox');
+  if (eodOn) { eodLabel.classList.add('checked'); eodBox.classList.add('checked'); }
+  else        { eodLabel.classList.remove('checked'); eodBox.classList.remove('checked'); }
+  document.getElementById('sf_eodEnabled').checked = eodOn;
+  document.getElementById('eodFields').style.display = eodOn ? 'block' : 'none';
+  document.getElementById('sf_eodTime').value   = s.eodTime   || '15:00';
+  document.getElementById('sf_eodAction').value = s.eodAction || 'remind';
+
+  // Retention tab
+  document.getElementById('sf_retainDays').value = s.dataRetentionDays !== undefined ? s.dataRetentionDays : 90;
+
+  // Reset to first tab
+  switchStab(document.querySelector('.stab[data-sec="school"]'), 'school');
+
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settingsModal').classList.remove('open');
+  _settingsModalId = null;
+}
+
+function switchStab(btn, sec) {
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ssec').forEach(s => s.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const el = document.getElementById('ssec_' + sec);
+  if (el) el.classList.add('active');
+}
+
+function toggleEodEnable(label) {
+  label.classList.toggle('checked');
+  const cb = document.getElementById('sf_eodEnabled');
+  cb.checked = !cb.checked;
+  const box = document.getElementById('eodCheckBox');
+  box.classList.toggle('checked', cb.checked);
+  document.getElementById('eodFields').style.display = cb.checked ? 'block' : 'none';
+}
+
+function populateSettingsLabels() {
+  document.getElementById('lbl_schoolName').textContent   = t('school_name_key');
+  document.getElementById('lbl_classFormat').textContent  = t('class_format');
+  document.getElementById('lbl_classOverride').textContent = t('class_override_lbl');
+  document.getElementById('sf_classOverride').placeholder  = t('class_override_ph');
+  document.getElementById('lbl_yearSections').textContent  = t('year_sections_lbl');
+  document.getElementById('lbl_eodEnable').textContent     = t('eod_enable');
+  document.getElementById('lbl_eodTime').textContent       = t('eod_time_lbl');
+  document.getElementById('lbl_eodAction').textContent     = t('eod_action_lbl');
+  document.getElementById('opt_remind').textContent        = t('eod_remind');
+  document.getElementById('opt_clear').textContent         = t('eod_clear');
+  document.getElementById('lbl_retainDays').textContent    = t('retain_days');
+  document.getElementById('saveSettingsBtn').textContent   = t('save_settings');
+  document.getElementById('stab_school').textContent    = t('sect_school');
+  document.getElementById('stab_classes').textContent   = t('sect_classes');
+  document.getElementById('stab_eod').textContent       = t('sect_eod');
+  document.getElementById('stab_retention').textContent = t('sect_retention');
+
+  // Populate format options
+  const fmtSel = document.getElementById('sf_classFormat');
+  if (fmtSel) {
+    fmtSel.options[0].text = t('fmt_letter');
+    fmtSel.options[1].text = t('fmt_dot');
+    fmtSel.options[2].text = t('fmt_number');
+    fmtSel.options[3].text = t('fmt_none');
+  }
+}
+
+async function saveSchoolSettings() {
+  if (!_settingsModalId) return;
+  const btn = document.getElementById('saveSettingsBtn');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  // Build year sections object from grid
+  const yearSections = {};
+  document.querySelectorAll('#sf_yearGrid input[data-year]').forEach(inp => {
+    yearSections[inp.dataset.year] = parseInt(inp.value) || 0;
+  });
+
+  const settings = {
+    schoolName:        document.getElementById('sf_schoolName').value.trim(),
+    classFormat:       document.getElementById('sf_classFormat').value,
+    classOverride:     document.getElementById('sf_classOverride').value.trim(),
+    yearSections,
+    eodEnabled:        document.getElementById('sf_eodEnabled').checked,
+    eodTime:           document.getElementById('sf_eodTime').value,
+    eodAction:         document.getElementById('sf_eodAction').value,
+    dataRetentionDays: parseInt(document.getElementById('sf_retainDays').value) || 0,
+  };
+
+  try {
+    const r = await apiFetch('/api/admin/school-settings', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: _settingsModalId, settings })
+    });
+    if (!r.ok) throw new Error(await r.text());
+
+    // Update local cache so card re-renders correctly
+    const school = (window._lastSchools || []).find(s => s.school_id === _settingsModalId);
+    if (school) school.settings = settings;
+
+    toast(t('settings_saved'));
+    closeSettingsModal();
+    // Refresh cards
+    if (window._lastSchools) renderSchools(window._lastSchools);
+  } catch(e) {
+    toast(t('save_failed'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('save_settings');
+  }
+}
+</script>
+</body>
+</html>

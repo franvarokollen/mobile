@@ -8,10 +8,10 @@ function setServerIndicator(online, networkUrl) {
   const el = document.getElementById('serverIndicator');
   if (!el) return;
   if (online) {
-    el.textContent = '● Online';
+    el.textContent = t('topbar.online');
     el.style.color = 'var(--green-text)';
   } else {
-    el.textContent = '○ Offline';
+    el.textContent = t('topbar.offline');
     el.style.color = 'var(--text3)';
   }
 }
@@ -51,8 +51,6 @@ async function serverGetAllLogs() {
   } catch(e) { return null; }
 }
 
-let pollCount = 0;
-
 async function pollServer() {
   pollCount++;
   try {
@@ -79,7 +77,10 @@ async function fetchStudentsFromServer() {
     const r = await fetch(`${API}/students`);
     if (!r.ok) return;
     const data = await r.json();
-    if (data && typeof data === 'object') {
+    // Only overwrite local cache if Supabase returned at least one student.
+    // An empty object means the table is empty or the fetch failed silently —
+    // either way, don't wipe a valid local cache.
+    if (data && typeof data === 'object' && Object.keys(data).length > 0) {
       saveStudents(data);
       CLASSES = getClasses(data) || CLASSES;
     }

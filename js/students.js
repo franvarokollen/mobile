@@ -4,66 +4,70 @@ function openEditStudent(id) {
   const students = loadStudents();
   const s = students[id];
   if (!s) return;
-  // Populate class dropdown dynamically from current student data
-  const sel = document.getElementById('editStudentClass');
-  sel.innerHTML = '';
-  getClasses(students).forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
-    sel.appendChild(opt);
-  });
+  const dl = document.getElementById('classOptions');
+  if (dl) {
+    dl.innerHTML = '';
+    CLASSES.forEach(c => { const o = document.createElement('option'); o.value = c; dl.appendChild(o); });
+  }
   document.getElementById('editStudentId').value = id;
   document.getElementById('editStudentName').value = s.name;
-  document.getElementById('editStudentClass').value = s.cls;
+  document.getElementById('editStudentClass').value = s.cls || '';
   document.getElementById('editStudentSsid').value = id;
-  // Find barcode for this student from barcodeMap
   var bm = loadBarcodeMap();
   var existingBarcode = Object.keys(bm).find(function(k) { return bm[k] === id; }) || '';
   document.getElementById('editStudentBarcode').value = existingBarcode;
+  const ex = getExtra(id);
+  document.getElementById('editStudentNote').value = ex.note || '';
   document.getElementById('editStudentModal').style.display = 'flex';
 }
 
 function saveEditStudent() {
   const oldId = document.getElementById('editStudentId').value;
   const newName = document.getElementById('editStudentName').value.trim();
-  const newCls = document.getElementById('editStudentClass').value;
+  const newCls = document.getElementById('editStudentClass').value.trim();
   const newBarcode = document.getElementById('editStudentBarcode').value.trim().toUpperCase();
-  if (!newName) { showToast('Name required'); return; }
+  if (!newName) { showToast(t('toast.name_required')); return; }
   const students = loadStudents();
-  if (!students[oldId]) { showToast('Student not found'); return; }
+  if (!students[oldId]) { showToast(t('toast.student_not_found')); return; }
   const s = students[oldId];
   s.name = newName;
   s.cls = newCls;
   students[oldId] = s;
   saveStudents(students);
-  // Update barcode map - remove old barcode for this student, add new one
   const bm = loadBarcodeMap();
-  // Remove any existing barcode pointing to this student
   Object.keys(bm).forEach(function(k) { if (bm[k] === oldId) delete bm[k]; });
-  // Add new barcode if provided
   if (newBarcode) bm[newBarcode] = oldId;
   saveBarcodeMap(bm);
-  if (SERVER) fetch(SERVER + '/students/' + oldId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) }).catch(() => {});
+  if (SERVER) patchStudentOnServer(oldId, s);
+  const newNote = document.getElementById('editStudentNote').value.trim();
+  setExtra(oldId, { note: newNote || null });
   document.getElementById('editStudentModal').style.display = 'none';
   renderStudentList();
-  showToast('Student updated');
+  renderGrid();
+  showToast(t('toast.student_updated'));
 }
 
 async function addStudent() {
   const id = document.getElementById('newId').value.trim();
   const name = document.getElementById('newName').value.trim();
   const cls = document.getElementById('newClass').value;
-  if (!id || !name) { showToast('Enter ID and name'); return; }
+  if (!id || !name) { showToast(t('toast.id_required')); return; }
   const students = loadStudents();
-  if (students[id]) { showToast('ID already exists'); return; }
-  const s = { id, name, cls, active: true };
+  if (students[id]) { showToast(t('toast.id_exists')); return; }
+  const parts = name.trim().split(/\s+/);
+  const fname = parts[0] || '';
+  const lname = parts.slice(1).join(' ') || '';
+  const s = { id, name, fname, lname, cls, active: true };
   students[id] = s;
   saveStudents(students);
   await saveStudentToServer(s);
   document.getElementById('newId').value = '';
   document.getElementById('newName').value = '';
+  document.getElementById('newClass').value = '';
   document.getElementById('addPanel').classList.remove('open');
-  showToast(name + ' added to ' + cls);
+  const clsSuffix = cls ? t('toast.added_cls', { cls }) : '';
+  showToast(t('toast.added', { name, cls: clsSuffix }));
+  CLASSES = getClasses(loadStudents());
   renderDash();
   renderStudentList();
 }
@@ -71,11 +75,11 @@ async function addStudent() {
 async function removeStudent(id) {
   const students = loadStudents();
   if (!students[id]) return;
-  if (!confirm('Remove ' + students[id].name + '? Their history will be kept.')) return;
+  if (!confirm(t('confirm.remove', { name: students[id].name }))) return;
   students[id].active = false;
   saveStudents(students);
   await patchStudentOnServer(id, { active: false });
-  showToast('Student removed');
+  showToast(t('toast.student_updated'));
   renderDash();
   renderStudentList();
   closeDrillModal();
@@ -87,7 +91,7 @@ async function reactivateStudent(id) {
   students[id].active = true;
   saveStudents(students);
   await patchStudentOnServer(id, { active: true });
-  showToast('Student reactivated');
+  showToast(t('toast.student_updated'));
   renderStudentList();
 }
 
@@ -97,6 +101,5 @@ function hasStudents() {
 }
 
 function addStudentBarcode() {
-  // Placeholder — barcode assignment is handled via openEditStudent / saveEditStudent
-  showToast('Use Edit Student to assign a barcode');
+  showToast(t('toast.barcode_hint'));
 }

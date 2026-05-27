@@ -31,7 +31,7 @@ function handleStudentsXML(input) {
     try {
       var parser = new DOMParser(), xml = parser.parseFromString(e.target.result, 'text/xml');
       var nodes = xml.querySelectorAll('student');
-      if (!nodes.length) { showToast('No students found in XML'); return; }
+      if (!nodes.length) { showToast(t('toast.no_students_xml')); return; }
       var students = {}, nameMap = {};
       nodes.forEach(function(node) {
         var get = function(tag) { var el = node.querySelector(tag); return el ? el.textContent.trim() : ''; };
@@ -45,9 +45,9 @@ function handleStudentsXML(input) {
       var result = await bulkUploadToServer(Object.values(students));
       await fetchStudentsFromServer();
       hideUploadScreen();
-      showToast(result.added + ' added, ' + result.updated + ' updated from XML');
+      showToast(t('toast.imported', { added: result.added, updated: result.updated }));
       renderDash(); renderStudentList();
-    } catch(err) { showToast('Error parsing XML: ' + err.message); }
+    } catch(err) { showToast(t('toast.xml_error', { msg: err.message })); }
     input.value = '';
   };
   reader.readAsText(file, 'ISO-8859-1');
@@ -69,7 +69,7 @@ function handleParentsXML(input) {
         // Show what tags ARE in the file to help debug
         var rootTag = xml.documentElement ? xml.documentElement.tagName : 'unknown';
         var firstChild = xml.documentElement && xml.documentElement.firstElementChild ? xml.documentElement.firstElementChild.tagName : 'none';
-        showToast('No parents found — root: ' + rootTag + ', first child: ' + firstChild);
+        showToast(t('toast.no_parents_xml', { root: rootTag, child: firstChild }));
         return;
       }
       var guardians = {};
@@ -88,10 +88,10 @@ function handleParentsXML(input) {
       if (SERVER) saveGuardiansToServer(guardians);
       var total = Object.values(guardians).reduce(function(n, arr) { return n + arr.length; }, 0);
       var statusEl = document.getElementById('guardianUploadStatus');
-      if (statusEl) statusEl.innerHTML = '<span style="color:var(--green-text)">✓ ' + total + ' guardian records from Parents.xml</span>';
-      showToast(total + ' guardian records loaded');
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--green-text)">' + t('report.guardians_from_xml', { n: total }) + '</span>';
+      showToast(t('toast.guardians_loaded', { n: total }));
       if (document.getElementById('viewReport').classList.contains('active')) renderReport();
-    } catch(err) { showToast('Error parsing XML: ' + err.message); }
+    } catch(err) { showToast(t('toast.xml_error', { msg: err.message })); }
     input.value = '';
   };
   // Try to detect encoding from file - default ISO-8859-1 for SchoolSoft XML
@@ -101,7 +101,7 @@ function handleParentsXML(input) {
 
 function handlePatronPDF(input) {
   var file = input.files[0]; if (!file) return;
-  showToast('Reading PDF…');
+  showToast(t('toast.reading_pdf'));
   var url = URL.createObjectURL(file);
   var script = document.createElement('script');
   script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
@@ -116,10 +116,10 @@ function handlePatronPDF(input) {
         fullText += content.items.map(function(item) { return item.str; }).join('\n') + '\n---PAGE---\n';
       }
       processPDFText(fullText);
-    } catch(err) { showToast('PDF error: ' + err.message); }
+    } catch(err) { showToast(t('toast.pdf_error', { msg: err.message })); }
     URL.revokeObjectURL(url);
   };
-  script.onerror = function() { showToast('Could not load PDF reader'); };
+  script.onerror = function() { showToast(t('toast.pdf_load_error')); };
   document.head.appendChild(script);
   input.value = '';
 }
@@ -144,7 +144,8 @@ function processPDFText(text) {
     } else { pendingName = line; }
   });
   saveBarcodeMap(barcodeMap);
-  showToast(mapped + ' barcodes mapped' + (unmatched.length ? ' (' + unmatched.length + ' unmatched)' : ''));
+  const unmatchedStr = unmatched.length ? t('toast.barcodes_unmatched', { n: unmatched.length }) : '';
+  showToast(t('toast.barcodes_mapped', { n: mapped, unmatched: unmatchedStr }));
 }
 
 function handleCSVUpload(input) {
@@ -173,17 +174,17 @@ function handleCSVUpload(input) {
       students[id] = { id, name, cls, active: true };
     });
     const count = Object.keys(students).length;
-    if (count === 0) { showToast('No valid rows found - check format'); return; }
+    if (count === 0) { showToast(t('toast.no_valid_rows')); return; }
     // send to server (merges on server side), then refresh local cache
     const arr = Object.values(students);
-    showToast('Uploading ' + arr.length + ' students…');
+    showToast(t('toast.uploading', { n: arr.length }));
     const result = await bulkUploadToServer(arr);
     await fetchStudentsFromServer();
     await fetchGuardiansFromServer();
     await fetchExtraFromServer();
     await loadFlagsFromServer();
     hideUploadScreen();
-    showToast(result.added + ' added, ' + result.updated + ' updated');
+    showToast(t('toast.imported', { added: result.added, updated: result.updated }));
     renderDash();
     renderStudentList();
     input.value = '';
@@ -200,18 +201,19 @@ function exportCSV() {
     const parts = s.name.trim().split(' ');
     const fname = parts[0];
     const lname = parts.slice(1).join(' ');
-    const statusLabel = status === 'out' ? 'Not handed in' : 'Late / Reception';
+    const statusConfig = getStatuses().find(x => x.key === status);
+    const statusLabel = statusConfig ? statusConfig.label : status;
     return [currentDate, fname, lname, s.cls, statusLabel];
   }).filter(Boolean);
-  if (!marked.length) { showToast('No marked students to export'); return; }
-  const header = 'Date,First name,Last name,Class,Status';
+  if (!marked.length) { showToast(t('toast.no_export')); return; }
+  const header = [t('export.date'), t('export.first_name'), t('export.last_name'), t('export.class'), t('export.status')].map(h => `"${h}"`).join(',');
   const rows = marked.map(r => r.map(v => `"${v}"`).join(','));
   const csv = [header, ...rows].join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = `phone-checkin-${currentDate}.csv`;
   a.click();
-  showToast(`Exported ${marked.length} student${marked.length > 1 ? 's' : ''}`);
+  showToast(t(marked.length > 1 ? 'toast.exported_pl' : 'toast.exported', { n: marked.length }));
 }
 
 function exportGuardianXLSX(mode) {
@@ -223,7 +225,7 @@ function exportGuardianXLSX(mode) {
 
   function guardianRows(s, status) {
     var arr = guardians[s.id];
-    if (!arr || !arr.length) return [{ student: s.name, cls: s.cls, status: status, guardian: 'No guardian data', mobile: '', workphone: '', homephone: '' }];
+    if (!arr || !arr.length) return [{ student: s.name, cls: s.cls, status: status, guardian: t('export.no_guardian'), mobile: '', workphone: '', homephone: '' }];
     return arr.map(function(g) {
       var gname = ((g.fname || g.fname1 || '') + ' ' + (g.lname || g.lname1 || '')).trim();
       return { student: s.name, cls: s.cls, status: status, guardian: gname || '', mobile: g.mobile || g.mobile1 || '', workphone: g.workphone || g.workphone1 || '', homephone: g.homephone || '' };
@@ -238,8 +240,8 @@ function exportGuardianXLSX(mode) {
     var redIds = Object.entries(dl).filter(function(e) { return e[1] === 'out' && !extra[e[0]]?.starred && !extra[e[0]]?.athome && !extra[e[0]]?.keepphone; }).map(function(e) { return e[0]; });
     var redStudents = redIds.map(function(id) { return resolveStudent(id, students, barcodeMap); }).filter(function(s) { return s && s.active; });
     redStudents.sort(function(a, b) { return a.cls.localeCompare(b.cls) || a.name.localeCompare(b.name, 'sv'); });
-    absentStudents.forEach(function(s) { guardianRows(s, 'Absent').forEach(function(r) { data.push(r); }); });
-    redStudents.forEach(function(s) { guardianRows(s, 'Not Handed In').forEach(function(r) { data.push(r); }); });
+    absentStudents.forEach(function(s) { guardianRows(s, t('export.absent')).forEach(function(r) { data.push(r); }); });
+    redStudents.forEach(function(s) { guardianRows(s, t('export.nhi')).forEach(function(r) { data.push(r); }); });
   }
 
   // Build XLSX using XML SpreadsheetML — no library needed
@@ -247,7 +249,7 @@ function exportGuardianXLSX(mode) {
   xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
   xml += '<Worksheet ss:Name="Guardians"><Table>';
   // Header row
-  var headers = ['Student Name', 'Class', 'Status', 'Guardian Name', 'Mobile', 'Work Phone', 'Home Phone'];
+  var headers = [t('export.student'), t('export.class'), t('export.status'), t('export.guardian'), t('export.mobile'), t('export.workphone'), t('export.homephone')];
   xml += '<Row>';
   headers.forEach(function(h) { xml += '<Cell><Data ss:Type="String">' + h + '</Data></Cell>'; });
   xml += '</Row>';
@@ -269,24 +271,34 @@ function exportGuardianXLSX(mode) {
 }
 
 function downloadTemplate() {
-  const csv = 'ID,Name,Class\nC000000001,Erik Lindqvist,7A\nC000000002,Maja Söderström,7B';
+  const rows = [
+    'ID,First Name,Last Name,Class',
+    'S100001,Anna,Andersson,7A',
+    'S100002,Erik,Lindqvist,7A',
+    'S100003,Maja,Söderström,7B',
+    'S100004,Liam,Berg,7B',
+    'S100005,Sofia,Karlsson,8A',
+    'S100006,Oscar,Nilsson,8A',
+    'S100007,Ella,Johansson,8B',
+    'S100008,Noah,Petersson,9A',
+  ];
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
   a.download = 'students-template.csv';
   a.click();
 }
 
 function clearStudentData() {
-  if (!confirm('Remove all student data from this device? Incident logs will also be cleared.')) return;
+  if (!confirm(t('confirm.clear_data'))) return;
   localStorage.removeItem('phc_students');
   localStorage.removeItem('phc_logs');
-  showToast('Data cleared');
+  showToast(t('toast.data_cleared'));
   showUploadScreen();
 }
 
 function copyUnmatched() {
   const el = document.getElementById('unmatchedList');
-  if (el) navigator.clipboard.writeText(el.textContent).then(() => showToast('Copied!'));
+  if (el) navigator.clipboard.writeText(el.textContent).then(() => showToast(t('toast.copied')));
 }
 
 // ─── UNIVERSAL SMART IMPORT ────────────────────────────────
@@ -339,23 +351,23 @@ function showMappingUI(headers, rows, onConfirm) {
   const fieldOptions = ['(skip)', 'id', 'firstName', 'lastName', 'name', 'class', 'phone', 'email', 'guardian'];
   const mappings = headers.map(h => detectField(h) || '(skip)');
   const preview = rows.slice(0, 3);
-  let html = `<div style="margin-bottom:1rem;font-size:13px;color:var(--text2)">Map your columns — auto-detected where possible. Adjust anything that looks wrong.</div>`;
+  let html = `<div style="margin-bottom:1rem;font-size:13px;color:var(--text2)">${t('map.hint')}</div>`;
   html += `<table style="width:100%;border-collapse:collapse;font-size:13px">`;
-  html += `<tr><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">Column</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">Maps to</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">Preview</th></tr>`;
+  html += `<tr><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">${t('map.col')}</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">${t('map.maps_to')}</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">${t('map.preview')}</th></tr>`;
   headers.forEach((h, i) => {
     const opts = fieldOptions.map(f => `<option value="${f}" ${mappings[i] === f ? 'selected' : ''}>${f}</option>`).join('');
     const previewVals = preview.map(r => r[i] || '').filter(Boolean).slice(0, 2).join(', ');
     html += `<tr><td style="padding:4px 8px;border-bottom:0.5px solid var(--border)">${h}</td><td style="padding:4px 8px;border-bottom:0.5px solid var(--border)"><select id="map_${i}" style="height:28px;font-size:12px">${opts}</select></td><td style="padding:4px 8px;border-bottom:0.5px solid var(--border);color:var(--text3);font-size:12px">${previewVals}</td></tr>`;
   });
   html += `</table>`;
-  html += `<div style="margin-top:1rem;display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="confirmMapping(${JSON.stringify(headers)},${JSON.stringify(rows)})">Import</button></div>`;
+  html += `<div style="margin-top:1rem;display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="confirmMapping(${JSON.stringify(headers)},${JSON.stringify(rows)})">${t('map.import_btn')}</button></div>`;
   document.getElementById('importModalBody').innerHTML = html;
   document.getElementById('importModal').classList.add('open');
   window._pendingImportRows = rows;
   window._pendingImportHeaders = headers;
 }
 
-function confirmMapping(headers, rows) {
+async function confirmMapping(headers, rows) {
   const mapping = {};
   headers.forEach((h, i) => {
     const sel = document.getElementById(`map_${i}`);
@@ -367,17 +379,22 @@ function confirmMapping(headers, rows) {
     const obj = {};
     Object.entries(mapping).forEach(([i, field]) => { obj[field] = row[i] || ''; });
     normalizeStudentObj(obj);
-    if (!obj.firstName && !obj.lastName) return;
-    if (!obj.id) obj.id = (obj.firstName + '_' + obj.lastName + '_' + (obj.cls || '')).trim();
+    if (!obj.fname && !obj.lname && !obj.name) return;
+    if (!obj.id) obj.id = ((obj.fname || '') + '_' + (obj.lname || '') + '_' + (obj.cls || '')).trim();
     obj.id = obj.id.trim();
+    if (!obj.id) return;
     if (students[obj.id]) updated++; else added++;
     students[obj.id] = { ...students[obj.id], ...obj };
   });
   saveStudents(students);
-  document.getElementById('importModal').classList.remove('open');
-  showToast(`Imported: ${added} added, ${updated} updated`);
+  document.getElementById('importModal').style.display = 'none';
+  showToast(t('toast.uploading', { n: added + updated }));
+  await bulkUploadToServer(Object.values(students));
+  await fetchStudentsFromServer();
+  hideUploadScreen();
+  showToast(t('toast.imported', { added, updated }));
   renderDash();
-  renderStudentList && renderStudentList();
+  renderStudentList();
 }
 
 function handleSmartImport(input) {
@@ -390,7 +407,7 @@ function handleSmartImport(input) {
       const text = e.target.result;
       if (text.includes('<Students>') || text.includes('<Student>')) handleStudentsXML(input);
       else if (text.includes('<Parents>') || text.includes('<Parent>') || text.includes('<Guardian>')) handleParentsXML(input);
-      else showToast('Unknown XML format');
+      else showToast(t('toast.unknown_xml'));
     };
     reader.readAsText(file);
   } else if (ext === 'pdf') {
@@ -398,7 +415,7 @@ function handleSmartImport(input) {
   } else if (ext === 'csv' || ext === 'txt' || ext === 'tsv') {
     reader.onload = e => {
       const { headers, rows } = parseCSVUniversal(e.target.result);
-      if (headers.length < 2) { showToast('Could not parse file'); return; }
+      if (headers.length < 2) { showToast(t('toast.parse_error')); return; }
       // Check confidence: if all headers auto-detected with high confidence, skip mapping UI
       const mapped = headers.map(h => detectField(h));
       const allMapped = mapped.every(m => m !== null);
@@ -410,7 +427,7 @@ function handleSmartImport(input) {
     };
     reader.readAsText(file, 'UTF-8');
   } else if (ext === 'xlsx' || ext === 'xls') {
-    showToast('Excel import: save as CSV first, then import');
+    showToast(t('toast.excel_csv'));
   } else if (ext === 'json') {
     reader.onload = e => {
       try {
@@ -420,18 +437,18 @@ function handleSmartImport(input) {
           const rows = data.map(row => headers.map(h => row[h] || ''));
           showMappingUI(headers, rows, confirmMapping);
         } else {
-          showToast('JSON must be an array of objects');
+          showToast(t('toast.json_array'));
         }
-      } catch(err) { showToast('Invalid JSON file'); }
+      } catch(err) { showToast(t('toast.invalid_json')); }
     };
     reader.readAsText(file);
   } else {
-    showToast('Unsupported file type: ' + ext);
+    showToast(t('toast.unsupported_type', { ext }));
   }
   input.value = '';
 }
 
-function confirmMappingAuto(headers, rows, mappings) {
+async function confirmMappingAuto(headers, rows, mappings) {
   const mapping = {};
   headers.forEach((h, i) => { if (mappings[i]) mapping[i] = mappings[i]; });
   const students = loadStudents();
@@ -440,12 +457,18 @@ function confirmMappingAuto(headers, rows, mappings) {
     const obj = {};
     Object.entries(mapping).forEach(([i, field]) => { obj[field] = row[i] || ''; });
     normalizeStudentObj(obj);
-    if (!obj.firstName && !obj.lastName) return;
-    if (!obj.id) obj.id = (obj.firstName + '_' + obj.lastName + '_' + (obj.cls || '')).trim();
+    if (!obj.fname && !obj.lname && !obj.name) return;
+    if (!obj.id) obj.id = ((obj.fname || '') + '_' + (obj.lname || '') + '_' + (obj.cls || '')).trim();
+    if (!obj.id) return;
     if (students[obj.id]) updated++; else added++;
     students[obj.id] = { ...students[obj.id], ...obj };
   });
   saveStudents(students);
-  showToast(`Imported: ${added} added, ${updated} updated`);
+  showToast(t('toast.uploading', { n: added + updated }));
+  await bulkUploadToServer(Object.values(students));
+  await fetchStudentsFromServer();
+  hideUploadScreen();
+  showToast(t('toast.imported', { added, updated }));
   renderDash();
+  renderStudentList();
 }

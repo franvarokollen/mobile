@@ -1,162 +1,117 @@
-// ─── AUTH ──────────────────────────────────────────────────
+// ─── AUTH & UI MODES ────────────────────────────────────────
 
-function resetInactivityTimer() {
-  if (!currentRole || currentRole === 'view') return;
-  if (warningActive) return; // don't reset if warning is showing — only cancelWarning() does that
-  clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(showInactivityWarning, INACTIVITY_MS);
+function logout() { /* no-op until SSO */ }
+function resetInactivityTimer() {}
+function showInactivityWarning() {}
+function cancelWarning() {}
+function updateUIForRole() {
+  const lb = document.getElementById('logoutBtn');
+  if (lb) lb.style.display = 'none';
 }
 
-function showInactivityWarning() {
-  warningActive = true;
-  let secs = WARNING_S;
-  const el = document.getElementById('inactivityWarning');
-  const num = document.getElementById('countdownNum');
-  if (!el || !num) return;
-  el.style.display = 'flex';
-  num.textContent = secs;
-  countdownInterval = setInterval(() => {
-    secs--;
-    num.textContent = secs;
-    if (secs <= 0) { clearInterval(countdownInterval); logout(); }
-  }, 1000);
-}
 
-function cancelWarning() {
-  warningActive = false;
-  clearInterval(countdownInterval);
-  const _iw = document.getElementById('inactivityWarning');
-  if (_iw) _iw.style.display = 'none';
-  resetInactivityTimer();
-}
-
-function logout(msg) {
-  warningActive = false;
-  currentRole = null;
-  clearTimeout(inactivityTimer);
-  clearInterval(countdownInterval);
-  const _iw2 = document.getElementById('inactivityWarning');
-  if (_iw2) _iw2.style.display = 'none';
-  showLoginScreen();
-}
-
-function showLoginScreen() {
-  pinBuf = ''; pinMode = null;
-  document.getElementById('pinScreen').style.display = 'flex';
-  document.getElementById('roleButtons').style.display = 'flex';
-  document.getElementById('pinEntry').style.display = 'none';
-  document.getElementById('pinError').textContent = '';
-  document.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
-}
-
-function enterViewOnly() {
-  currentRole = 'view';
-  document.getElementById('pinScreen').style.display = 'none';
-  const _appv = document.querySelector('.app');
-  if (_appv) _appv.style.display = 'block';
-  updateUIForRole();
-  updateDateDisplay();
+// ── Whole-class exempt ───────────────────────────────────────
+function exemptClass() {
+  const cls = currentClass;
+  if (cls === 'ALL') return;
+  if (!confirm(t('exempt.confirm', { cls }))) return;
+  const students = loadStudents();
+  const dl = getDayLogs(currentDate);
+  const affected = Object.values(students).filter(s => s.active && s.cls === cls && dl[s.id]);
+  if (!affected.length) { showToast(t('exempt.none', { cls })); return; }
+  affected.forEach(s => {
+    setDayLog(currentDate, s.id, 'in');
+    if (SERVER) serverSet(currentDate, s.id, 'in');
+  });
+  showToast(t('exempt.done', { n: affected.length, cls }));
   renderDash();
 }
 
-function startPin(mode) {
-  pinMode = mode;
-  pinBuf = '';
-  document.getElementById('roleButtons').style.display = 'none';
-  document.getElementById('pinEntry').style.display = 'block';
-  document.getElementById('pinModeLabel').textContent = mode === 'staff' ? 'Admin' : 'Guardians';
-  document.getElementById('pinError').textContent = '';
-  document.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
-}
-
-function requireGuardianPin() {
-  if (currentRole === 'guardian') { switchView('report'); return; }
-  // Show pin screen and jump straight to guardian pin entry
-  document.getElementById('pinScreen').style.display = 'flex';
-  document.getElementById('roleButtons').style.display = 'none';
-  document.getElementById('pinEntry').style.display = 'block';
-  document.getElementById('pinModeLabel').textContent = 'Guardians';
-  document.getElementById('pinError').textContent = '';
-  document.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
-  pinBuf = '';
-  pinMode = 'guardian';
-}
-
-function backToRoles() {
-  document.getElementById('roleButtons').style.display = 'flex';
-  document.getElementById('pinEntry').style.display = 'none';
-  document.getElementById('pinError').textContent = '';
-  document.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
-}
-
-function pinPress(v) {
-  const err = document.getElementById('pinError');
-  err.textContent = '';
-  if (v === 'back') { pinBuf = pinBuf.slice(0, -1); }
-  else if (v === 'enter') { checkPin(); }
-  else if (pinBuf.length < 6) { pinBuf += v; }
-  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('filled', i < pinBuf.length));
-  if (pinBuf.length === 6) setTimeout(checkPin, 120);
-}
-
-function checkPin() {
-  const correctPin = pinMode === 'staff' ? PIN_STAFF : PIN_GUARDIAN;
-  if (pinBuf === correctPin) {
-    currentRole = pinMode === 'staff' ? 'staff' : 'guardian';
-    document.getElementById('pinScreen').style.display = 'none';
-    const _app = document.querySelector('.app');
-    if (_app) _app.style.display = 'block';
-    updateUIForRole();
-    updateDateDisplay();
-    resetInactivityTimer();
-    if (currentRole === 'guardian') {
-      switchView('report');
+// ── End-of-day reset ─────────────────────────────────────────
+function checkEndOfDay() {
+  const s = getSettings();
+  if (!s.eodEnabled || !s.eodTime) return;
+  const today = todayKey();
+  if (_eodCheckedToday) return;
+  const now = new Date();
+  const [h, m] = (s.eodTime || '16:00').split(':').map(Number);
+  if (isNaN(h)) return;
+  if (now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m)) {
+    _eodCheckedToday = true;
+    localStorage.setItem('phc_eod_checked', today);
+    if (s.eodAction === 'clear') {
+      _doEodReset(false);
     } else {
-      renderDash();
+      showToast(t('eod.reminder'));
+      if (currentView !== 'report') switchView('report');
     }
-  } else {
-    document.getElementById('pinError').textContent = 'Incorrect PIN';
-    pinBuf = '';
-    document.querySelectorAll('.dot').forEach(d => d.classList.remove('filled'));
   }
 }
 
-function updateUIForRole() {
-  const isView = currentRole === 'view';
-  const isGuardian = currentRole === 'guardian';
-  // hide/show nav items based on role
-  const navStudents = document.getElementById('navStudents');
-  const navTrends = document.getElementById('navTrends');
-  const importBtn = document.getElementById('importBtn');
-  const exportBtn = document.getElementById('exportBtn');
-  const addStudentBtn = document.getElementById('addStudentBtn');
-  if (navStudents) navStudents.style.display = isView ? 'none' : '';
-  if (navTrends) navTrends.style.display = isView ? 'none' : '';
-  const navReport = document.getElementById('navReport');
-  if (navReport) navReport.style.display = (isView) ? 'none' : '';
-  if (importBtn) importBtn.style.display = isView ? 'none' : '';
-  if (exportBtn) exportBtn.style.display = isView ? 'none' : '';
-  if (addStudentBtn) addStudentBtn.style.display = isView ? 'none' : '';
-  // add logout button to topbar
-  let lb = document.getElementById('logoutBtn');
-  if (!lb) {
-    lb = document.createElement('button');
-    lb.id = 'logoutBtn';
-    lb.className = 'nav-btn';
-    lb.innerHTML = '<i class="ti ti-logout"></i>Log out';
-    lb.onclick = () => logout();
-    if (document.getElementById('topbarRow1')) document.getElementById('topbarRow1').appendChild(lb);
+function _doEodReset(manual) {
+  const today = todayKey();
+  const logs = loadLogs();
+  if (logs[today]) {
+    const cleaned = {};
+    Object.entries(logs[today]).forEach(([k, v]) => {
+      if (k.endsWith('_explained') || k.endsWith('_unreported')) cleaned[k] = v;
+    });
+    logs[today] = Object.keys(cleaned).length ? cleaned : undefined;
+    if (!logs[today]) delete logs[today];
+    saveLogs(logs);
   }
-  lb.style.display = isView ? 'none' : '';
-  // add/show a discreet login button for view-only users
-  let vl = document.getElementById('viewLoginBtn');
-  if (!vl) {
-    vl = document.createElement('button');
-    vl.id = 'viewLoginBtn';
-    vl.className = 'nav-btn';
-    vl.innerHTML = '<i class="ti ti-lock"></i>Log in';
-    vl.onclick = () => logout();
-    if (document.getElementById('topbarRow1')) document.getElementById('topbarRow1').appendChild(vl);
+  renderDash();
+  if (manual) showToast(t('eod.done'));
+}
+
+function manualEodReset() {
+  const today = todayKey();
+  if (!confirm(t('eod.manual_confirm', { date: today }))) return;
+  _doEodReset(true);
+}
+
+// ── Purge old logs from localStorage ────────────────────────
+function purgeOldLogs() {
+  const days = parseInt(getSettings().dataRetentionDays);
+  if (!days || days <= 0) return;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const logs = loadLogs();
+  let purged = 0;
+  Object.keys(logs).forEach(date => { if (date < cutoffStr) { delete logs[date]; purged++; } });
+  if (purged) saveLogs(logs);
+}
+
+// ── Create backup ────────────────────────────────────────────
+async function createBackup() {
+  showToast(t('backup.creating'));
+  try {
+    const r = await fetch(`${API}/backups`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'manual-' + new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-') })
+    });
+    if (r.ok) showToast(t('backup.done'));
+    else showToast(t('backup.failed'));
+  } catch(e) { showToast(t('backup.failed')); }
+}
+
+// ── Privacy notice ───────────────────────────────────────────
+function checkPrivacyNotice() {
+  if (!localStorage.getItem('phc_privacy_ok')) {
+    const modal = document.getElementById('privacyModal');
+    if (modal) modal.style.display = 'flex';
   }
-  vl.style.display = isView ? '' : 'none';
+}
+
+function acceptPrivacy() {
+  localStorage.setItem('phc_privacy_ok', '1');
+  const modal = document.getElementById('privacyModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function openPrivacyModal() {
+  const modal = document.getElementById('privacyModal');
+  if (modal) modal.style.display = 'flex';
 }

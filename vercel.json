@@ -3,8 +3,12 @@
   "routes": [
     { "src": "/api/students/bulk", "dest": "/api/students-bulk" },
     { "src": "/api/(.*)",          "dest": "/api/$1" },
+    { "src": "/admin/(.*)",        "dest": "/admin/$1" },
+    { "src": "/admin",             "dest": "/admin/index.html" },
     { "src": "/css/(.*)",          "dest": "/css/$1" },
     { "src": "/js/(.*)",           "dest": "/js/$1" },
+    { "src": "/view",              "dest": "/view/index.html" },
+    { "src": "/view/(.*)",         "dest": "/view/$1" },
     { "src": "/(.*)",              "dest": "/index.html" }
   ]
 }

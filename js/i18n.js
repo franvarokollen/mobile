@@ -1,0 +1,693 @@
+// ─── INTERNATIONALISATION ───────────────────────────────────
+// Swedish (sv) is the default. English (en) is selectable via the toggle.
+
+const TRANSLATIONS = {
+  sv: {
+    // Nav
+    'nav.dashboard':  'Instrumentpanel',
+    'nav.trends':     'Trender',
+    'nav.students':   'Elever',
+    'nav.report':     'Frånvarorapport',
+    'nav.settings':   'Inställningar',
+
+    // Top bar
+    'topbar.import':     'Importera',
+    'topbar.export':     'Exportera',
+    'topbar.online':     '● Online',
+    'topbar.offline':    '○ Offline',
+    'topbar.connecting': '○ Ansluter…',
+    'topbar.show_all':   'Visa alla',
+
+    // Date
+    'date.days':   'Söndag,Måndag,Tisdag,Onsdag,Torsdag,Fredag,Lördag',
+    'date.months': 'Januari,Februari,Mars,April,Maj,Juni,Juli,Augusti,September,Oktober,November,December',
+    'date.today_week': 'Idag · Vecka {wk}',
+
+    // Upload screen
+    'upload.title':       'Mobiltillsyn',
+    'upload.subtitle':    'Ladda upp en elevlista för att komma igång. Behöver du en startpunkt? Ladda ned exempelfilen nedan, fyll i den och ladda upp den.',
+    'upload.btn':         'Ladda upp elev-CSV',
+    'upload.template':    'Ladda ned exempel-CSV-mall',
+    'upload.format_hint': 'Kolumner: ID, Förnamn, Efternamn, Klass — eller en Namn-kolumn. Rubriker identifieras automatiskt.',
+
+    // Dashboard
+    'dash.no_students':     'Inga elever inlagda',
+    'dash.no_students_sub': 'Gå till Elever-fliken för att ladda upp din CSV',
+    'dash.go_to_students':  'Gå till Elever',
+    'dash.search':          'Sök på namn eller ID…',
+    'dash.total':           'Totalt',
+    'dash.handed_in':       'Inlämnad / OK',
+    'dash.filter_showing':  'Visar: {label} enbart',
+    'dash.filter_ok':       'Visar: Inlämnad / OK',
+    'dash.click_cycle':     'Klicka för att byta status',
+
+    // Students view
+    'students.no_students':     'Inga elever inlagda',
+    'students.no_students_sub': 'Ladda upp en CSV för att komma igång',
+    'students.upload_btn':      'Ladda upp elev-CSV',
+    'students.removed':         'Borttagna elever',
+    'students.restore':         'Återställ',
+    'students.incidents':       '{n} incident',
+    'students.incidents_pl':    '{n} incidenter',
+    'students.add_btn':         'Lägg till elev',
+    'students.search':          'Sök på namn eller ID…',
+    'students.data':            'Data',
+    'students.reupload':        'Ladda upp CSV igen',
+    'students.clear':           'Rensa all data',
+    'students.id_label':        'Elev-ID',
+    'students.id_ph':           'ID, streckkod eller nummer',
+    'students.name_label':      'Fullständigt namn',
+    'students.name_ph':         'Elevens namn',
+    'students.class_label':     'Klass',
+    'students.class_ph':        't.ex. 9A eller År 9',
+    'students.add':             'Lägg till',
+    'students.cancel':          'Avbryt',
+
+    // Trends
+    'trends.title':        'Frånvarotrender',
+    'trends.today':        'Idag',
+    'trends.week':         'Denna vecka',
+    'trends.month':        '30 dagar',
+    'trends.all':          'All tid',
+    'trends.not_in':       'Ej inlämnad',
+    'trends.late':         'Sen / Reception',
+    'trends.total':        'Totala incidenter',
+    'trends.unique':       '{n} unika elever',
+    'trends.lbl_today':    'Idag',
+    'trends.lbl_week':     'Denna vecka',
+    'trends.lbl_month':    'Senaste 30 dagarna',
+    'trends.lbl_all':      'All tid',
+    'trends.class_ov':     'Klassöversikt',
+    'trends.daily':        'Dagliga incidenter',
+    'trends.offenders':    'Mest återkommande',
+    'trends.late_sect':    'Sen / Reception',
+    'trends.no_data':      'Inga incidenter registrerade ännu.',
+    'trends.out_badge':    'ut',
+    'trends.late_badge':   'sen',
+
+    // Report
+    'report.title':       'Frånvarorapport',
+    'report.parents':     'Ladda upp Föräldrar.xml',
+    'report.export_nhi':  'Exportera Ej Inlämnade',
+    'report.none':        'Inga olösta incidenter för {date} ✓',
+    'report.absent':      '🟣 Frånvarande — {n} elev',
+    'report.absent_pl':   '🟣 Frånvarande — {n} elever',
+    'report.nhi':         '🔴 Ej Inlämnad — {n} elev',
+    'report.nhi_pl':      '🔴 Ej Inlämnad — {n} elever',
+    'report.guardians_ok': '✓ {n} kontaktuppgifter inlagda',
+    'report.no_guardians': '⚠ Ingen kontaktdata — ladda upp Föräldrar.xml ovan',
+    'report.badge_absent': 'Frånvarande',
+    'report.badge_nhi':    'Ej inlämnad',
+
+    // Settings
+    'settings.title':         'Skolinställningar',
+    'settings.school_name':   'Skolnamn',
+    'settings.school_ph':     't.ex. Vasaskolan',
+    'settings.class_format':  'Klassformat',
+    'settings.year_groups':   'Årskurser & klasser',
+    'settings.year_hint':     'Bocka för en årskurs för att aktivera den, sedan välj antal parallellklasser.',
+    'settings.year':          'År',
+    'settings.sections':      'klasser:',
+    'settings.preview':       'Förhandsgranskning',
+    'settings.preview_empty': 'Aktivera årskurser ovan för förhandsgranskning',
+    'settings.custom':        'Anpassad klasslista',
+    'settings.custom_sub':    '(valfritt — åsidosätter generatorn)',
+    'settings.custom_ph':     't.ex. Björnen, Eken, Granen, 4A, 4B',
+    'settings.custom_hint':   'Kommaseparerade. Använd för namngivna klasser eller blandade format. Om ifylld ignoreras generatorn ovan.',
+    'settings.fmt_none':      '5 (år-format enbart)',
+    'settings.statuses':      'Statusar',
+    'settings.statuses_hint':   'Tryck på en elev för att cykla igenom statusarna i den ordning de visas. Numret = klickordning.',
+    'settings.add_status':      'Lägg till status',
+    'settings.add_confirmed':   '✅ Lägg till "Inlämnad" (bekräftad)',
+    'settings.confirmed_label': 'Inlämnad',
+    'settings.confirmed_badge': 'bekräftad',
+    'settings.flags':         'Åtgärdsknappar',
+    'settings.flags_hint':    'Sekundära knappar på varje elevkort. Byt namn eller ta bort sådana du inte behöver.',
+    'settings.add_flag':      'Lägg till knapp',
+    'settings.save':          'Spara inställningar',
+    'settings.status_ph':     'Statusnamn',
+    'settings.flag_ph':       'Knappnamn',
+    'settings.section_school':     'Skola',
+    'settings.section_classes':    'Klasser',
+    'settings.section_statuses':   'Statusar & Flaggor',
+    'settings.section_automation': 'Automation',
+    'settings.section_data':       'Data & Backup',
+    'settings.school_sub':         'Konfigurera grundläggande skolinformation.',
+    'settings.classes_sub':        'Ange klassformat och läsår.',
+    'settings.statuses_sub':       'Anpassa statusar och flaggor för elevkort.',
+    'settings.automation_sub':     'Automatiska åtgärder och datahantering.',
+    'settings.data_sub':           'Säkerhetskopiera och återställ din data.',
+    'settings.school_hint':        'Visas i sidofältet och i exporterade rapporter.',
+    'nav.section':                 'Navigation',
+
+    // Default status/flag labels (before first settings save)
+    'default.status.out':  'Ej inlämnad',
+    'default.status.late': 'Sen',
+    'default.flag.starred':   'Förälder kontaktad',
+    'default.flag.athome':    'Hemma',
+    'default.flag.keepphone': 'Pass',
+
+    // Edit student modal
+    'edit.title':        'Redigera elev',
+    'edit.full_name':    'Fullständigt namn',
+    'edit.class':        'Klass',
+    'edit.student_id':   'Elev-ID',
+    'edit.id_sub':       '(från import)',
+    'edit.student_id_ph':'Elev-ID',
+    'edit.second_id':    'Sekundärt ID',
+    'edit.second_sub':   '(från PDF-skanning)',
+    'edit.barcode_ph':   't.ex. C1234567',
+    'edit.save':         'Spara',
+    'edit.cancel':       'Avbryt',
+
+    // Import modal
+    'import.title':          '📥 Importera data',
+    'import.students_title': '📋 Elever — CSV, XML eller JSON',
+    'import.students_desc':  'Valfri elevlista. Kolumner identifieras automatiskt — granska mappningen innan import.',
+    'import.guardians_title':'👨‍👩‍👧 Föräldrar — XML eller CSV',
+    'import.guardians_desc': 'Föräldra-/vårdnadshavarkontaktlista. Kopplas till elever via elev-ID.',
+    'import.secondary_title':'📖 Sekundära ID — PDF',
+    'import.secondary_desc': 'Valfria sekundära identifierare (bibliotekskort, streckkoder m.m.), exporterade som PDF.',
+    'import.select_file':    'Välj eller dra en fil',
+    'import.formats':        'Tar emot CSV · XML · JSON · PDF · TSV — format identifieras automatiskt',
+    'import.template':       'Ladda ned exempel-CSV-mall',
+
+    // Inactivity modal
+    'inactivity.title': 'Är du kvar?',
+    'inactivity.msg':   'Du loggas ut om {n} sekunder på grund av inaktivitet.',
+    'inactivity.stay':  'Stanna inloggad',
+
+    // Backup modal
+    'backup.title':       '💾 Återställ säkerhetskopia',
+    'backup.hint':        'Välj en säkerhetskopia att återställa. Detta skriver över all aktuell data.',
+    'backup.daily_badge': 'DAGLIG',
+
+    // Drill modal
+    'drill.not_in':      'Ej inlämnad',
+    'drill.late':        'Sen',
+    'drill.total':       'Totala incidenter',
+    'drill.last7':       'Senaste 7 dagarna',
+    'drill.history':     'Fullständig historik',
+    'drill.no_history':  'Inga incidenter registrerade för denna elev.',
+    'drill.class_label': 'Klass',
+    'drill.badge_out':   'Ej inlämnad',
+    'drill.badge_late':  'Sen / Reception',
+    'drill.late_title':  '⏰ Sen / Reception — {date}',
+    'drill.no_late':     'Inga sena elever registrerade.',
+    'drill.students':    'Elever ({n})',
+    'drill.slot':        'Plats {n}',
+
+    // Export
+    'export.date':              'Datum',
+    'export.first_name':        'Förnamn',
+    'export.last_name':         'Efternamn',
+    'export.student':           'Elevnamn',
+    'export.class':             'Klass',
+    'export.status':            'Status',
+    'export.guardian':          'Föräldranamn',
+    'export.mobile':            'Mobil',
+    'export.workphone':         'Arbetstelefon',
+    'export.homephone':         'Hemtelefon',
+    'export.no_guardian':       'Ingen kontaktdata',
+    'export.absent':            'Frånvarande',
+    'export.nhi':               'Ej inlämnad',
+    'report.no_guardian_inline':'Ingen kontaktdata på fil',
+    'report.guardians_from_xml':'✓ {n} kontaktuppgifter från Föräldrar.xml',
+
+    // Toasts
+    'toast.name_required':         'Namn krävs',
+    'toast.student_not_found':     'Elev hittades inte',
+    'toast.student_updated':       'Elev uppdaterad',
+    'toast.id_required':           'Ange ID och namn',
+    'toast.id_exists':             'ID finns redan',
+    'toast.data_cleared':          'Data rensad',
+    'toast.no_export':             'Inga markerade elever att exportera',
+    'toast.settings_saved':        'Inställningar sparade',
+    'toast.barcode_hint':          'Använd Redigera elev för att tilldela en streckkod',
+    'toast.uploading':             'Laddar upp {n} elever…',
+    'toast.imported':              'Importerade: {added} tillagda, {updated} uppdaterade',
+    'toast.no_valid_rows':         'Inga giltiga rader hittades – kontrollera format',
+    'toast.exported':              'Exporterade {n} elev',
+    'toast.exported_pl':           'Exporterade {n} elever',
+    'toast.xml_error':             'Fel vid parsning av XML: {msg}',
+    'toast.no_students_xml':       'Inga elever hittades i XML',
+    'toast.added':                 '{name} tillagd{cls}',
+    'toast.added_cls':             ' i {cls}',
+    'toast.guardian_column_error': 'Kolumnen studentid saknas i filen',
+    'toast.no_guardians_found':    'Inga kontaktuppgifter hittades',
+    'toast.guardians_loaded':      '{n} kontaktuppgifter inlästa',
+    'toast.no_parents_xml':        'Inga föräldrar hittades — rot: {root}, första barn: {child}',
+    'toast.reading_pdf':           'Läser PDF…',
+    'toast.pdf_error':             'PDF-fel: {msg}',
+    'toast.pdf_load_error':        'Kunde inte läsa in PDF-läsaren',
+    'toast.barcodes_mapped':       '{n} streckkoder mappade{unmatched}',
+    'toast.barcodes_unmatched':    ' ({n} omatchade)',
+    'toast.copied':                'Kopierat!',
+    'toast.unknown_xml':           'Okänt XML-format',
+    'toast.parse_error':           'Kunde inte tolka filen',
+    'toast.excel_csv':             'Excel: spara som CSV först och importera sedan',
+    'toast.json_array':            'JSON måste vara en array med objekt',
+    'toast.invalid_json':          'Ogiltigt JSON-format',
+    'toast.unsupported_type':      'Filtypen stöds inte: {ext}',
+
+    // Confirms
+    'confirm.remove':     'Ta bort {name}? Deras historik behålls.',
+    'confirm.clear_data': 'Ta bort all elevdata från den här enheten? Incidentloggar rensas också.',
+
+    // Loading
+    'loading.students': 'Laddar elever…',
+
+    // Map UI
+    'map.col': 'Kolumn',
+    'map.maps_to': 'Mappas till',
+    'map.preview': 'Förhandsgranskning',
+    'map.hint': 'Mappa dina kolumner — automatisk igenkänning där möjligt. Justera om något ser fel ut.',
+    'map.import_btn': 'Importera',
+
+    // View-only mode
+    'viewonly.toggle':   'Visningsläge',
+    'viewonly.banner':   'Visningsläge — ändringar inaktiverade',
+    'viewonly.exit_btn': 'Avsluta',
+    'viewonly.blocked':  'Visningsläge — tryck på ögat för att aktivera redigering',
+
+    // Dark mode
+    'dark.toggle': 'Mörkt läge',
+
+    // Whole-class exempt
+    'exempt.btn':   'Fria klassen',
+    'exempt.none':  'Inga elever med aktiv status i {cls}',
+    'exempt.done':  '{n} elever i {cls} återställda',
+    'exempt.confirm': 'Markera alla elever i {cls} som inlämnade?',
+
+    // Notes
+    'notes.label':  'Notering',
+    'notes.ph':     't.ex. 🤒 eller Sjuk',
+    'notes.clear':  'Rensa notering',
+
+    // EOD reset
+    'eod.section':       'Daglig återställning',
+    'eod.enable':        'Aktivera automatisk återställning',
+    'eod.time':          'Tid för återställning',
+    'eod.action':        'Åtgärd',
+    'eod.clear':         'Rensa statusar',
+    'eod.remind':        'Påminn om olösta',
+    'eod.manual_btn':    'Återställ idag manuellt',
+    'eod.manual_confirm':'Rensa alla statusar för idag ({date})? Detta kan inte ångras.',
+    'eod.done':          'Daglig återställning klar',
+    'eod.reminder':      'Påminnelse: Kontrollera olösta frånvaron för idag',
+
+    // Data retention
+    'retention.section': 'Datalagring',
+    'retention.label':   'Behåll loggdata i',
+    'retention.30':      '30 dagar',
+    'retention.60':      '60 dagar',
+    'retention.90':      '90 dagar',
+    'retention.180':     '6 månader',
+    'retention.365':     '1 år',
+    'retention.never':   'Rensa aldrig',
+
+    // Backup
+    'backup.section':    'Säkerhetskopiering',
+    'backup.create_btn': 'Skapa säkerhetskopia nu',
+    'backup.restore_lnk':'Återställ från säkerhetskopia',
+    'backup.creating':   'Skapar säkerhetskopia…',
+    'backup.done':       'Säkerhetskopia skapad',
+    'backup.failed':     'Säkerhetskopiering misslyckades',
+
+    // Privacy
+    'privacy.title':     'Integritet och dataskydd',
+    'privacy.body':      'Den här appen lagrar elevdata i en molndatabas (Supabase) och cachas lokalt i din webbläsare för snabb åtkomst. Data används enbart för telefonkontroll och delas aldrig med tredje part. Loggar raderas automatiskt efter konfigurerat antal dagar. Du kan när som helst radera all data under Elever → Rensa all data.',
+    'privacy.accept':    'Jag förstår',
+    'privacy.link':      'Integritetspolicy',
+    'privacy.updated':   'Uppdaterad',
+  },
+
+  en: {
+    // Nav
+    'nav.dashboard':  'Dashboard',
+    'nav.trends':     'Trends',
+    'nav.students':   'Students',
+    'nav.report':     'Absence Report',
+    'nav.settings':   'Settings',
+
+    // Top bar
+    'topbar.import':     'Import',
+    'topbar.export':     'Export',
+    'topbar.online':     '● Online',
+    'topbar.offline':    '○ Offline',
+    'topbar.connecting': '○ Connecting…',
+    'topbar.show_all':   'Show all',
+
+    // Date
+    'date.days':   'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
+    'date.months': 'January,February,March,April,May,June,July,August,September,October,November,December',
+    'date.today_week': 'Today · Week {wk}',
+
+    // Upload screen
+    'upload.title':       'Phone Check-In',
+    'upload.subtitle':    'Upload a student list to get started. Need a starting point? Download the sample file below, fill it in, then upload it.',
+    'upload.btn':         'Upload students CSV',
+    'upload.template':    'Download sample CSV template',
+    'upload.format_hint': 'Columns: ID, First Name, Last Name, Class — or a single Name column. Headers are auto-detected.',
+
+    // Dashboard
+    'dash.no_students':     'No students loaded',
+    'dash.no_students_sub': 'Go to the Students tab to upload your CSV',
+    'dash.go_to_students':  'Go to Students',
+    'dash.search':          'Search by name or ID…',
+    'dash.total':           'Total',
+    'dash.handed_in':       'Handed in / OK',
+    'dash.filter_showing':  'Showing: {label} only',
+    'dash.filter_ok':       'Showing: Handed in / OK',
+    'dash.click_cycle':     'Click to cycle status',
+
+    // Students view
+    'students.no_students':     'No students loaded',
+    'students.no_students_sub': 'Upload a CSV to get started',
+    'students.upload_btn':      'Upload students CSV',
+    'students.removed':         'Removed students',
+    'students.restore':         'Restore',
+    'students.incidents':       '{n} incident',
+    'students.incidents_pl':    '{n} incidents',
+    'students.add_btn':         'Add student',
+    'students.search':          'Search by name or ID…',
+    'students.data':            'Data',
+    'students.reupload':        'Re-upload CSV',
+    'students.clear':           'Clear all data',
+    'students.id_label':        'Student ID',
+    'students.id_ph':           'ID, barcode or number',
+    'students.name_label':      'Full name',
+    'students.name_ph':         'Student name',
+    'students.class_label':     'Class',
+    'students.class_ph':        'e.g. 9A or Year 9',
+    'students.add':             'Add',
+    'students.cancel':          'Cancel',
+
+    // Trends
+    'trends.title':        'Attendance Trends',
+    'trends.today':        'Today',
+    'trends.week':         'This week',
+    'trends.month':        '30 days',
+    'trends.all':          'All time',
+    'trends.not_in':       'Not handed in',
+    'trends.late':         'Late / Reception',
+    'trends.total':        'Total incidents',
+    'trends.unique':       '{n} unique students',
+    'trends.lbl_today':    'Today',
+    'trends.lbl_week':     'This week',
+    'trends.lbl_month':    'Last 30 days',
+    'trends.lbl_all':      'All time',
+    'trends.class_ov':     'Class overview',
+    'trends.daily':        'Daily incidents',
+    'trends.offenders':    'Top repeat offenders',
+    'trends.late_sect':    'Late / Reception',
+    'trends.no_data':      'No incidents recorded yet.',
+    'trends.out_badge':    'out',
+    'trends.late_badge':   'late',
+
+    // Report
+    'report.title':       'Absence Report',
+    'report.parents':     'Upload Parents.xml',
+    'report.export_nhi':  'Export Not Handed In',
+    'report.none':        'No unresolved incidents for {date} ✓',
+    'report.absent':      '🟣 Absent — {n} student',
+    'report.absent_pl':   '🟣 Absent — {n} students',
+    'report.nhi':         '🔴 Not Handed In — {n} student',
+    'report.nhi_pl':      '🔴 Not Handed In — {n} students',
+    'report.guardians_ok': '✓ {n} guardian records loaded',
+    'report.no_guardians': '⚠ No guardian data — upload Parents.xml above',
+    'report.badge_absent': 'Absent',
+    'report.badge_nhi':    'Not handed in',
+
+    // Settings
+    'settings.title':         'School Settings',
+    'settings.school_name':   'School name',
+    'settings.school_ph':     'e.g. Vasaskolan',
+    'settings.class_format':  'Class naming format',
+    'settings.year_groups':   'Year groups & sections',
+    'settings.year_hint':     'Tick a year to enable it, then set how many parallel classes it has.',
+    'settings.year':          'Year',
+    'settings.sections':      'sections:',
+    'settings.preview':       'Preview',
+    'settings.preview_empty': 'Enable year groups above to preview',
+    'settings.custom':        'Custom class list',
+    'settings.custom_sub':    '(optional — overrides generator)',
+    'settings.custom_ph':     'e.g. Björnen, Eken, Granen, 4A, 4B',
+    'settings.custom_hint':   'Comma-separated. Use for named classes or mixed formats. When filled, ignores the generator above.',
+    'settings.fmt_none':      '5 (year only)',
+    'settings.statuses':      'Statuses',
+    'settings.statuses_hint':   'Tap a student to cycle through statuses in the order shown. The number = click position.',
+    'settings.add_status':      'Add status',
+    'settings.add_confirmed':   '✅ Add "Handed in" (confirmed)',
+    'settings.confirmed_label': 'Handed in',
+    'settings.confirmed_badge': 'confirmed',
+    'settings.flags':         'Action buttons',
+    'settings.flags_hint':    'Secondary buttons shown on each student card. Rename them or remove ones you don\'t need.',
+    'settings.add_flag':      'Add button',
+    'settings.save':          'Save settings',
+    'settings.status_ph':     'Status name',
+    'settings.flag_ph':       'Button label',
+    'settings.section_school':     'School',
+    'settings.section_classes':    'Classes',
+    'settings.section_statuses':   'Statuses & Flags',
+    'settings.section_automation': 'Automation',
+    'settings.section_data':       'Data & Backup',
+    'settings.school_sub':         'Configure basic school information.',
+    'settings.classes_sub':        'Set class format and year groups.',
+    'settings.statuses_sub':       'Customise statuses and flags on student cards.',
+    'settings.automation_sub':     'Automatic actions and data management.',
+    'settings.data_sub':           'Back up and restore your data.',
+    'settings.school_hint':        'Shown in the sidebar and in exported reports.',
+    'nav.section':                 'Navigation',
+
+    // Default status/flag labels
+    'default.status.out':  'Not handed in',
+    'default.status.late': 'Late',
+    'default.flag.starred':   'Parent notified',
+    'default.flag.athome':    'At home',
+    'default.flag.keepphone': 'Pass',
+
+    // Edit student modal
+    'edit.title':        'Edit Student',
+    'edit.full_name':    'Full Name',
+    'edit.class':        'Class',
+    'edit.student_id':   'Student ID',
+    'edit.id_sub':       '(from import)',
+    'edit.student_id_ph':'Student ID',
+    'edit.second_id':    'Secondary ID',
+    'edit.second_sub':   '(from PDF scan)',
+    'edit.barcode_ph':   'e.g. C1234567',
+    'edit.save':         'Save',
+    'edit.cancel':       'Cancel',
+
+    // Import modal
+    'import.title':          '📥 Import Data',
+    'import.students_title': '📋 Students — CSV, XML or JSON',
+    'import.students_desc':  'Any student list. Columns are auto-detected — you can review the mapping before importing.',
+    'import.guardians_title':'👨‍👩‍👧 Guardians — XML or CSV',
+    'import.guardians_desc': 'Parent/guardian contact list. Linked to students by student ID.',
+    'import.secondary_title':'📖 Secondary IDs — PDF',
+    'import.secondary_desc': 'Optional secondary identifiers (library cards, barcodes etc.), exported as PDF.',
+    'import.select_file':    'Select or drop a file',
+    'import.formats':        'Accepts CSV · XML · JSON · PDF · TSV — format detected automatically',
+    'import.template':       'Download sample CSV template',
+
+    // Inactivity modal
+    'inactivity.title': 'Still there?',
+    'inactivity.msg':   'You will be logged out in {n} seconds due to inactivity.',
+    'inactivity.stay':  'Stay logged in',
+
+    // Backup modal
+    'backup.title':       '💾 Restore Backup',
+    'backup.hint':        'Select a backup to restore. This will overwrite all current data.',
+    'backup.daily_badge': 'DAILY',
+
+    // Drill modal
+    'drill.not_in':      'Not in',
+    'drill.late':        'Late',
+    'drill.total':       'Total incidents',
+    'drill.last7':       'Last 7 days',
+    'drill.history':     'Full history',
+    'drill.no_history':  'No incidents recorded for this student.',
+    'drill.class_label': 'Class',
+    'drill.badge_out':   'Not handed in',
+    'drill.badge_late':  'Late / Reception',
+    'drill.late_title':  '⏰ Late / Reception — {date}',
+    'drill.no_late':     'No late students recorded.',
+    'drill.students':    'Students ({n})',
+    'drill.slot':        'Slot {n}',
+
+    // Export
+    'export.date':              'Date',
+    'export.first_name':        'First Name',
+    'export.last_name':         'Last Name',
+    'export.student':           'Student Name',
+    'export.class':             'Class',
+    'export.status':            'Status',
+    'export.guardian':          'Guardian Name',
+    'export.mobile':            'Mobile',
+    'export.workphone':         'Work Phone',
+    'export.homephone':         'Home Phone',
+    'export.no_guardian':       'No guardian data',
+    'export.absent':            'Absent',
+    'export.nhi':               'Not Handed In',
+    'report.no_guardian_inline':'No guardian data on file',
+    'report.guardians_from_xml':'✓ {n} guardian records from Parents.xml',
+
+    // Toasts
+    'toast.name_required':         'Name required',
+    'toast.student_not_found':     'Student not found',
+    'toast.student_updated':       'Student updated',
+    'toast.id_required':           'Enter ID and name',
+    'toast.id_exists':             'ID already exists',
+    'toast.data_cleared':          'Data cleared',
+    'toast.no_export':             'No marked students to export',
+    'toast.settings_saved':        'Settings saved',
+    'toast.barcode_hint':          'Use Edit Student to assign a barcode',
+    'toast.uploading':             'Uploading {n} students…',
+    'toast.imported':              'Imported: {added} added, {updated} updated',
+    'toast.no_valid_rows':         'No valid rows found – check format',
+    'toast.exported':              'Exported {n} student',
+    'toast.exported_pl':           'Exported {n} students',
+    'toast.xml_error':             'Error parsing XML: {msg}',
+    'toast.no_students_xml':       'No students found in XML',
+    'toast.added':                 '{name} added{cls}',
+    'toast.added_cls':             ' to {cls}',
+    'toast.guardian_column_error': 'studentid column not found in file',
+    'toast.no_guardians_found':    'No guardian records found',
+    'toast.guardians_loaded':      '{n} guardian records loaded',
+    'toast.no_parents_xml':        'No parents found — root: {root}, first child: {child}',
+    'toast.reading_pdf':           'Reading PDF…',
+    'toast.pdf_error':             'PDF error: {msg}',
+    'toast.pdf_load_error':        'Could not load PDF reader',
+    'toast.barcodes_mapped':       '{n} barcodes mapped{unmatched}',
+    'toast.barcodes_unmatched':    ' ({n} unmatched)',
+    'toast.copied':                'Copied!',
+    'toast.unknown_xml':           'Unknown XML format',
+    'toast.parse_error':           'Could not parse file',
+    'toast.excel_csv':             'Excel import: save as CSV first, then import',
+    'toast.json_array':            'JSON must be an array of objects',
+    'toast.invalid_json':          'Invalid JSON file',
+    'toast.unsupported_type':      'Unsupported file type: {ext}',
+
+    // Confirms
+    'confirm.remove':     'Remove {name}? Their history will be kept.',
+    'confirm.clear_data': 'Remove all student data from this device? Incident logs will also be cleared.',
+
+    // Loading
+    'loading.students': 'Loading students…',
+
+    // Map UI
+    'map.col': 'Column',
+    'map.maps_to': 'Maps to',
+    'map.preview': 'Preview',
+    'map.hint': 'Map your columns — auto-detected where possible. Adjust anything that looks wrong.',
+    'map.import_btn': 'Import',
+
+    // View-only mode
+    'viewonly.toggle':   'View-only mode',
+    'viewonly.banner':   'View-only mode — changes are disabled',
+    'viewonly.exit_btn': 'Exit',
+    'viewonly.blocked':  'View-only mode — click the eye icon to enable editing',
+
+    // Dark mode
+    'dark.toggle': 'Dark mode',
+
+    // Whole-class exempt
+    'exempt.btn':     'Exempt class',
+    'exempt.none':    'No students with an active status in {cls}',
+    'exempt.done':    '{n} students in {cls} cleared',
+    'exempt.confirm': 'Mark all students in {cls} as handed in?',
+
+    // Notes
+    'notes.label': 'Note',
+    'notes.ph':    'e.g. 🤒 or Sick',
+    'notes.clear': 'Clear note',
+
+    // EOD reset
+    'eod.section':        'End-of-day reset',
+    'eod.enable':         'Enable automatic reset',
+    'eod.time':           'Reset time',
+    'eod.action':         'Action',
+    'eod.clear':          'Clear all statuses',
+    'eod.remind':         'Remind about unresolved',
+    'eod.manual_btn':     'Reset today manually',
+    'eod.manual_confirm': 'Clear all statuses for today ({date})? This cannot be undone.',
+    'eod.done':           'End-of-day reset complete',
+    'eod.reminder':       'Reminder: check unresolved absences for today',
+
+    // Data retention
+    'retention.section': 'Data retention',
+    'retention.label':   'Keep log data for',
+    'retention.30':      '30 days',
+    'retention.60':      '60 days',
+    'retention.90':      '90 days',
+    'retention.180':     '6 months',
+    'retention.365':     '1 year',
+    'retention.never':   'Never purge',
+
+    // Backup
+    'backup.section':    'Backup',
+    'backup.create_btn': 'Create backup now',
+    'backup.restore_lnk':'Restore from backup',
+    'backup.creating':   'Creating backup…',
+    'backup.done':       'Backup created',
+    'backup.failed':     'Backup failed',
+
+    // Privacy
+    'privacy.title':   'Privacy & Data Protection',
+    'privacy.body':    'This app stores student data in a cloud database (Supabase) and caches it locally in your browser for fast access. Data is used solely for phone check-in and is never shared with third parties. Logs are automatically deleted after the configured retention period. You can delete all data at any time under Students → Clear all data.',
+    'privacy.accept':  'I understand',
+    'privacy.link':    'Privacy policy',
+    'privacy.updated': 'Updated',
+  }
+};
+
+let currentLang = 'sv'; // Always default to Swedish; EN button switches temporarily for the session
+
+function t(key, vars) {
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.sv;
+  const str = dict[key] !== undefined ? dict[key] : (TRANSLATIONS.sv[key] !== undefined ? TRANSLATIONS.sv[key] : key);
+  if (!vars) return str;
+  return str.replace(/\{(\w+)\}/g, (_, k) => vars[k] !== undefined ? vars[k] : '{' + k + '}');
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  // Not persisted — language resets to Swedish (default) on each page load
+  applyI18n();
+  if (typeof renderDash === 'function') renderDash();
+  if (typeof currentView !== 'undefined') {
+    if (currentView === 'trends' && typeof renderTrends === 'function') renderTrends();
+    if (currentView === 'students' && typeof renderStudentList === 'function') renderStudentList();
+    if (currentView === 'report' && typeof renderReport === 'function') renderReport();
+    if (currentView === 'settings' && typeof renderSettings === 'function') renderSettings();
+  }
+  if (typeof updateDateDisplay === 'function') updateDateDisplay();
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.placeholder = t(key);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (key) el.title = t(key);
+  });
+  // Sync sidebar lang buttons
+  const sv = document.getElementById('langBtnSV');
+  const en = document.getElementById('langBtnEN');
+  if (sv) sv.classList.toggle('active', currentLang === 'sv');
+  if (en) en.classList.toggle('active', currentLang === 'en');
+  // Legacy fallback for any remaining langToggleBtn
+  const btn = document.getElementById('langToggleBtn');
+  if (btn) {
+    btn.textContent = currentLang === 'sv' ? 'EN' : 'SV';
+    btn.title = currentLang === 'sv' ? 'Switch to English' : 'Byt till svenska';
+  }
+}

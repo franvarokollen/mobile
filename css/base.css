@@ -23,6 +23,28 @@
   --green-text: #3b6d11;
 }
 
+/* DARK MODE */
+[data-theme="dark"] {
+  --bg: #111318;
+  --surface: #1c1f27;
+  --surface2: #252932;
+  --surface3: #2e3240;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.15);
+  --text: #eef0f6;
+  --text2: #9098b0;
+  --text3: #565e7a;
+  --red-bg: #2b1616;
+  --red-border: #e24b4a;
+  --red-text: #f87171;
+  --amber-bg: #2b1e0e;
+  --amber-border: #ef9f27;
+  --amber-text: #fbbf24;
+  --green-bg: #122010;
+  --green-border: #97c459;
+  --green-text: #86efac;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
 .app { max-width: 100%; margin: 0 auto; padding: 1.25rem 1.5rem; }
@@ -32,7 +54,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 .topbar-title i { color: var(--text2); font-size: 22px; }
 .nav-btn { height: 34px; padding: 0 13px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--surface); color: var(--text2); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
 .nav-btn:hover { background: var(--surface2); color: var(--text); }
-.nav-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+.nav-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
 /* BUTTONS */
 .btn { height: 36px; padding: 0 14px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--surface); color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
@@ -49,9 +71,14 @@ input::placeholder { color: var(--text3); }
 .view { display: none; }
 .view.active { display: block; }
 
+/* LOADING SPINNER */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 0.8s linear infinite; }
+
 /* TOAST */
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: #f5f4f0; padding: 10px 20px; border-radius: var(--radius); font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; }
+[data-theme="dark"] .toast { background: #eef0f6; color: #111318; }
 
 /* STATUS TEXT COLORS */
 .red { color: var(--red-text); }
@@ -70,4 +97,191 @@ input::placeholder { color: var(--text3); }
 @media (max-width: 400px) {
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .student-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+}
+
+/* ── SIDEBAR LAYOUT ──────────────────────────────────── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #162032;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.sidebar-logo {
+  padding: 20px 16px 14px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-logo-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-logo-brand i { font-size: 18px; color: #e84040; }
+
+.sidebar-school {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  padding-left: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  padding: 16px 16px 6px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-left: 2.5px solid transparent;
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s;
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.85);
+}
+
+.sidebar-nav-item.active {
+  background: rgba(255,255,255,0.09);
+  color: #fff;
+  font-weight: 600;
+  border-left-color: #e84040;
+}
+
+.sidebar-nav-item i {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-spacer { flex: 1; }
+
+.sidebar-bottom {
+  padding: 10px 8px 16px;
+  border-top: 0.5px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-bottom-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.45);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s;
+}
+
+.sidebar-bottom-btn:hover {
+  color: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.06);
+}
+
+.sidebar-bottom-btn i { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+.sidebar-lang {
+  display: flex;
+  gap: 5px;
+  padding: 6px 10px;
+}
+
+.sidebar-lang-btn {
+  flex: 1;
+  height: 28px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(255,255,255,0.12);
+  background: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+
+.sidebar-lang-btn:hover { color: rgba(255,255,255,0.75); }
+
+.sidebar-lang-btn.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border-color: rgba(255,255,255,0.28);
+}
+
+.sidebar-server {
+  padding: 4px 10px 0;
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+/* Update .app to remove max-width constraint in sidebar layout */
+.layout .app {
+  padding: 1.25rem 1.5rem;
+}
+
+/* Responsive — collapse sidebar on small screens */
+@media (max-width: 700px) {
+  .sidebar { display: none; }
+  .main-content { width: 100%; }
 }

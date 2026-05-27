@@ -18,7 +18,7 @@ function switchView(v) {
   const exportNHI = document.getElementById('exportNHIBtn');
   if (exportNHI) exportNHI.style.display = v === 'report' ? '' : 'none';
   updateDateDisplay();
-  ['dash', 'trends', 'students', 'report'].forEach(n => {
+  ['dash', 'trends', 'students', 'report', 'settings'].forEach(n => {
     const vEl = document.getElementById('view' + n.charAt(0).toUpperCase() + n.slice(1));
     const nEl = document.getElementById('nav' + n.charAt(0).toUpperCase() + n.slice(1));
     if (vEl) vEl.classList.toggle('active', n === v);
@@ -27,23 +27,14 @@ function switchView(v) {
   if (v === 'trends') renderTrends();
   if (v === 'students') renderStudentList();
   if (v === 'report') renderReport();
+  if (v === 'settings') renderSettings();
 }
 
 function toggleAdd() {
   document.getElementById('addPanel').classList.toggle('open');
 }
 
-// ── Keyboard: PIN entry ─────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (document.getElementById('pinScreen').style.display === 'none') return;
-  const entry = document.getElementById('pinEntry');
-  if (entry.style.display === 'none') return;
-  if (e.key >= '0' && e.key <= '9') pinPress(e.key);
-  else if (e.key === 'Backspace') pinPress('back');
-  else if (e.key === 'Enter') pinPress('enter');
-});
-
-// ── Activity listeners — resets inactivity timer ───────────
+//── Activity listeners — resets inactivity timer ───────────
 ['mousemove', 'keydown', 'click', 'touchstart'].forEach(ev => {
   document.addEventListener(ev, () => {
     if (!currentRole || currentRole === 'view') return;
@@ -115,25 +106,25 @@ document.addEventListener('keydown', e => {
   if (changed) saveExtra(extra);
 })();
 
-// ── Bootstrap CLASSES array from loaded students ────────────
+
+// ── Bootstrap CLASSES from students (settings will override after load) ─
 (function() {
-  var students = loadStudents();
-  var derived = getClasses(students);
-  // If we have students but no class data derived, fall back to static seed
-  if (derived.length > 0) {
-    CLASSES = derived;
-  } else {
-    // Default fallback list for when no students are loaded yet
-    CLASSES = ['6A', '6B', '7A', '7B', '7C', '8A', '8B', '8C', '9A', '9B', '9C', '9D'];
-  }
+  var derived = getClasses(loadStudents());
+  if (derived.length > 0) CLASSES = derived;
 })();
 
 // ── Startup ─────────────────────────────────────────────────
 if (SERVER) {
+  // Show loading state in grid before fetches begin
+  const _grid = document.getElementById('studentGrid');
+  if (_grid) _grid.innerHTML = `
+    <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;gap:12px;color:var(--text3)">
+      <i class="ti ti-loader-2 spin" style="font-size:28px"></i>
+      <div style="font-size:13px">${t('loading.students')}</div>
+    </div>`;
   (async () => {
-    // fetch students and today status from server
+    await fetchSettingsFromServer();
     await fetchStudentsFromServer();
-    await fetchGuardiansFromServer();
     await fetchExtraFromServer();
     await loadFlagsFromServer();
     const remote = await serverGet(currentDate);
@@ -146,10 +137,25 @@ if (SERVER) {
     CLASSES = getClasses(loadStudents()) || CLASSES;
     startPolling();
     updateDateDisplay();
-    // Only show upload screen if no students after server sync AND user is logged in
-    if (!hasStudents() && currentRole && currentRole !== 'view') showUploadScreen();
+    renderDash();
+    if (!hasStudents()) showUploadScreen();
   })();
 } else {
   setServerIndicator(false);
   if (!hasStudents()) showUploadScreen();
 }
+
+// ── Feature startup ──────────────────────────────────────────
+checkPrivacyNotice();
+purgeOldLogs();
+checkEndOfDay();
+setInterval(checkEndOfDay, 60000);
+
+
+// Sync sidebar lang buttons on initial load
+(function() {
+  const sv = document.getElementById('langBtnSV');
+  const en = document.getElementById('langBtnEN');
+  if (sv) sv.classList.toggle('active', currentLang === 'sv');
+  if (en) en.classList.toggle('active', currentLang === 'en');
+})();

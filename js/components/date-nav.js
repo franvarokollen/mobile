@@ -2,12 +2,12 @@
 
 function updateDateDisplay() {
   var d = new Date(currentDate + 'T12:00:00');
-  var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var days   = t('date.days').split(',');
+  var months = t('date.months').split(',');
   var dayEl = document.getElementById('dateDay');
   var numEl = document.getElementById('dateDayNum');
   var monEl = document.getElementById('dateMonth');
-  var wkEl = document.getElementById('dateWeekLabel');
+  var wkEl  = document.getElementById('dateWeekLabel');
   if (dayEl) dayEl.textContent = days[d.getDay()];
   if (numEl) numEl.textContent = d.getDate();
   if (monEl) monEl.textContent = months[d.getMonth()];
@@ -15,7 +15,7 @@ function updateDateDisplay() {
   var tmp = new Date(d); tmp.setHours(0, 0, 0, 0); tmp.setDate(tmp.getDate() + 3 - (tmp.getDay() + 6) % 7);
   var w1 = new Date(tmp.getFullYear(), 0, 4);
   var wk = 1 + Math.round(((tmp.getTime() - w1.getTime()) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
-  if (wkEl) wkEl.textContent = 'Today · Week ' + wk;
+  if (wkEl) wkEl.textContent = t('date.today_week', { wk: wk });
   // Tab active states
   ['navDash', 'navTrends', 'navStudents', 'navReport'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.classList.remove('tab-active');
@@ -55,7 +55,7 @@ function weekToMonday(year, week) {
 
 function goBack() {
   if (viewHistory.length < 2) return;
-  viewHistory.pop(); // remove current
-  const prev = viewHistory.pop(); // get previous
+  viewHistory.pop();
+  const prev = viewHistory.pop();
   switchView(prev);
 }

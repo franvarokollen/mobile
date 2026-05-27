@@ -1,4 +1,4 @@
-# Mobilekollen Online
+# Mobilkollen Online
 
 School phone check-in system — online version.  
 Built for Vercel + Supabase. Same UI as the local version, cloud-backed.
