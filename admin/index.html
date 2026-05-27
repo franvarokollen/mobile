@@ -421,10 +421,16 @@ body {
       <button class="stab" data-sec="classes" onclick="switchStab(this,'classes')">📋 <span id="stab_classes"></span></button>
       <button class="stab" data-sec="eod" onclick="switchStab(this,'eod')">⏰ <span id="stab_eod"></span></button>
       <button class="stab" data-sec="retention" onclick="switchStab(this,'retention')">🗄️ <span id="stab_retention"></span></button>
+      <button class="stab" data-sec="users" onclick="switchStab(this,'users')">👥 <span id="stab_users"></span></button>
+      <button class="stab" data-sec="invites" onclick="switchStab(this,'invites')">🔗 <span id="stab_invites"></span></button>
     </div>
 
     <!-- School section -->
     <div class="ssec active" id="ssec_school">
+      <div class="modal-field">
+        <label id="lbl_schoolDisplayName"></label>
+        <input id="sf_schoolDisplayName" style="width:100%" placeholder="e.g. Vasaskolan">
+      </div>
       <div class="modal-field">
         <label id="lbl_schoolName"></label>
         <input id="sf_schoolName" style="width:100%">
@@ -437,6 +443,10 @@ body {
           <option value="number"></option>
           <option value="none"></option>
         </select>
+      </div>
+      <div style="margin-top:20px;padding-top:16px;border-top:0.5px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Danger zone</div>
+        <button onclick="deleteSchool()" style="padding:6px 14px;border:0.5px solid var(--red);border-radius:var(--radius);background:none;color:var(--red);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif" id="deleteSchoolBtn"></button>
       </div>
     </div>
 
@@ -485,6 +495,54 @@ body {
         <label id="lbl_retainDays"></label>
         <input type="number" id="sf_retainDays" min="0" style="width:100%">
         <div style="font-size:11px;color:var(--text3);margin-top:4px">0 = never automatically purge old records</div>
+      </div>
+    </div>
+
+    <!-- Users section -->
+    <div class="ssec" id="ssec_users">
+      <!-- Add user row -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;align-items:flex-end">
+        <div style="flex:1">
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px" id="lbl_add_email"></label>
+          <input id="sf_addUserEmail" type="email" placeholder="teacher@school.com" style="width:100%;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px" id="lbl_add_role"></label>
+          <select id="sf_addUserRole" style="height:34px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+            <option value="teacher" id="opt_teacher"></option>
+            <option value="admin" id="opt_admin_role"></option>
+          </select>
+        </div>
+        <button onclick="addAdminUser()" style="height:34px;padding:0 12px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap" id="addUserBtn"></button>
+      </div>
+      <!-- User list -->
+      <div id="adminUsersList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto">
+        <div style="font-size:13px;color:var(--text3)" id="usersLoadingMsg"></div>
+      </div>
+    </div>
+
+    <!-- Invites section -->
+    <div class="ssec" id="ssec_invites">
+      <!-- Create invite row -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:2;min-width:150px">
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px" id="lbl_inv_email"></label>
+          <input id="sf_invEmail" type="email" placeholder="optional@school.com" style="width:100%;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+        <div style="min-width:110px">
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px" id="lbl_inv_expiry"></label>
+          <select id="sf_invExpiry" style="height:34px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;width:100%">
+            <option value="1" id="opt_1day"></option>
+            <option value="7" selected id="opt_7days"></option>
+            <option value="30" id="opt_30days"></option>
+            <option value="365" id="opt_365days"></option>
+          </select>
+        </div>
+        <button onclick="createAdminInvite()" style="height:34px;padding:0 12px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap" id="createInviteBtn"></button>
+      </div>
+      <!-- Invite list -->
+      <div id="adminInvitesList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto">
+        <div style="font-size:13px;color:var(--text3)" id="invitesLoadingMsg"></div>
       </div>
     </div>
 
@@ -539,6 +597,20 @@ const TR = {
     class_override_ph: 't.ex. 7A,7B,8A,8B,9A',
     year_sections_lbl: 'Sektioner per år (0 = dölj år)',
     save_settings: 'Spara inställningar',
+    sect_users: 'Användare', sect_invites: 'Inbjudningar',
+    lbl_add_email: 'E-post', lbl_add_role: 'Roll', add_user_btn: 'Lägg till',
+    role_teacher: 'Lärare', role_admin: 'Administratör',
+    user_added: 'Användare tillagd', user_not_found: 'Ingen användare med den e-posten — skapar inbjudan…',
+    user_removed: 'Användare borttagen', role_updated: 'Roll uppdaterad',
+    lbl_inv_email: 'E-post (valfritt)', lbl_inv_expiry: 'Giltighetstid',
+    inv_1day: '1 dag', inv_7days: '7 dagar', inv_30days: '30 dagar', inv_365days: '1 år',
+    create_invite_btn: 'Skapa kod', invite_created: 'Kod skapad & kopierad!',
+    invite_deleted: 'Kod raderad', no_users: 'Inga användare ännu',
+    no_invites: 'Inga inbjudningskoder', loading_users: 'Laddar användare…',
+    loading_invites: 'Laddar koder…', used_badge: 'Använd',
+    lbl_school_display_name: 'Skolnamn (internt)', delete_school_btn: 'Ta bort skola',
+    delete_school_confirm: 'Ta bort {name} och ALL data permanent? Detta kan INTE ångras.',
+    school_deleted: 'Skola raderad',
   },
   en: {
     schools: 'schools', active: 'active', trial: 'trial',
@@ -581,6 +653,20 @@ const TR = {
     class_override_ph: 'e.g. 7A,7B,8A,8B,9A',
     year_sections_lbl: 'Sections per year (0 = hide year)',
     save_settings: 'Save settings',
+    sect_users: 'Users', sect_invites: 'Invites',
+    lbl_add_email: 'Email', lbl_add_role: 'Role', add_user_btn: 'Add user',
+    role_teacher: 'Teacher', role_admin: 'Administrator',
+    user_added: 'User added', user_not_found: 'No user with that email — creating invite…',
+    user_removed: 'User removed', role_updated: 'Role updated',
+    lbl_inv_email: 'Email (optional)', lbl_inv_expiry: 'Valid for',
+    inv_1day: '1 day', inv_7days: '7 days', inv_30days: '30 days', inv_365days: '1 year',
+    create_invite_btn: 'Generate code', invite_created: 'Code created & copied!',
+    invite_deleted: 'Code deleted', no_users: 'No users yet',
+    no_invites: 'No invite codes yet', loading_users: 'Loading users…',
+    loading_invites: 'Loading codes…', used_badge: 'Used',
+    lbl_school_display_name: 'School name', delete_school_btn: 'Delete school',
+    delete_school_confirm: 'Permanently delete {name} and ALL its data? This CANNOT be undone.',
+    school_deleted: 'School deleted',
   }
 };
 
@@ -907,6 +993,9 @@ function openSettingsModal(schoolId) {
   const s = school?.settings || {};
   const name = school?.meta?.display_name || s.schoolName || schoolId;
 
+  // Store current school for users/invites/delete
+  window._currentAdminSchool = school;
+
   // Header
   document.getElementById('settingsModalTitle').textContent = name;
 
@@ -914,6 +1003,7 @@ function openSettingsModal(schoolId) {
   populateSettingsLabels();
 
   // School tab
+  document.getElementById('sf_schoolDisplayName').value = school?.name || '';
   document.getElementById('sf_schoolName').value   = s.schoolName || '';
   document.getElementById('sf_classFormat').value  = s.classFormat || 'letter';
 
@@ -961,6 +1051,8 @@ function switchStab(btn, sec) {
   if (btn) btn.classList.add('active');
   const el = document.getElementById('ssec_' + sec);
   if (el) el.classList.add('active');
+  if (sec === 'users')   loadAdminUsers();
+  if (sec === 'invites') loadAdminInvites();
 }
 
 function toggleEodEnable(label) {
@@ -989,6 +1081,24 @@ function populateSettingsLabels() {
   document.getElementById('stab_classes').textContent   = t('sect_classes');
   document.getElementById('stab_eod').textContent       = t('sect_eod');
   document.getElementById('stab_retention').textContent = t('sect_retention');
+  document.getElementById('stab_users').textContent     = t('sect_users');
+  document.getElementById('stab_invites').textContent   = t('sect_invites');
+  document.getElementById('lbl_schoolDisplayName').textContent = t('lbl_school_display_name');
+  document.getElementById('deleteSchoolBtn').textContent = t('delete_school_btn');
+  document.getElementById('lbl_add_email').textContent  = t('lbl_add_email');
+  document.getElementById('lbl_add_role').textContent   = t('lbl_add_role');
+  document.getElementById('addUserBtn').textContent     = t('add_user_btn');
+  document.getElementById('opt_teacher').textContent   = t('role_teacher');
+  document.getElementById('opt_admin_role').textContent = t('role_admin');
+  document.getElementById('lbl_inv_email').textContent  = t('lbl_inv_email');
+  document.getElementById('lbl_inv_expiry').textContent = t('lbl_inv_expiry');
+  document.getElementById('opt_1day').textContent   = t('inv_1day');
+  document.getElementById('opt_7days').textContent  = t('inv_7days');
+  document.getElementById('opt_30days').textContent = t('inv_30days');
+  document.getElementById('opt_365days').textContent = t('inv_365days');
+  document.getElementById('createInviteBtn').textContent = t('create_invite_btn');
+  document.getElementById('usersLoadingMsg').textContent = t('loading_users');
+  document.getElementById('invitesLoadingMsg').textContent = t('loading_invites');
 
   // Populate format options
   const fmtSel = document.getElementById('sf_classFormat');
@@ -1024,6 +1134,19 @@ async function saveSchoolSettings() {
   };
 
   try {
+    // Patch school display name if changed
+    const displayName = document.getElementById('sf_schoolDisplayName')?.value.trim();
+    if (displayName && displayName !== (window._currentAdminSchool?.name || '')) {
+      await apiFetch('/api/admin/schools', {
+        method: 'PATCH',
+        body: JSON.stringify({ school_id: _settingsModalId, name: displayName })
+      });
+      // update local cache
+      if (window._currentAdminSchool) window._currentAdminSchool.name = displayName;
+      const school = (window._lastSchools || []).find(s => s.school_id === _settingsModalId);
+      if (school) school.name = displayName;
+    }
+
     const r = await apiFetch('/api/admin/school-settings', {
       method: 'POST',
       body: JSON.stringify({ school_id: _settingsModalId, settings })
@@ -1044,6 +1167,182 @@ async function saveSchoolSettings() {
     btn.disabled = false;
     btn.textContent = t('save_settings');
   }
+}
+// ── Admin user management ─────────────────────────────────────
+async function loadAdminUsers() {
+  const container = document.getElementById('adminUsersList');
+  if (!container || !_settingsModalId) return;
+  container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('loading_users')}</div>`;
+
+  try {
+    const r = await apiFetch(`/api/admin/school-users?school_id=${_settingsModalId}`);
+    if (!r.ok) { container.innerHTML = `<div style="font-size:12px;color:var(--text3)">Error ${r.status}</div>`; return; }
+    const users = await r.json();
+
+    if (!users.length) {
+      container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('no_users')}</div>`;
+      return;
+    }
+
+    container.innerHTML = users.map(u => {
+      const initial = (u.name || u.email || '?')[0].toUpperCase();
+      const joined = u.joinedAt ? new Date(u.joinedAt).toLocaleDateString('sv-SE') : '—';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius)">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;color:var(--text2)">${initial}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.name || u.email)}</div>
+          <div style="font-size:11px;color:var(--text3)">${esc(u.email)} · ${joined}</div>
+        </div>
+        <select onchange="changeAdminRole('${u.userId}', this.value)" style="height:28px;padding:0 6px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:11px;font-family:'DM Sans',sans-serif;flex-shrink:0">
+          <option value="teacher" ${u.role==='teacher'?'selected':''}>${t('role_teacher')}</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>${t('role_admin')}</option>
+        </select>
+        <button onclick="removeAdminUser('${u.userId}','${esc(u.email)}')" style="background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;flex-shrink:0;font-family:'DM Sans',sans-serif">✕</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = `<div style="font-size:12px;color:var(--text3)">Error loading users</div>`;
+  }
+}
+
+async function addAdminUser() {
+  const email = document.getElementById('sf_addUserEmail')?.value.trim();
+  const role  = document.getElementById('sf_addUserRole')?.value || 'teacher';
+  const btn   = document.getElementById('addUserBtn');
+  if (!email) return;
+  if (btn) btn.disabled = true;
+
+  try {
+    const r = await apiFetch('/api/admin/school-users', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: _settingsModalId, email, role })
+    });
+    const d = await r.json().catch(()=>({}));
+
+    if (r.ok) {
+      document.getElementById('sf_addUserEmail').value = '';
+      toast(t('user_added'));
+      loadAdminUsers();
+    } else if (d.not_found) {
+      // User not in system yet — create an invite for their email
+      toast(t('user_not_found'));
+      document.getElementById('sf_invEmail').value = email;
+      switchStab(document.querySelector('.stab[data-sec="invites"]'), 'invites');
+    } else {
+      toast(d.error || t('save_failed'));
+    }
+  } catch(e) { toast(t('save_failed')); }
+  if (btn) btn.disabled = false;
+}
+
+async function changeAdminRole(userId, newRole) {
+  try {
+    const r = await apiFetch('/api/admin/school-users', {
+      method: 'PATCH',
+      body: JSON.stringify({ school_id: _settingsModalId, user_id: userId, role: newRole })
+    });
+    if (r.ok) toast(t('role_updated'));
+    else toast(t('save_failed'));
+  } catch(e) { toast(t('save_failed')); }
+}
+
+async function removeAdminUser(userId, email) {
+  if (!confirm(`Remove ${email} from this school?`)) return;
+  try {
+    const r = await apiFetch(`/api/admin/school-users?school_id=${_settingsModalId}&user_id=${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    if (r.ok) { toast(t('user_removed')); loadAdminUsers(); }
+    else toast(t('save_failed'));
+  } catch(e) { toast(t('save_failed')); }
+}
+
+// ── Admin invite management ───────────────────────────────────
+async function loadAdminInvites() {
+  const container = document.getElementById('adminInvitesList');
+  if (!container || !_settingsModalId) return;
+  container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('loading_invites')}</div>`;
+
+  try {
+    const r = await apiFetch(`/api/admin/school-invites?school_id=${_settingsModalId}`);
+    if (!r.ok) { container.innerHTML = ''; return; }
+    const invites = await r.json();
+
+    if (!invites.length) {
+      container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('no_invites')}</div>`;
+      return;
+    }
+
+    container.innerHTML = invites.map(inv => {
+      const used = !!inv.used_by;
+      const expires = inv.expires_at ? new Date(inv.expires_at).toLocaleDateString('sv-SE') : '—';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);${used?'opacity:0.5':''}">
+        <code style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;letter-spacing:0.1em;flex:1;color:var(--text)">${esc(inv.code)}</code>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap">
+          ${used ? `<span style="background:var(--surface3);padding:1px 6px;border-radius:8px">${t('used_badge')}</span>` : `Exp ${expires}`}
+          ${inv.email ? ` · ${esc(inv.email)}` : ''}
+        </div>
+        ${!used ? `<button onclick="copyAdminInvite('${esc(inv.code)}')" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px">Copy</button>` : ''}
+        <button onclick="deleteAdminInvite('${inv.id}')" style="flex-shrink:0;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 4px;line-height:1">✕</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '';
+  }
+}
+
+async function createAdminInvite() {
+  const email      = (document.getElementById('sf_invEmail')?.value || '').trim() || null;
+  const expiryDays = parseInt(document.getElementById('sf_invExpiry')?.value || '7');
+  const btn        = document.getElementById('createInviteBtn');
+  if (btn) btn.disabled = true;
+
+  try {
+    const r = await apiFetch('/api/admin/school-invites', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: _settingsModalId, email, expiryDays })
+    });
+    const d = await r.json().catch(()=>({}));
+    if (r.ok) {
+      if (document.getElementById('sf_invEmail')) document.getElementById('sf_invEmail').value = '';
+      navigator.clipboard.writeText(d.code).catch(()=>{});
+      toast(`${t('invite_created')} ${d.code}`);
+      loadAdminInvites();
+    } else {
+      toast(d.error || t('save_failed'));
+    }
+  } catch(e) { toast(t('save_failed')); }
+  if (btn) btn.disabled = false;
+}
+
+async function deleteAdminInvite(id) {
+  try {
+    const r = await apiFetch(`/api/admin/school-invites?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (r.ok) { toast(t('invite_deleted')); loadAdminInvites(); }
+  } catch(e) {}
+}
+
+function copyAdminInvite(code) {
+  navigator.clipboard.writeText(code).then(() => toast(`Copied: ${code}`)).catch(()=>{});
+}
+
+// ── Delete school ─────────────────────────────────────────────
+async function deleteSchool() {
+  const school = window._currentAdminSchool;
+  const name   = school?.name || _settingsModalId;
+  const msg    = t('delete_school_confirm').replace('{name}', name);
+  if (!confirm(msg)) return;
+  if (!confirm(`Second confirmation: permanently delete "${name}"?`)) return;
+
+  try {
+    const r = await apiFetch(`/api/admin/schools?school_id=${encodeURIComponent(_settingsModalId)}`, { method: 'DELETE' });
+    if (r.ok) {
+      toast(t('school_deleted'));
+      closeSettingsModal();
+      await loadSchools();
+    } else {
+      const d = await r.json().catch(()=>({}));
+      toast(d.error || t('save_failed'));
+    }
+  } catch(e) { toast(t('save_failed')); }
 }
 </script>
 </body>

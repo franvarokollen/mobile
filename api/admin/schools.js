@@ -15,7 +15,7 @@ function checkToken(req, res) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!checkToken(req, res)) return;
@@ -97,6 +97,42 @@ module.exports = async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ ok: true, school_id: data.id, slug: data.slug });
+  }
+
+  // ── PATCH: update school name and/or slug ────────────────────
+  if (req.method === 'PATCH') {
+    const { school_id, name, slug } = req.body || {};
+    if (!school_id) return res.status(400).json({ error: 'school_id required' });
+
+    const patch = {};
+    if (name !== undefined) patch.name = name;
+    if (slug !== undefined) patch.slug = slug;
+    if (!Object.keys(patch).length) return res.status(400).json({ error: 'nothing to update' });
+
+    const { error } = await supabase
+      .from('schools')
+      .update(patch)
+      .eq('id', school_id);
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true });
+  }
+
+  // ── DELETE: delete school and all related data ───────────────
+  if (req.method === 'DELETE') {
+    const { school_id } = req.query;
+    if (!school_id) return res.status(400).json({ error: 'school_id required' });
+
+    const tables = ['students', 'status_logs', 'extra', 'guardians', 'flags', 'settings', 'backups', 'school_users', 'invites'];
+    for (const table of tables) {
+      const { error } = await supabase.from(table).delete().eq('school_id', school_id);
+      if (error) return res.status(500).json({ error: `Failed deleting from ${table}: ${error.message}` });
+    }
+
+    const { error } = await supabase.from('schools').delete().eq('id', school_id);
+    if (error) return res.status(500).json({ error: error.message });
+
+    return res.json({ ok: true });
   }
 
   res.status(405).end();
