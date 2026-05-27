@@ -1,4 +1,4 @@
-const { supabase, SCHOOL_ID } = require('./_lib/supabase');
+const { supabase } = require('./_lib/supabase');
 const { requireAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
@@ -6,14 +6,14 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  const user = await requireAuth(req, res); if (!user) return;
+  const auth = await requireAuth(req, res); if (!auth) return;
 
   // GET /api/students → { id: studentObj, ... }
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('students')
       .select('id, data')
-      .eq('school_id', SCHOOL_ID);
+      .eq('school_id', auth.schoolId);
     if (error) return res.status(500).json({ error: error.message });
     const result = {};
     (data || []).forEach(row => { result[row.id] = row.data; });
@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     if (!s || !s.id) return res.status(400).json({ error: 'id required' });
     const { error } = await supabase
       .from('students')
-      .upsert({ school_id: SCHOOL_ID, id: s.id, data: s }, { onConflict: 'school_id,id' });
+      .upsert({ school_id: auth.schoolId, id: s.id, data: s }, { onConflict: 'school_id,id' });
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ ok: true });
   }
@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
     const { error } = await supabase
       .from('students')
       .delete()
-      .eq('school_id', SCHOOL_ID)
+      .eq('school_id', auth.schoolId)
       .eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ ok: true });

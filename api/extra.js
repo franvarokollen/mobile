@@ -1,4 +1,4 @@
-const { supabase, SCHOOL_ID } = require('./_lib/supabase');
+const { supabase } = require('./_lib/supabase');
 const { requireAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
@@ -6,14 +6,14 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  const user = await requireAuth(req, res); if (!user) return;
+  const auth = await requireAuth(req, res); if (!auth) return;
 
   // GET /api/extra → { studentId: { starred, athome, keepphone, slot, ... }, ... }
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('extra')
       .select('student_id, data')
-      .eq('school_id', SCHOOL_ID);
+      .eq('school_id', auth.schoolId);
     if (error) return res.status(500).json({ error: error.message });
     const result = {};
     (data || []).forEach(r => {
@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
     const { data: existing } = await supabase
       .from('extra')
       .select('data')
-      .eq('school_id', SCHOOL_ID)
+      .eq('school_id', auth.schoolId)
       .eq('student_id', id)
       .single();
 
@@ -43,9 +43,9 @@ module.exports = async (req, res) => {
     Object.keys(merged).forEach(k => { if (!merged[k]) delete merged[k]; });
 
     if (Object.keys(merged).length === 0) {
-      await supabase.from('extra').delete().eq('school_id', SCHOOL_ID).eq('student_id', id);
+      await supabase.from('extra').delete().eq('school_id', auth.schoolId).eq('student_id', id);
     } else {
-      await supabase.from('extra').upsert({ school_id: SCHOOL_ID, student_id: id, data: merged }, { onConflict: 'school_id,student_id' });
+      await supabase.from('extra').upsert({ school_id: auth.schoolId, student_id: id, data: merged }, { onConflict: 'school_id,student_id' });
     }
     return res.json({ ok: true });
   }

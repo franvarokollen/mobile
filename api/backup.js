@@ -1,4 +1,4 @@
-const { supabase, SCHOOL_ID } = require('./_lib/supabase');
+const { supabase } = require('./_lib/supabase');
 const { requireAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  const user = await requireAuth(req, res); if (!user) return;
+  const auth = await requireAuth(req, res); if (!auth) return;
 
   const path = req.query.action;
 
@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
     const { data, error } = await supabase
       .from('backups')
       .select('name, created_at')
-      .eq('school_id', SCHOOL_ID)
+      .eq('school_id', auth.schoolId)
       .order('created_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
     return res.json((data || []).map(r => ({ name: r.name, time: r.created_at })));
@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     const { data, error } = await supabase
       .from('backups')
       .select('data')
-      .eq('school_id', SCHOOL_ID)
+      .eq('school_id', auth.schoolId)
       .eq('name', name)
       .single();
     if (error || !data) return res.status(404).json({ error: 'not found' });
@@ -36,11 +36,11 @@ module.exports = async (req, res) => {
 
   // POST /api/backup?action=manual → create manual backup
   if (req.method === 'POST' && path === 'manual') {
-    const snapshot = await buildSnapshot();
+    const snapshot = await buildSnapshot(auth.schoolId);
     const name = `manual-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`;
     const { error } = await supabase
       .from('backups')
-      .upsert({ school_id: SCHOOL_ID, name, data: snapshot }, { onConflict: 'school_id,name' });
+      .upsert({ school_id: auth.schoolId, name, data: snapshot }, { onConflict: 'school_id,name' });
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ ok: true, name });
   }
@@ -51,20 +51,20 @@ module.exports = async (req, res) => {
     const { data, error } = await supabase
       .from('backups')
       .select('data')
-      .eq('school_id', SCHOOL_ID)
+      .eq('school_id', auth.schoolId)
       .eq('name', name)
       .single();
     if (error || !data) return res.status(404).json({ error: 'not found' });
     const snap = data.data;
-    await restoreSnapshot(snap);
+    await restoreSnapshot(snap, auth.schoolId);
     return res.json({ ok: true, restoredFrom: name });
   }
 
   res.status(405).end();
 };
 
-async function buildSnapshot() {
-  const { supabase: sb, SCHOOL_ID: sid } = require('./_lib/supabase');
+async function buildSnapshot(sid) {
+  const { supabase: sb } = require('./_lib/supabase');
   const [students, statusLogs, guardians, extra, flags] = await Promise.all([
     sb.from('students').select('id,data').eq('school_id', sid),
     sb.from('status_logs').select('date,student_id,status').eq('school_id', sid),
@@ -88,8 +88,8 @@ async function buildSnapshot() {
   return { students: studentsObj, status: statusObj, guardians: guardiansObj, extra: extraObj, flags: flagsObj, backedUpAt: new Date().toISOString() };
 }
 
-async function restoreSnapshot(snap) {
-  const { supabase: sb, SCHOOL_ID: sid } = require('./_lib/supabase');
+async function restoreSnapshot(snap, sid) {
+  const { supabase: sb } = require('./_lib/supabase');
   if (snap.students) {
     await sb.from('students').delete().eq('school_id', sid);
     const rows = Object.entries(snap.students).map(([id, data]) => ({ school_id: sid, id, data }));

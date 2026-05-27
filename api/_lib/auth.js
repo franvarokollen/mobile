@@ -1,15 +1,8 @@
 // ─── API AUTH HELPER ────────────────────────────────────────
-// Verifies a Supabase JWT from the Authorization header.
-// Optional env vars:
-//   ALLOWED_DOMAIN  – e.g. "skola.se"  → only that email domain allowed
-//   ALLOWED_EMAILS  – e.g. "a@b.se,c@d.se" → exact whitelist
+// Verifies a Supabase JWT and resolves the user's school_id
+// from the school_users table. Returns { user, schoolId } or null.
 
 const { supabase } = require('./supabase');
-
-const ALLOWED_DOMAIN = process.env.ALLOWED_DOMAIN || null;
-const ALLOWED_EMAILS = process.env.ALLOWED_EMAILS
-  ? process.env.ALLOWED_EMAILS.split(',').map(e => e.trim().toLowerCase())
-  : null;
 
 async function requireAuth(req, res) {
   const header = req.headers.authorization || '';
@@ -21,28 +14,24 @@ async function requireAuth(req, res) {
   }
 
   const { data: { user }, error } = await supabase.auth.getUser(token);
-
   if (error || !user) {
     res.status(401).json({ error: 'invalid_token' });
     return null;
   }
 
-  const email = (user.email || '').toLowerCase();
+  // Look up which school this user belongs to
+  const { data: membership, error: memberErr } = await supabase
+    .from('school_users')
+    .select('school_id, role')
+    .eq('user_id', user.id)
+    .single();
 
-  if (ALLOWED_EMAILS && !ALLOWED_EMAILS.includes(email)) {
-    res.status(403).json({ error: 'email_not_authorized' });
+  if (memberErr || !membership) {
+    res.status(403).json({ error: 'no_school_assigned' });
     return null;
   }
 
-  if (ALLOWED_DOMAIN) {
-    const domain = email.split('@')[1] || '';
-    if (domain !== ALLOWED_DOMAIN) {
-      res.status(403).json({ error: 'domain_not_authorized' });
-      return null;
-    }
-  }
-
-  return user;
+  return { user, schoolId: membership.school_id, role: membership.role };
 }
 
 module.exports = { requireAuth };

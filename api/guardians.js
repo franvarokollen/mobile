@@ -1,4 +1,4 @@
-const { supabase, SCHOOL_ID } = require('./_lib/supabase');
+const { supabase } = require('./_lib/supabase');
 const { requireAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
@@ -6,14 +6,14 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  const user = await requireAuth(req, res); if (!user) return;
+  const auth = await requireAuth(req, res); if (!auth) return;
 
   // GET /api/guardians → { studentId: guardianObj, ... }
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('guardians')
       .select('student_id, data')
-      .eq('school_id', SCHOOL_ID);
+      .eq('school_id', auth.schoolId);
     if (error) return res.status(500).json({ error: error.message });
     const result = {};
     (data || []).forEach(r => { result[r.student_id] = r.data; });
@@ -25,10 +25,10 @@ module.exports = async (req, res) => {
     const incoming = req.body;
     if (!incoming || typeof incoming !== 'object') return res.status(400).json({ error: 'object required' });
     const rows = Object.entries(incoming).map(([student_id, data]) => ({
-      school_id: SCHOOL_ID, student_id, data,
+      school_id: auth.schoolId, student_id, data,
     }));
     // Delete existing then insert (full replace semantics matching original)
-    await supabase.from('guardians').delete().eq('school_id', SCHOOL_ID);
+    await supabase.from('guardians').delete().eq('school_id', auth.schoolId);
     if (rows.length) {
       const { error } = await supabase.from('guardians').insert(rows);
       if (error) return res.status(500).json({ error: error.message });
