@@ -71,8 +71,10 @@ async function pollServer() {
       const logs = loadLogs();
       logs[currentDate] = remote;
       saveLogs(logs);
-      if (currentView === 'dash') renderDash();
     }
+    // Sync extra data (star, house, pass icons) — respects dirty lock
+    await fetchExtraFromServer();
+    if (currentView === 'dash') renderDash();
     setServerIndicator(true);
   } catch(e) {
     setServerIndicator(false);
