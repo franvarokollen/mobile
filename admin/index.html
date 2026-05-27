@@ -432,10 +432,6 @@ body {
         <input id="sf_schoolDisplayName" style="width:100%" placeholder="e.g. Vasaskolan">
       </div>
       <div class="modal-field">
-        <label id="lbl_schoolName"></label>
-        <input id="sf_schoolName" style="width:100%">
-      </div>
-      <div class="modal-field">
         <label id="lbl_classFormat"></label>
         <select id="sf_classFormat" style="width:100%;height:34px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
           <option value="letter"></option>
@@ -608,7 +604,7 @@ const TR = {
     invite_deleted: 'Kod raderad', no_users: 'Inga användare ännu',
     no_invites: 'Inga inbjudningskoder', loading_users: 'Laddar användare…',
     loading_invites: 'Laddar koder…', used_badge: 'Använd',
-    lbl_school_display_name: 'Skolnamn (internt)', delete_school_btn: 'Ta bort skola',
+    lbl_school_display_name: 'Skolnamn', delete_school_btn: 'Ta bort skola',
     delete_school_confirm: 'Ta bort {name} och ALL data permanent? Detta kan INTE ångras.',
     school_deleted: 'Skola raderad',
   },
@@ -991,7 +987,7 @@ function openSettingsModal(schoolId) {
   _settingsModalId = schoolId;
   const school = (window._lastSchools || []).find(s => s.school_id === schoolId);
   const s = school?.settings || {};
-  const name = school?.meta?.display_name || s.schoolName || schoolId;
+  const name = school?.name || school?.meta?.display_name || s.schoolName || schoolId;
 
   // Store current school for users/invites/delete
   window._currentAdminSchool = school;
@@ -1004,7 +1000,6 @@ function openSettingsModal(schoolId) {
 
   // School tab
   document.getElementById('sf_schoolDisplayName').value = school?.name || '';
-  document.getElementById('sf_schoolName').value   = s.schoolName || '';
   document.getElementById('sf_classFormat').value  = s.classFormat || 'letter';
 
   // Classes tab
@@ -1068,7 +1063,6 @@ function _setText(id, val) { const el = document.getElementById(id); if (el) el.
 function _setPlaceholder(id, val) { const el = document.getElementById(id); if (el) el.placeholder = val; }
 
 function populateSettingsLabels() {
-  _setText('lbl_schoolName',        t('school_name_key'));
   _setText('lbl_classFormat',       t('class_format'));
   _setText('lbl_classOverride',     t('class_override_lbl'));
   _setPlaceholder('sf_classOverride', t('class_override_ph'));
@@ -1125,8 +1119,9 @@ async function saveSchoolSettings() {
     yearSections[inp.dataset.year] = parseInt(inp.value) || 0;
   });
 
+  const displayNameVal = document.getElementById('sf_schoolDisplayName')?.value.trim() || '';
   const settings = {
-    schoolName:        document.getElementById('sf_schoolName').value.trim(),
+    schoolName:        displayNameVal,
     classFormat:       document.getElementById('sf_classFormat').value,
     classOverride:     document.getElementById('sf_classOverride').value.trim(),
     yearSections,
