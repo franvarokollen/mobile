@@ -13,8 +13,8 @@ Lurkollen — a Swedish school phone check-in system. Teachers mark students as 
 vercel dev                        # runs API routes + static files on localhost:3000
 
 # Deploy
-vercel --prod                     # deploy local files directly (bypasses GitHub if webhook is broken)
 git push                          # normal deploy via GitHub → Vercel auto-deploy
+vercel --prod                     # FALLBACK: force deploy if GitHub webhook is stuck (see below)
 
 # Check what's committed
 git log --oneline -5
@@ -22,6 +22,16 @@ git ls-files js/auth.js           # verify a file is tracked
 ```
 
 No build step. No bundler. No test suite. Static HTML/CSS/JS served directly.
+
+## ⚠️ Deployment checklist — do this after every push
+
+After `git push`, if the user reports changes aren't visible:
+
+1. **Check Vercel** — go to vercel.com → lurkollen → Deployments. Confirm the latest deployment shows the correct commit hash (matches `git log --oneline -1`). If it shows an old commit, the GitHub webhook is stuck.
+2. **Force redeploy** — run `vercel --prod` in the project directory. This bypasses GitHub and deploys local files directly. Takes ~30 seconds.
+3. **HTML is now no-cache** — `vercel.json` sets `max-age=0, must-revalidate` on all HTML files, so browser/CDN cache is no longer a problem for HTML. JS/CSS still have 30s cache so a hard refresh (Ctrl+Shift+R) handles those.
+
+The GitHub webhook getting stuck has happened multiple times. **Always run `vercel --prod` when in doubt** — it's safe and fast.
 
 ## Architecture
 
@@ -69,10 +79,13 @@ app.js        → startup IIFE (auth gate → parallel data fetch → renderDash
 - **Extra data** has a 10-second dirty lock (`_extraDirtyUntil`) to prevent server overwrites after local changes
 
 ### Supabase tables
-All tables have a `school_id` column. Every query filters by `SCHOOL_ID` (from env var — **this is the next major change**, see below).
+All tables have a `school_id` column (UUID FK to `schools.id`). Every query filters by the authenticated user's school, resolved at request time via `school_users`.
 
 | Table | Key columns |
 |---|---|
+| `schools` | `id (uuid), name, slug, meta (jsonb), created_at` |
+| `school_users` | `school_id, user_id, role ('admin'\|'teacher'), created_at` |
+| `invites` | `school_id, code, email, expires_at, used_by, used_at` |
 | `students` | `school_id, id, data (jsonb)` |
 | `status_logs` | `school_id, date, student_id, status` |
 | `extra` | `school_id, student_id, data (jsonb)` |
@@ -87,19 +100,14 @@ All tables have a `school_id` column. Every query filters by `SCHOOL_ID` (from e
 | `SUPABASE_URL` | All API files | Public, also served via `/api/config` |
 | `SUPABASE_SERVICE_ROLE_KEY` | `api/_lib/supabase.js` | Never in browser |
 | `SUPABASE_ANON_KEY` | `/api/config` endpoint | Safe to expose — used by browser Supabase client |
-| `SCHOOL_ID` | `api/_lib/supabase.js` | Single-tenant; will be replaced by per-user lookup |
-| `ALLOWED_EMAILS` | `api/_lib/auth.js` | Comma-separated allowlist (value hidden in Vercel UI — it's sensitive) |
-| `ALLOWED_DOMAIN` | `api/_lib/auth.js` | e.g. `skola.se` — whole domain allowlist |
+| `ADMIN_TOKEN` | `api/admin/*.js` | Secret token for the super-admin dashboard at `/admin` |
 
-### Pending major work: multi-tenancy
-`SCHOOL_ID` is currently a hardcoded env var (single school per deployment). The planned replacement is:
-- `schools` table + `school_users` table in Supabase
-- `api/_lib/supabase.js` resolves `school_id` from the authenticated user's JWT via a `school_users` lookup instead of env var
-- Invite code system for onboarding teachers to schools
-- `ALLOWED_EMAILS` / `ALLOWED_DOMAIN` env vars become obsolete once this is built
+`SCHOOL_ID`, `ALLOWED_EMAILS`, and `ALLOWED_DOMAIN` are obsolete — remove them from Vercel if still present.
 
-### Vercel deployment quirk
-Vercel's GitHub auto-deploy webhook sometimes gets stuck serving an old commit even after new pushes. If `vercel --prod` (CLI deploy) and GitHub auto-deploy disagree, use `vercel --prod` to force the correct code. Check the Source tab on any Vercel deployment to confirm which commit is actually running.
+### Auth helpers (`api/_lib/auth.js`)
+- `requireAuth(req, res)` — verifies JWT + looks up `school_users`, returns `{ user, schoolId, role }`. Used by all regular endpoints.
+- `requireAuthBasic(req, res)` — verifies JWT only, returns `user`. Used by `/api/me` and `/api/invite-redeem` (no school required yet).
 
-### Cache headers
-JS and CSS are cached for 30 seconds (`max-age=30, stale-while-revalidate=60`) — set in `vercel.json`. Bump this up before going to production at scale.
+### Cache headers (`vercel.json`)
+- HTML files (`/`, `/*.html`, `/admin`, `/view`): `max-age=0, must-revalidate` — always fresh
+- JS/CSS: `max-age=30, stale-while-revalidate=60` — 30-second cache for active development. Increase before scaling.
