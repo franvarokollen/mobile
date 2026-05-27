@@ -1,5 +1,7 @@
 // POST /api/invite-redeem  body: { code }
 // Validates an invite code and adds the user to the school.
+// Open invites (no email set) are multi-use until expiry.
+// Email-specific invites are single-use and checked for email match.
 
 const { supabase } = require('./_lib/supabase');
 const { requireAuthBasic } = require('./_lib/auth');
@@ -25,20 +27,28 @@ module.exports = async (req, res) => {
     .single();
 
   if (invErr || !invite) return res.status(404).json({ error: 'invalid_code' });
-  if (invite.used_by)    return res.status(409).json({ error: 'code_already_used' });
+
+  // Expiry check (applies to all invite types)
   if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
     return res.status(410).json({ error: 'code_expired' });
   }
-  if (invite.email && invite.email.toLowerCase() !== (user.email || '').toLowerCase()) {
-    return res.status(403).json({ error: 'code_not_for_this_email' });
-  }
 
-  // Check not already in school
+  if (invite.email) {
+    // Email-specific invite: single-use + email must match
+    if (invite.used_by) return res.status(409).json({ error: 'code_already_used' });
+    if (invite.email.toLowerCase() !== (user.email || '').toLowerCase()) {
+      return res.status(403).json({ error: 'code_not_for_this_email' });
+    }
+  }
+  // Open invite (no email): no used_by check — multi-use until expiry
+
+  // Check not already in THIS school
   const { data: existing } = await supabase
     .from('school_users')
     .select('id')
     .eq('user_id', user.id)
-    .single();
+    .eq('school_id', invite.school_id)
+    .maybeSingle();
   if (existing) return res.status(409).json({ error: 'already_in_school' });
 
   // Add to school
@@ -47,11 +57,13 @@ module.exports = async (req, res) => {
     .insert({ school_id: invite.school_id, user_id: user.id, role: 'teacher' });
   if (insertErr) return res.status(500).json({ error: insertErr.message });
 
-  // Mark invite as used
-  await supabase
-    .from('invites')
-    .update({ used_by: user.id, used_at: new Date().toISOString() })
-    .eq('id', invite.id);
+  // Mark as used only for email-specific invites
+  if (invite.email) {
+    await supabase
+      .from('invites')
+      .update({ used_by: user.id, used_at: new Date().toISOString() })
+      .eq('id', invite.id);
+  }
 
   return res.json({ ok: true });
 };

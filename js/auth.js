@@ -36,6 +36,9 @@ async function initAuth() {
   });
 
   if (!session) {
+    // Preserve any ?join=CODE across the OAuth redirect
+    const urlCode = new URLSearchParams(window.location.search).get('join');
+    if (urlCode) sessionStorage.setItem('pendingJoinCode', urlCode.trim().toUpperCase());
     showLoginOverlay();
     return null;
   }
@@ -48,7 +51,18 @@ async function initAuth() {
 
   if (!_meInfo?.school) {
     hideLoginOverlay();
+    // Check for ?join=CODE URL param (shareable invite link)
+    const urlCode = new URLSearchParams(window.location.search).get('join');
+    if (urlCode) sessionStorage.setItem('pendingJoinCode', urlCode.trim().toUpperCase());
+    const pendingCode = sessionStorage.getItem('pendingJoinCode');
     showInviteOverlay();
+    if (pendingCode) {
+      sessionStorage.removeItem('pendingJoinCode');
+      const input = document.getElementById('inviteCodeInput');
+      if (input) input.value = pendingCode;
+      // Small delay so the overlay renders before we try to read it
+      setTimeout(() => redeemInvite(), 80);
+    }
     return null;
   }
 

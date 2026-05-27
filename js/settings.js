@@ -789,14 +789,18 @@ async function settingsLoadInvites() {
     }
 
     container.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">` + invites.map(inv => {
-      const used = !!inv.used_by;
+      const used = !!inv.used_by && !!inv.email; // open invites (no email) never lock
       const expires = new Date(inv.expires_at).toLocaleDateString('sv-SE');
+      const joinUrl = `${window.location.origin}/?join=${inv.code}`;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);${used ? 'opacity:0.5' : ''}">
-        <code style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;letter-spacing:0.1em;flex:1;color:var(--text)">${escHtml(inv.code)}</code>
-        <div style="font-size:11px;color:var(--text3);white-space:nowrap">
-          ${used ? `<span>${t('settings.invite_used')}</span>` : t('settings.invite_expires', { date: expires })}${inv.email ? ` · ${escHtml(inv.email)}` : ''}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${joinUrl}</div>
+          ${inv.email ? `<div style="font-size:10px;color:var(--text3);margin-top:1px">${escHtml(inv.email)}</div>` : ''}
         </div>
-        ${!used ? `<button onclick="settingsCopyInviteCode('${escHtml(inv.code)}')" title="${t('settings.invite_copy')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:3px 10px"><i class="ti ti-copy"></i></button>` : ''}
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0">
+          ${used ? `<span>${t('settings.invite_used')}</span>` : `exp ${expires}`}
+        </div>
+        ${!used ? `<button onclick="settingsCopyInviteLink('${escHtml(joinUrl)}')" title="${t('settings.invite_copy')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:3px 10px"><i class="ti ti-copy"></i></button>` : ''}
         <button onclick="settingsDeleteInvite('${inv.id}')" title="Delete" style="flex-shrink:0;background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:2px 4px;line-height:1">✕</button>
       </div>`;
     }).join('') + `</div>`;
@@ -822,7 +826,7 @@ async function settingsGenerateInvite() {
       const emailInput = document.getElementById('inviteEmail');
       if (emailInput) emailInput.value = '';
       await settingsLoadInvites();
-      settingsCopyInviteCode(d.code);
+      settingsCopyInviteLink(`${window.location.origin}/?join=${d.code}`);
     } else {
       showToast(d.error || t('settings.invite_error'));
     }
@@ -837,6 +841,6 @@ async function settingsDeleteInvite(id) {
   } catch(e) {}
 }
 
-function settingsCopyInviteCode(code) {
-  navigator.clipboard.writeText(code).then(() => showToast(t('settings.invite_code_copied')));
+function settingsCopyInviteLink(url) {
+  navigator.clipboard.writeText(url).then(() => showToast(t('settings.invite_code_copied')));
 }

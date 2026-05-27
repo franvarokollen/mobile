@@ -440,6 +440,16 @@ body {
           <option value="none"></option>
         </select>
       </div>
+      <!-- Domain auto-join -->
+      <div style="margin-top:20px;padding-top:16px;border-top:0.5px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px" id="lbl_domains_title"></div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <input id="sf_newDomain" placeholder="vasaskolan.se" style="flex:1;padding:6px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+          <button onclick="addAdminDomain()" style="padding:6px 12px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" id="addDomainBtn"></button>
+        </div>
+        <div id="adminDomainsList" style="display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+
       <div style="margin-top:20px;padding-top:16px;border-top:0.5px solid var(--border)">
         <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Danger zone</div>
         <button onclick="deleteSchool()" style="padding:6px 14px;border:0.5px solid var(--red);border-radius:var(--radius);background:none;color:var(--red);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif" id="deleteSchoolBtn"></button>
@@ -512,8 +522,17 @@ body {
         <button onclick="addAdminUser()" style="height:34px;padding:0 12px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap" id="addUserBtn"></button>
       </div>
       <!-- User list -->
-      <div id="adminUsersList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto">
+      <div id="adminUsersList" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">
         <div style="font-size:13px;color:var(--text3)" id="usersLoadingMsg"></div>
+      </div>
+      <!-- Bulk import -->
+      <div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px" id="lbl_bulk_title"></div>
+        <textarea id="sf_bulkEmails" rows="4" placeholder="anna.berg@school.se&#10;erik.svensson@school.se&#10;…one per line" style="width:100%;padding:8px 10px;box-sizing:border-box;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:12px;font-family:'DM Mono',monospace;resize:vertical"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button onclick="bulkImportUsers()" style="padding:6px 14px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" id="bulkImportBtn"></button>
+        </div>
+        <div id="bulkImportResult" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
       </div>
     </div>
 
@@ -521,10 +540,6 @@ body {
     <div class="ssec" id="ssec_invites">
       <!-- Create invite row -->
       <div style="display:flex;gap:6px;margin-bottom:14px;align-items:flex-end;flex-wrap:wrap">
-        <div style="flex:2;min-width:150px">
-          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px" id="lbl_inv_email"></label>
-          <input id="sf_invEmail" type="email" placeholder="optional@school.com" style="width:100%;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
-        </div>
         <div style="min-width:110px">
           <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px" id="lbl_inv_expiry"></label>
           <select id="sf_invExpiry" style="height:34px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;width:100%">
@@ -534,7 +549,7 @@ body {
             <option value="365" id="opt_365days"></option>
           </select>
         </div>
-        <button onclick="createAdminInvite()" style="height:34px;padding:0 12px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap" id="createInviteBtn"></button>
+        <button onclick="createAdminInvite()" style="height:34px;padding:0 16px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap" id="createInviteBtn"></button>
       </div>
       <!-- Invite list -->
       <div id="adminInvitesList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto">
@@ -607,6 +622,12 @@ const TR = {
     lbl_school_display_name: 'Skolnamn', delete_school_btn: 'Ta bort skola',
     delete_school_confirm: 'Ta bort {name} och ALL data permanent? Detta kan INTE ångras.',
     school_deleted: 'Skola raderad',
+    lbl_domains_title: 'Domäner (auto-inloggning)',
+    add_domain_btn: 'Lägg till', domain_added: 'Domän tillagd', domain_removed: 'Domän borttagen',
+    domain_already_exists: 'Domänen är redan registrerad på en annan skola',
+    lbl_bulk_title: 'Massimport av personal (en e-post per rad)',
+    bulk_import_btn: 'Importera', bulk_result: '{added} tillagda · {invited} inbjudningar skapade · {already} redan med · {failed} misslyckades',
+    invite_link_copied: 'Länk kopierad!',
   },
   en: {
     schools: 'schools', active: 'active', trial: 'trial',
@@ -663,6 +684,12 @@ const TR = {
     lbl_school_display_name: 'School name', delete_school_btn: 'Delete school',
     delete_school_confirm: 'Permanently delete {name} and ALL its data? This CANNOT be undone.',
     school_deleted: 'School deleted',
+    lbl_domains_title: 'Domains (auto-join)',
+    add_domain_btn: 'Add', domain_added: 'Domain added', domain_removed: 'Domain removed',
+    domain_already_exists: 'That domain is already registered to another school',
+    lbl_bulk_title: 'Bulk import staff (one email per line)',
+    bulk_import_btn: 'Import', bulk_result: '{added} added · {invited} invites created · {already} already in school · {failed} failed',
+    invite_link_copied: 'Link copied!',
   }
 };
 
@@ -1046,6 +1073,7 @@ function switchStab(btn, sec) {
   if (btn) btn.classList.add('active');
   const el = document.getElementById('ssec_' + sec);
   if (el) el.classList.add('active');
+  if (sec === 'school')  loadAdminDomains();
   if (sec === 'users')   loadAdminUsers();
   if (sec === 'invites') loadAdminInvites();
 }
@@ -1082,12 +1110,15 @@ function populateSettingsLabels() {
   _setText('stab_invites',          t('sect_invites'));
   _setText('lbl_schoolDisplayName', t('lbl_school_display_name'));
   _setText('deleteSchoolBtn',       t('delete_school_btn'));
+  _setText('lbl_domains_title',     t('lbl_domains_title'));
+  _setText('addDomainBtn',          t('add_domain_btn'));
+  _setText('lbl_bulk_title',        t('lbl_bulk_title'));
+  _setText('bulkImportBtn',         t('bulk_import_btn'));
   _setText('lbl_add_email',         t('lbl_add_email'));
   _setText('lbl_add_role',          t('lbl_add_role'));
   _setText('addUserBtn',            t('add_user_btn'));
   _setText('opt_teacher',           t('role_teacher'));
   _setText('opt_admin_role',        t('role_admin'));
-  _setText('lbl_inv_email',         t('lbl_inv_email'));
   _setText('lbl_inv_expiry',        t('lbl_inv_expiry'));
   _setText('opt_1day',              t('inv_1day'));
   _setText('opt_7days',             t('inv_7days'));
@@ -1269,16 +1300,21 @@ async function loadAdminInvites() {
       return;
     }
 
+    const base = window.location.origin.replace('/admin','').replace(/\/admin$/, '');
     container.innerHTML = invites.map(inv => {
-      const used = !!inv.used_by;
+      const used = !!inv.used_by && !!inv.email; // open invites never lock
       const expires = inv.expires_at ? new Date(inv.expires_at).toLocaleDateString('sv-SE') : '—';
+      const joinUrl = `${base}/?join=${inv.code}`;
+      const safeUrl = esc(joinUrl);
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);${used?'opacity:0.5':''}">
-        <code style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;letter-spacing:0.1em;flex:1;color:var(--text)">${esc(inv.code)}</code>
-        <div style="font-size:11px;color:var(--text3);white-space:nowrap">
-          ${used ? `<span style="background:var(--surface3);padding:1px 6px;border-radius:8px">${t('used_badge')}</span>` : `Exp ${expires}`}
-          ${inv.email ? ` · ${esc(inv.email)}` : ''}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'DM Mono',monospace">${safeUrl}</div>
+          ${inv.email ? `<div style="font-size:10px;color:var(--text3);margin-top:1px">${esc(inv.email)}</div>` : ''}
         </div>
-        ${!used ? `<button onclick="copyAdminInvite('${esc(inv.code)}')" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px">Copy</button>` : ''}
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0">
+          ${used ? `<span style="background:var(--surface3);padding:1px 6px;border-radius:8px">${t('used_badge')}</span>` : `exp ${expires}`}
+        </div>
+        ${!used ? `<button onclick="copyAdminInvite('${safeUrl}')" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px"><i class='ti ti-copy'></i></button>` : ''}
         <button onclick="deleteAdminInvite('${inv.id}')" style="flex-shrink:0;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 4px;line-height:1">✕</button>
       </div>`;
     }).join('');
@@ -1288,7 +1324,6 @@ async function loadAdminInvites() {
 }
 
 async function createAdminInvite() {
-  const email      = (document.getElementById('sf_invEmail')?.value || '').trim() || null;
   const expiryDays = parseInt(document.getElementById('sf_invExpiry')?.value || '7');
   const btn        = document.getElementById('createInviteBtn');
   if (btn) btn.disabled = true;
@@ -1296,13 +1331,14 @@ async function createAdminInvite() {
   try {
     const r = await apiFetch('/api/admin/school-invites', {
       method: 'POST',
-      body: JSON.stringify({ school_id: _settingsModalId, email, expiryDays })
+      body: JSON.stringify({ school_id: _settingsModalId, expiryDays })
     });
     const d = await r.json().catch(()=>({}));
     if (r.ok) {
-      if (document.getElementById('sf_invEmail')) document.getElementById('sf_invEmail').value = '';
-      navigator.clipboard.writeText(d.code).catch(()=>{});
-      toast(`${t('invite_created')} ${d.code}`);
+      const base = window.location.origin.replace(/\/admin$/, '');
+      const joinUrl = `${base}/?join=${d.code}`;
+      navigator.clipboard.writeText(joinUrl).catch(()=>{});
+      toast(t('invite_link_copied'));
       loadAdminInvites();
     } else {
       toast(d.error || t('save_failed'));
@@ -1318,8 +1354,96 @@ async function deleteAdminInvite(id) {
   } catch(e) {}
 }
 
-function copyAdminInvite(code) {
-  navigator.clipboard.writeText(code).then(() => toast(`Copied: ${code}`)).catch(()=>{});
+function copyAdminInvite(url) {
+  navigator.clipboard.writeText(url).then(() => toast(t('invite_link_copied'))).catch(()=>{});
+}
+
+// ── Domain auto-join management ──────────────────────────────
+async function loadAdminDomains() {
+  const container = document.getElementById('adminDomainsList');
+  if (!container || !_settingsModalId) return;
+  container.innerHTML = '';
+
+  try {
+    const r = await apiFetch(`/api/admin/school-domains?school_id=${_settingsModalId}`);
+    if (!r.ok) return;
+    const domains = await r.json();
+    if (!domains.length) {
+      container.innerHTML = `<div style="font-size:12px;color:var(--text3)">—</div>`;
+      return;
+    }
+    container.innerHTML = domains.map(d =>
+      `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius)">
+        <span style="font-family:'DM Mono',monospace;font-size:12px;flex:1">@${esc(d.domain)}</span>
+        <button onclick="removeAdminDomain('${d.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:1px 4px;line-height:1">✕</button>
+      </div>`
+    ).join('');
+  } catch(e) {}
+}
+
+async function addAdminDomain() {
+  const input = document.getElementById('sf_newDomain');
+  const domain = (input?.value || '').trim().toLowerCase().replace(/^@/, '');
+  if (!domain) return;
+  try {
+    const r = await apiFetch('/api/admin/school-domains', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: _settingsModalId, domain })
+    });
+    const d = await r.json().catch(()=>({}));
+    if (r.ok) {
+      input.value = '';
+      toast(t('domain_added'));
+      loadAdminDomains();
+    } else if (d.error === 'domain_already_registered') {
+      toast(t('domain_already_exists'));
+    } else {
+      toast(d.error || t('save_failed'));
+    }
+  } catch(e) { toast(t('save_failed')); }
+}
+
+async function removeAdminDomain(id) {
+  try {
+    const r = await apiFetch(`/api/admin/school-domains?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (r.ok) { toast(t('domain_removed')); loadAdminDomains(); }
+  } catch(e) {}
+}
+
+// ── Bulk import staff ────────────────────────────────────────
+async function bulkImportUsers() {
+  const raw = (document.getElementById('sf_bulkEmails')?.value || '').trim();
+  if (!raw) return;
+  const emails = raw.split(/[\n,;]+/).map(e => e.trim()).filter(e => e.includes('@'));
+  if (!emails.length) { toast('No valid emails found'); return; }
+
+  const btn = document.getElementById('bulkImportBtn');
+  const result = document.getElementById('bulkImportResult');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = '…';
+
+  try {
+    const r = await apiFetch('/api/admin/bulk-import', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: _settingsModalId, emails, role: 'teacher' })
+    });
+    const d = await r.json().catch(()=>({}));
+    if (r.ok) {
+      if (document.getElementById('sf_bulkEmails')) document.getElementById('sf_bulkEmails').value = '';
+      const msg = t('bulk_result')
+        .replace('{added}',   d.added?.length   || 0)
+        .replace('{invited}', d.invited?.length  || 0)
+        .replace('{already}', d.already?.length  || 0)
+        .replace('{failed}',  d.failed?.length   || 0);
+      if (result) result.textContent = msg;
+      loadAdminUsers();
+    } else {
+      if (result) result.textContent = d.error || t('save_failed');
+    }
+  } catch(e) {
+    if (result) result.textContent = t('save_failed');
+  }
+  if (btn) btn.disabled = false;
 }
 
 // ── Delete school ─────────────────────────────────────────────
