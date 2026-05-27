@@ -1064,41 +1064,44 @@ function toggleEodEnable(label) {
   document.getElementById('eodFields').style.display = cb.checked ? 'block' : 'none';
 }
 
+function _setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function _setPlaceholder(id, val) { const el = document.getElementById(id); if (el) el.placeholder = val; }
+
 function populateSettingsLabels() {
-  document.getElementById('lbl_schoolName').textContent   = t('school_name_key');
-  document.getElementById('lbl_classFormat').textContent  = t('class_format');
-  document.getElementById('lbl_classOverride').textContent = t('class_override_lbl');
-  document.getElementById('sf_classOverride').placeholder  = t('class_override_ph');
-  document.getElementById('lbl_yearSections').textContent  = t('year_sections_lbl');
-  document.getElementById('lbl_eodEnable').textContent     = t('eod_enable');
-  document.getElementById('lbl_eodTime').textContent       = t('eod_time_lbl');
-  document.getElementById('lbl_eodAction').textContent     = t('eod_action_lbl');
-  document.getElementById('opt_remind').textContent        = t('eod_remind');
-  document.getElementById('opt_clear').textContent         = t('eod_clear');
-  document.getElementById('lbl_retainDays').textContent    = t('retain_days');
-  document.getElementById('saveSettingsBtn').textContent   = t('save_settings');
-  document.getElementById('stab_school').textContent    = t('sect_school');
-  document.getElementById('stab_classes').textContent   = t('sect_classes');
-  document.getElementById('stab_eod').textContent       = t('sect_eod');
-  document.getElementById('stab_retention').textContent = t('sect_retention');
-  document.getElementById('stab_users').textContent     = t('sect_users');
-  document.getElementById('stab_invites').textContent   = t('sect_invites');
-  document.getElementById('lbl_schoolDisplayName').textContent = t('lbl_school_display_name');
-  document.getElementById('deleteSchoolBtn').textContent = t('delete_school_btn');
-  document.getElementById('lbl_add_email').textContent  = t('lbl_add_email');
-  document.getElementById('lbl_add_role').textContent   = t('lbl_add_role');
-  document.getElementById('addUserBtn').textContent     = t('add_user_btn');
-  document.getElementById('opt_teacher').textContent   = t('role_teacher');
-  document.getElementById('opt_admin_role').textContent = t('role_admin');
-  document.getElementById('lbl_inv_email').textContent  = t('lbl_inv_email');
-  document.getElementById('lbl_inv_expiry').textContent = t('lbl_inv_expiry');
-  document.getElementById('opt_1day').textContent   = t('inv_1day');
-  document.getElementById('opt_7days').textContent  = t('inv_7days');
-  document.getElementById('opt_30days').textContent = t('inv_30days');
-  document.getElementById('opt_365days').textContent = t('inv_365days');
-  document.getElementById('createInviteBtn').textContent = t('create_invite_btn');
-  document.getElementById('usersLoadingMsg').textContent = t('loading_users');
-  document.getElementById('invitesLoadingMsg').textContent = t('loading_invites');
+  _setText('lbl_schoolName',        t('school_name_key'));
+  _setText('lbl_classFormat',       t('class_format'));
+  _setText('lbl_classOverride',     t('class_override_lbl'));
+  _setPlaceholder('sf_classOverride', t('class_override_ph'));
+  _setText('lbl_yearSections',      t('year_sections_lbl'));
+  _setText('lbl_eodEnable',         t('eod_enable'));
+  _setText('lbl_eodTime',           t('eod_time_lbl'));
+  _setText('lbl_eodAction',         t('eod_action_lbl'));
+  _setText('opt_remind',            t('eod_remind'));
+  _setText('opt_clear',             t('eod_clear'));
+  _setText('lbl_retainDays',        t('retain_days'));
+  _setText('saveSettingsBtn',       t('save_settings'));
+  _setText('stab_school',           t('sect_school'));
+  _setText('stab_classes',          t('sect_classes'));
+  _setText('stab_eod',              t('sect_eod'));
+  _setText('stab_retention',        t('sect_retention'));
+  _setText('stab_users',            t('sect_users'));
+  _setText('stab_invites',          t('sect_invites'));
+  _setText('lbl_schoolDisplayName', t('lbl_school_display_name'));
+  _setText('deleteSchoolBtn',       t('delete_school_btn'));
+  _setText('lbl_add_email',         t('lbl_add_email'));
+  _setText('lbl_add_role',          t('lbl_add_role'));
+  _setText('addUserBtn',            t('add_user_btn'));
+  _setText('opt_teacher',           t('role_teacher'));
+  _setText('opt_admin_role',        t('role_admin'));
+  _setText('lbl_inv_email',         t('lbl_inv_email'));
+  _setText('lbl_inv_expiry',        t('lbl_inv_expiry'));
+  _setText('opt_1day',              t('inv_1day'));
+  _setText('opt_7days',             t('inv_7days'));
+  _setText('opt_30days',            t('inv_30days'));
+  _setText('opt_365days',           t('inv_365days'));
+  _setText('createInviteBtn',       t('create_invite_btn'));
+  _setText('usersLoadingMsg',       t('loading_users'));
+  _setText('invitesLoadingMsg',     t('loading_invites'));
 
   // Populate format options
   const fmtSel = document.getElementById('sf_classFormat');
