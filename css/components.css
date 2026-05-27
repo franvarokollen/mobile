@@ -10,10 +10,6 @@
 .tab:hover { background: var(--surface2); color: var(--text); }
 .tab.active { background: var(--text); color: #fff; border-color: var(--text); }
 
-/* SCAN BAR */
-.scan-bar { display: flex; gap: 10px; margin-bottom: 1.25rem; }
-.scan-bar input { flex: 1; height: 40px; font-size: 14px; border-radius: var(--radius); }
-
 /* STUDENT GRID */
 .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
 .chip { border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 0; cursor: pointer; user-select: none; background: var(--surface); transition: transform 0.1s; overflow: hidden; }
@@ -24,8 +20,6 @@
 .chip-fname { font-size: 19px; font-weight: 700; color: var(--text); line-height: 1.15; word-break: break-word; }
 .chip-lname { font-size: 16px; font-weight: 400; color: var(--text); line-height: 1.15; word-break: break-word; opacity: 0.7; }
 .chip-icon-row { display: flex; align-items: center; justify-content: space-around; margin-top: auto; padding-top: 6px; border-top: 0.5px solid var(--border); }
-.chip-badge-row { margin-top: 4px; }
-.chip-slot-row { margin-top: 4px; }
 
 /* CHIP STATUS VARIANTS */
 .chip.s-out { border-color: var(--red-border); background: var(--red-bg); }
@@ -104,19 +98,13 @@
 /* SEARCH */
 .search-input { width: 100%; margin-bottom: 1rem; }
 
-/* STAR & SLOT */
-.star-btn { background: none; border: none; cursor: pointer; font-size: 22px; display: block; width: 100%; text-align: left; padding: 6px 0 0; line-height: 1; transition: transform 0.1s; }
-.star-btn:active { transform: scale(0.9); }
+/* SLOT */
 .slot-input { width: 36px; height: 26px; padding: 0 4px; font-size: 13px; border-radius: 6px; border: 0.5px solid var(--amber-border); background: var(--surface); color: var(--amber-text); font-family: 'DM Mono', monospace; text-align: center; -moz-appearance: textfield; }
 .slot-input::-webkit-inner-spin-button, .slot-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* REPORT */
 .report-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
 .report-phones { font-size: 12px; color: var(--text2); line-height: 1.8; font-family: 'DM Mono', monospace; text-align: right; }
-.upload-guardian-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-
-/* VIEW-ONLY BANNER */
-.viewonly-banner { background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); border-radius: var(--radius); padding: 7px 14px; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
 
 /* NOTE BADGE on chips */
 .chip-note { font-size: 15px; line-height: 1; flex-shrink: 0; }

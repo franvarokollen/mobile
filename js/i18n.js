@@ -264,15 +264,6 @@ const TRANSLATIONS = {
     'map.hint': 'Mappa dina kolumner — automatisk igenkänning där möjligt. Justera om något ser fel ut.',
     'map.import_btn': 'Importera',
 
-    // View-only mode
-    'viewonly.toggle':   'Visningsläge',
-    'viewonly.banner':   'Visningsläge — ändringar inaktiverade',
-    'viewonly.exit_btn': 'Avsluta',
-    'viewonly.blocked':  'Visningsläge — tryck på ögat för att aktivera redigering',
-
-    // Dark mode
-    'dark.toggle': 'Mörkt läge',
-
     // Whole-class exempt
     'exempt.btn':   'Fria klassen',
     'exempt.none':  'Inga elever med aktiv status i {cls}',
@@ -584,15 +575,6 @@ const TRANSLATIONS = {
     'map.hint': 'Map your columns — auto-detected where possible. Adjust anything that looks wrong.',
     'map.import_btn': 'Import',
 
-    // View-only mode
-    'viewonly.toggle':   'View-only mode',
-    'viewonly.banner':   'View-only mode — changes are disabled',
-    'viewonly.exit_btn': 'Exit',
-    'viewonly.blocked':  'View-only mode — click the eye icon to enable editing',
-
-    // Dark mode
-    'dark.toggle': 'Dark mode',
-
     // Whole-class exempt
     'exempt.btn':     'Exempt class',
     'exempt.none':    'No students with an active status in {cls}',
@@ -684,10 +666,4 @@ function applyI18n() {
   const en = document.getElementById('langBtnEN');
   if (sv) sv.classList.toggle('active', currentLang === 'sv');
   if (en) en.classList.toggle('active', currentLang === 'en');
-  // Legacy fallback for any remaining langToggleBtn
-  const btn = document.getElementById('langToggleBtn');
-  if (btn) {
-    btn.textContent = currentLang === 'sv' ? 'EN' : 'SV';
-    btn.title = currentLang === 'sv' ? 'Switch to English' : 'Byt till svenska';
-  }
 }

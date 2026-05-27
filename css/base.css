@@ -23,27 +23,6 @@
   --green-text: #3b6d11;
 }
 
-/* DARK MODE */
-[data-theme="dark"] {
-  --bg: #111318;
-  --surface: #1c1f27;
-  --surface2: #252932;
-  --surface3: #2e3240;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.15);
-  --text: #eef0f6;
-  --text2: #9098b0;
-  --text3: #565e7a;
-  --red-bg: #2b1616;
-  --red-border: #e24b4a;
-  --red-text: #f87171;
-  --amber-bg: #2b1e0e;
-  --amber-border: #ef9f27;
-  --amber-text: #fbbf24;
-  --green-bg: #122010;
-  --green-border: #97c459;
-  --green-text: #86efac;
-}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
@@ -78,7 +57,6 @@ input::placeholder { color: var(--text3); }
 /* TOAST */
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: #f5f4f0; padding: 10px 20px; border-radius: var(--radius); font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; }
-[data-theme="dark"] .toast { background: #eef0f6; color: #111318; }
 
 /* STATUS TEXT COLORS */
 .red { color: var(--red-text); }
