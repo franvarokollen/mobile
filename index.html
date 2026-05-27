@@ -40,6 +40,31 @@
   </div>
 </div>
 
+<!-- INVITE CODE SCREEN -->
+<div id="inviteOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2rem">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:24px;width:100%;max-width:360px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div style="width:56px;height:56px;background:var(--text);border-radius:14px;display:flex;align-items:center;justify-content:center">
+        <i class="ti ti-device-mobile" style="font-size:28px;color:var(--bg)"></i>
+      </div>
+      <div style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.02em">Lurkollen</div>
+      <div style="font-size:13px;color:var(--text3);text-align:center">Ange din inbjudningskod för att komma igång</div>
+    </div>
+    <div style="width:100%;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px">
+      <input id="inviteCodeInput" type="text" placeholder="XXXX-XXXX"
+        style="width:100%;padding:12px 16px;border:0.5px solid var(--border2);border-radius:10px;font-size:18px;font-weight:600;letter-spacing:0.1em;text-align:center;text-transform:uppercase;font-family:'DM Sans',sans-serif;background:var(--surface2);color:var(--text);outline:none"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')"
+        onkeydown="if(event.key==='Enter')redeemInvite()">
+      <button onclick="redeemInvite()" id="redeemBtn"
+        style="width:100%;padding:12px 16px;background:var(--text);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+        Fortsätt
+      </button>
+      <div id="inviteMsg" style="display:none;font-size:12px;color:var(--red-text);text-align:center;padding:8px 12px;background:rgba(226,75,74,0.08);border-radius:8px"></div>
+    </div>
+    <button onclick="signOut()" style="background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline">Logga ut</button>
+  </div>
+</div>
+
 <!-- UPLOAD SCREEN -->
 <div id="uploadScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:99;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem">
   <div style="font-size:20px;font-weight:700;color:var(--text)"><i class="ti ti-device-mobile-off" style="margin-right:8px"></i><span data-i18n="upload.title">Lurkollen</span></div>

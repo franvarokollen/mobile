@@ -34,4 +34,14 @@ async function requireAuth(req, res) {
   return { user, schoolId: membership.school_id, role: membership.role };
 }
 
-module.exports = { requireAuth };
+/** JWT-only check — no school required. Used for /me and /invite-redeem. */
+async function requireAuthBasic(req, res) {
+  const header = req.headers.authorization || '';
+  const token  = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  if (!token) { res.status(401).json({ error: 'auth_required' }); return null; }
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) { res.status(401).json({ error: 'invalid_token' }); return null; }
+  return user;
+}
+
+module.exports = { requireAuth, requireAuthBasic };

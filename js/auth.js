@@ -2,6 +2,7 @@
 
 let _supabaseClient = null;
 let _currentSession  = null;
+let _meInfo          = null;   // { user, school } from /api/me
 
 /**
  * Fetch runtime config, initialise the Supabase browser client, restore any
@@ -31,7 +32,7 @@ async function initAuth() {
   // Keep _currentSession fresh (token refresh, sign-out in another tab, etc.)
   _supabaseClient.auth.onAuthStateChange((_event, sess) => {
     _currentSession = sess;
-    if (!sess) { showLoginOverlay(); }
+    if (!sess) { _meInfo = null; showLoginOverlay(); }
   });
 
   if (!session) {
@@ -39,7 +40,20 @@ async function initAuth() {
     return null;
   }
 
+  // Verify the user belongs to a school
+  try {
+    const r = await authFetch('/api/me');
+    if (r.ok) _meInfo = await r.json();
+  } catch(e) {}
+
+  if (!_meInfo?.school) {
+    hideLoginOverlay();
+    showInviteOverlay();
+    return null;
+  }
+
   hideLoginOverlay();
+  hideInviteOverlay();
   _updateUserDisplay(session.user);
   return session;
 }
@@ -48,6 +62,12 @@ async function initAuth() {
 function getAuthToken() {
   return _currentSession?.access_token || null;
 }
+
+/** Return the current user's role in their school ('admin' | 'teacher' | null). */
+function getMyRole()   { return _meInfo?.school?.role || null; }
+
+/** Return the current user's Supabase auth UUID. */
+function getMyUserId() { return _meInfo?.user?.id || null; }
 
 /** Kick off Google OAuth redirect via Supabase. */
 async function signInWithGoogle() {
@@ -85,6 +105,64 @@ function hideLoginOverlay() {
 function _showLoginMessage(msg) {
   const el = document.getElementById('loginMsg');
   if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+// ── Invite overlay ───────────────────────────────────────────
+function showInviteOverlay() {
+  const el = document.getElementById('inviteOverlay');
+  if (el) el.style.display = 'flex';
+}
+
+function hideInviteOverlay() {
+  const el = document.getElementById('inviteOverlay');
+  if (el) el.style.display = 'none';
+}
+
+function _showInviteMessage(msg, isError = true) {
+  const el = document.getElementById('inviteMsg');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color      = isError ? 'var(--red-text)' : '#16a34a';
+  el.style.background = isError ? 'rgba(226,75,74,0.08)' : 'rgba(22,163,74,0.08)';
+  el.style.display    = 'block';
+}
+
+async function redeemInvite() {
+  const input = document.getElementById('inviteCodeInput');
+  const btn   = document.getElementById('redeemBtn');
+  const code  = (input?.value || '').trim().toUpperCase();
+
+  if (!code) { _showInviteMessage('Ange din inbjudningskod'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  try {
+    const r = await authFetch('/api/invite-redeem', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ code })
+    });
+    const data = await r.json().catch(() => ({}));
+
+    if (r.ok) {
+      // Code redeemed — reload to pick up the new school assignment
+      window.location.reload();
+      return;
+    }
+
+    const msgs = {
+      'invalid_code':            'Ogiltig kod — kontrollera och försök igen',
+      'code_already_used':       'Den här koden har redan använts',
+      'code_expired':            'Koden har gått ut',
+      'code_not_for_this_email': 'Koden är inte avsedd för den här e-postadressen',
+      'already_in_school':       'Du är redan kopplad till en skola',
+    };
+    _showInviteMessage(msgs[data.error] || 'Något gick fel — försök igen');
+  } catch(e) {
+    _showInviteMessage('Nätverksfel — försök igen');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Fortsätt'; }
 }
 
 function _updateUserDisplay(user) {

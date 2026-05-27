@@ -149,6 +149,7 @@ function renderSettings() {
         <button class="settings-nav-item" onclick="switchSettingsSection('statuses',this)">${t('settings.section_statuses')}</button>
         <button class="settings-nav-item" onclick="switchSettingsSection('automation',this)">${t('settings.section_automation')}</button>
         <button class="settings-nav-item" onclick="switchSettingsSection('data',this)">${t('settings.section_data')}</button>
+        ${getMyRole() === 'admin' ? `<button class="settings-nav-item" onclick="switchSettingsSection('users',this);settingsLoadUsers();settingsLoadInvites()">${t('settings.section_users')}</button>` : ''}
       </nav>
 
       <!-- Right content -->
@@ -357,6 +358,46 @@ function renderSettings() {
               </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- Users section (admin only) -->
+        <div class="settings-section" id="settingsSec_users">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_users')}</div>
+            <div class="settings-card-sub">${t('settings.users_sub')}</div>
+
+            <!-- Team list -->
+            <div id="usersListContainer" style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
+              <div style="font-size:13px;color:var(--text3)">${t('settings.users_loading')}</div>
+            </div>
+
+            <!-- Invite section -->
+            <div style="margin-top:24px;padding-top:20px;border-top:0.5px solid var(--border)">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">${t('settings.invite_section')}</div>
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
+                <div style="flex:1;min-width:140px">
+                  <label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">${t('settings.invite_days_label')}</label>
+                  <select id="inviteExpiryDays" style="width:100%;height:36px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px">
+                    <option value="1">1 ${t('settings.invite_day')}</option>
+                    <option value="7" selected>7 ${t('settings.invite_days')}</option>
+                    <option value="30">30 ${t('settings.invite_days')}</option>
+                  </select>
+                </div>
+                <div style="flex:2;min-width:180px">
+                  <label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">${t('settings.invite_email_label')}</label>
+                  <input id="inviteEmail" type="email" placeholder="${t('settings.invite_email_ph')}"
+                    style="width:100%;padding:0 10px;height:36px;box-sizing:border-box;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px">
+                </div>
+                <button class="btn" onclick="settingsGenerateInvite()" id="generateInviteBtn"
+                  style="height:36px;padding:0 16px;font-size:13px;white-space:nowrap;flex-shrink:0;background:var(--text);color:var(--bg);border-color:var(--text)">
+                  <i class="ti ti-plus"></i>${t('settings.invite_generate')}
+                </button>
+              </div>
+              <div id="inviteListContainer">
+                <div style="font-size:12px;color:var(--text3)">${t('settings.users_loading')}</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -677,4 +718,125 @@ function settingsGoAddStudent() {
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+// ── Users & Invite management ────────────────────────────────
+
+async function settingsLoadUsers() {
+  const container = document.getElementById('usersListContainer');
+  if (!container) return;
+  container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('settings.users_loading')}</div>`;
+
+  try {
+    const r = await authFetch('/api/school-users');
+    if (!r.ok) {
+      container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('settings.users_error')}</div>`;
+      return;
+    }
+    const users = await r.json();
+    if (!users.length) {
+      container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('settings.users_empty')}</div>`;
+      return;
+    }
+
+    const myId = getMyUserId();
+    container.innerHTML = users.map(u => {
+      const isMe = u.userId === myId;
+      const roleLabel = u.role === 'admin' ? t('settings.users_role_admin') : t('settings.users_role_teacher');
+      const joined = new Date(u.joinedAt).toLocaleDateString('sv-SE');
+      const initial = (u.name || u.email || '?')[0].toUpperCase();
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;color:var(--text2)">${initial}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(u.name || u.email)}</div>
+          <div style="font-size:11px;color:var(--text3)">${escHtml(u.email)} · ${roleLabel} · ${joined}</div>
+        </div>
+        ${isMe ? `<span style="font-size:11px;color:var(--text3);padding:2px 8px;border:0.5px solid var(--border2);border-radius:10px;flex-shrink:0">${t('settings.users_you')}</span>` : ''}
+        ${!isMe ? `<button onclick="settingsRemoveUser('${u.userId}','${escHtml(u.email)}')" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:4px 10px">${t('settings.users_remove')}</button>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    if (container) container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('settings.users_error')}</div>`;
+  }
+}
+
+async function settingsRemoveUser(userId, email) {
+  if (!confirm(t('settings.users_remove_confirm', { email }))) return;
+  try {
+    const r = await authFetch(`/api/school-users?userId=${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    if (r.ok) {
+      settingsLoadUsers();
+    } else {
+      const d = await r.json().catch(() => ({}));
+      showToast(d.error === 'cannot_remove_self' ? t('settings.users_cannot_remove_self') : t('settings.users_remove_error'));
+    }
+  } catch(e) { showToast(t('settings.users_remove_error')); }
+}
+
+async function settingsLoadInvites() {
+  const container = document.getElementById('inviteListContainer');
+  if (!container) return;
+  container.innerHTML = `<div style="font-size:12px;color:var(--text3)">${t('settings.users_loading')}</div>`;
+
+  try {
+    const r = await authFetch('/api/invites');
+    if (!r.ok) { container.innerHTML = ''; return; }
+    const invites = await r.json();
+
+    if (!invites.length) {
+      container.innerHTML = `<div style="font-size:12px;color:var(--text3)">${t('settings.invite_list_empty')}</div>`;
+      return;
+    }
+
+    container.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">` + invites.map(inv => {
+      const used = !!inv.used_by;
+      const expires = new Date(inv.expires_at).toLocaleDateString('sv-SE');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);${used ? 'opacity:0.5' : ''}">
+        <code style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;letter-spacing:0.1em;flex:1;color:var(--text)">${escHtml(inv.code)}</code>
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap">
+          ${used ? `<span>${t('settings.invite_used')}</span>` : t('settings.invite_expires', { date: expires })}${inv.email ? ` · ${escHtml(inv.email)}` : ''}
+        </div>
+        ${!used ? `<button onclick="settingsCopyInviteCode('${escHtml(inv.code)}')" title="${t('settings.invite_copy')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:3px 10px"><i class="ti ti-copy"></i></button>` : ''}
+        <button onclick="settingsDeleteInvite('${inv.id}')" title="Delete" style="flex-shrink:0;background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:2px 4px;line-height:1">✕</button>
+      </div>`;
+    }).join('') + `</div>`;
+  } catch(e) {
+    if (container) container.innerHTML = '';
+  }
+}
+
+async function settingsGenerateInvite() {
+  const expiryDays = parseInt(document.getElementById('inviteExpiryDays')?.value || '7');
+  const email      = (document.getElementById('inviteEmail')?.value || '').trim() || null;
+  const btn        = document.getElementById('generateInviteBtn');
+
+  if (btn) btn.disabled = true;
+  try {
+    const r = await authFetch('/api/invites', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ expiryDays, email })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      const emailInput = document.getElementById('inviteEmail');
+      if (emailInput) emailInput.value = '';
+      await settingsLoadInvites();
+      settingsCopyInviteCode(d.code);
+    } else {
+      showToast(d.error || t('settings.invite_error'));
+    }
+  } catch(e) { showToast(t('settings.invite_error')); }
+  if (btn) btn.disabled = false;
+}
+
+async function settingsDeleteInvite(id) {
+  try {
+    const r = await authFetch(`/api/invites?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (r.ok) settingsLoadInvites();
+  } catch(e) {}
+}
+
+function settingsCopyInviteCode(code) {
+  navigator.clipboard.writeText(code).then(() => showToast(t('settings.invite_code_copied')));
 }
