@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mobiltillsyn</title>
+<title>Lurkollen</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231a1a18'/><rect x='10' y='4' width='12' height='20' rx='3' fill='none' stroke='%23f5f4f0' stroke-width='2'/><circle cx='16' cy='21' r='1' fill='%23f5f4f0'/><line x1='8' y1='27' x2='24' y2='27' stroke='%23e24b4a' stroke-width='2.5' stroke-linecap='round'/><line x1='11' y1='30' x2='21' y2='30' stroke='%23e24b4a' stroke-width='2' stroke-linecap='round'/></svg>">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css">
@@ -21,7 +21,7 @@
       <div style="width:56px;height:56px;background:var(--text);border-radius:14px;display:flex;align-items:center;justify-content:center">
         <i class="ti ti-device-mobile" style="font-size:28px;color:var(--bg)"></i>
       </div>
-      <div style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.02em">Mobilkollen</div>
+      <div style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.02em">Lurkollen</div>
       <div style="font-size:13px;color:var(--text3);text-align:center">Logga in för att fortsätta</div>
     </div>
 
@@ -42,7 +42,7 @@
 
 <!-- UPLOAD SCREEN -->
 <div id="uploadScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:99;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem">
-  <div style="font-size:20px;font-weight:700;color:var(--text)"><i class="ti ti-device-mobile-off" style="margin-right:8px"></i><span data-i18n="upload.title">Mobiltillsyn</span></div>
+  <div style="font-size:20px;font-weight:700;color:var(--text)"><i class="ti ti-device-mobile-off" style="margin-right:8px"></i><span data-i18n="upload.title">Lurkollen</span></div>
   <div style="font-size:14px;color:var(--text2);text-align:center;max-width:360px" data-i18n="upload.subtitle">Ladda upp en elevlista för att komma igång. Behöver du en startpunkt? Ladda ned exempelfilen nedan, fyll i den och ladda upp den.</div>
   <label class="btn" style="cursor:pointer;font-size:15px;padding:12px 24px"><i class="ti ti-upload" aria-hidden="true"></i><span data-i18n="upload.btn">Ladda upp elev-CSV</span><input type="file" accept=".csv,.xml,.json,.xlsx,.tsv,.txt" style="display:none" onchange="handleSmartImport(this)"></label>
   <button onclick="downloadTemplate()" style="background:none;border:none;font-size:13px;color:var(--text2);cursor:pointer;text-decoration:underline;padding:0"><i class="ti ti-download" style="margin-right:4px"></i><span data-i18n="upload.template">Ladda ned exempel-CSV-mall</span></button>
@@ -54,7 +54,7 @@
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-brand">
-        <i class="ti ti-device-mobile"></i>Mobilkollen
+        <i class="ti ti-device-mobile"></i>Lurkollen
       </div>
       <div class="sidebar-school" id="sidebarSchoolName">—</div>
     </div>

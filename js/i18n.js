@@ -24,7 +24,7 @@ const TRANSLATIONS = {
     'date.today_week': 'Idag · Vecka {wk}',
 
     // Upload screen
-    'upload.title':       'Mobiltillsyn',
+    'upload.title':       'Lurkollen',
     'upload.subtitle':    'Ladda upp en elevlista för att komma igång. Behöver du en startpunkt? Ladda ned exempelfilen nedan, fyll i den och ladda upp den.',
     'upload.btn':         'Ladda upp elev-CSV',
     'upload.template':    'Ladda ned exempel-CSV-mall',
@@ -340,7 +340,7 @@ const TRANSLATIONS = {
     'date.today_week': 'Today · Week {wk}',
 
     // Upload screen
-    'upload.title':       'Phone Check-In',
+    'upload.title':       'Lurkollen',
     'upload.subtitle':    'Upload a student list to get started. Need a starting point? Download the sample file below, fill it in, then upload it.',
     'upload.btn':         'Upload students CSV',
     'upload.template':    'Download sample CSV template',

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mobilkollen — Visning</title>
+<title>Lurkollen — Visning</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23162032'/><rect x='10' y='4' width='12' height='20' rx='3' fill='none' stroke='%23ffffff' stroke-width='2'/><circle cx='16' cy='21' r='1' fill='%23ffffff'/><line x1='8' y1='27' x2='24' y2='27' stroke='%23e84040' stroke-width='2.5' stroke-linecap='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -279,7 +279,7 @@ body {
 <header class="header">
   <div class="header-brand">
     <i class="ti ti-device-mobile"></i>
-    Mobilkollen
+    Lurkollen
   </div>
   <div class="header-school" id="schoolName">—</div>
   <div class="header-spacer"></div>
@@ -366,7 +366,7 @@ async function loadAll() {
   // School name
   const name = _settings.schoolName || '';
   document.getElementById('schoolName').textContent = name;
-  if (name) document.title = 'Mobilkollen — ' + name;
+  if (name) document.title = 'Lurkollen — ' + name;
 
   // Build class list
   const clsSet = new Set();

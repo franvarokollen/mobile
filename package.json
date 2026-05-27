@@ -1,7 +1,7 @@
 {
-  "name": "mobilkollen-online",
+  "name": "lurkollen",
   "version": "1.0.0",
-  "description": "School phone check-in system — online version",
+  "description": "Lurkollen — school phone check-in system",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"
