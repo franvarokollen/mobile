@@ -44,9 +44,9 @@ async function handleGuardianUpload(input) {
 
 function guardianBlock(logId, students, guardians, barcodeMap) {
   var s = resolveStudent(logId, students, barcodeMap);
-  if (!s) return '<div style="font-size:12px;color:var(--text3);margin-top:6px">${t('report.no_guardian_inline')}</div>';
+  if (!s) return `<div style="font-size:12px;color:var(--text3);margin-top:6px">${t('report.no_guardian_inline')}</div>`;
   var arr = guardians[s.id];
-  if (!arr || !arr.length) return '<div style="font-size:12px;color:var(--text3);margin-top:6px">${t('report.no_guardian_inline')}</div>';
+  if (!arr || !arr.length) return `<div style="font-size:12px;color:var(--text3);margin-top:6px">${t('report.no_guardian_inline')}</div>`;
   return arr.map(function(g) {
     var name = ((g.fname || g.fname1 || '') + ' ' + (g.lname || g.lname1 || '')).trim();
     var phones = [];
