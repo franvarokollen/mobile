@@ -1039,6 +1039,14 @@ function toggleCheck(label, schoolId, field, event) {
   saveMeta(schoolId, { [field]: isChecked });
   const cb = label.querySelector('input[type=checkbox]');
   if (cb) cb.checked = isChecked;
+  // Keep in-memory cache in sync so language swap / re-render doesn't revert the value
+  if (window._lastSchools) {
+    const school = window._lastSchools.find(s => s.id === schoolId);
+    if (school) {
+      if (!school.meta) school.meta = {};
+      school.meta[field] = isChecked;
+    }
+  }
 }
 
 function changeStatus(schoolId, value) {
