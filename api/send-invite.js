@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
   const subject     = s.emailSubject    || DEFAULT_SUBJECT;
   const emailBody   = s.emailBody       || DEFAULT_BODY;
   const fromName    = s.emailFromName    || 'Lurkollen';
-  const fromAddress = s.emailFromAddress || 'onboarding@resend.dev';
+  const fromAddress = s.emailFromAddress || 'noreply@lurkollen.com';
   const from        = `${fromName} <${fromAddress}>`;
   const origin      = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
 

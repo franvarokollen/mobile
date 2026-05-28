@@ -611,6 +611,8 @@ const TR = {
     admin_email_required: 'En administratörsepost krävs för att skapa en skola.',
     school_registered_no_admin: 'Skola skapad — administratören hittades inte. Lägg till dem via Konfigurera → Användare.',
     no_admin_warning: 'Ingen admin',
+    no_students_warning: 'Inga elever',
+    invite_sent: 'Inbjudan skickad',
     users_chip: 'lärare',
     fmt_letter: 'Bokstav (5A)', fmt_dot: 'Punkt (5.1)',
     fmt_number: 'Nummer (51)', fmt_none: 'Enbart år',
@@ -682,6 +684,8 @@ const TR = {
     admin_email_required: 'An administrator email is required to create a school.',
     school_registered_no_admin: 'School created — administrator not found. Add them via Configure → Users.',
     no_admin_warning: 'No admin',
+    no_students_warning: 'No students',
+    invite_sent: 'Invite sent',
     users_chip: 'teachers',
     fmt_letter: 'Letter (5A)', fmt_dot: 'Dot (5.1)',
     fmt_number: 'Number (51)', fmt_none: 'Year only',
@@ -932,6 +936,9 @@ function renderCard(school) {
           ${(school.adminCount || 0) === 0
             ? `<div class="stat-chip" style="background:var(--red-bg);color:var(--red);border-color:rgba(220,38,38,0.25)"><i class="ti ti-alert-triangle"></i>${t('no_admin_warning')}</div>`
             : ''}
+          ${(school.activeStudents || 0) === 0
+            ? `<div class="stat-chip" style="background:var(--amber-bg);color:var(--amber);border-color:rgba(217,119,6,0.25)"><i class="ti ti-users-group"></i>${t('no_students_warning')}</div>`
+            : ''}
         </div>
 
         <div class="block-label">${t('settings_lbl')}</div>
@@ -945,6 +952,7 @@ function renderCard(school) {
           ${checkItem(id, 'gdpr_signed',     t('gdpr'),        !!meta.gdpr_signed)}
           ${checkItem(id, 'billing_added',   t('invoice'),     !!meta.billing_added)}
           ${checkItem(id, 'onboarded',       t('onboarding'),  !!meta.onboarded)}
+          ${checkItem(id, 'invite_sent',     t('invite_sent'), !!meta.invite_sent)}
         </div>
         <input class="admin-input" placeholder="${t('contact_ph')}"
           value="${esc(meta.contact_name)}"

@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
   const subject      = s.emailSubject || DEFAULT_SUBJECT;
   const body         = s.emailBody    || DEFAULT_BODY;
   const fromName     = s.emailFromName    || 'Lurkollen';
-  const fromAddress  = s.emailFromAddress || 'onboarding@resend.dev';
+  const fromAddress  = s.emailFromAddress || 'noreply@lurkollen.com';
   const from         = `${fromName} <${fromAddress}>`;
   const origin       = baseUrl || 'https://lurkollen.vercel.app';
 
