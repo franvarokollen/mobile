@@ -201,6 +201,43 @@ async function signInWithGoogle() {
   }
 }
 
+/** Send a magic link to the given email address. */
+async function signInWithMagicLink() {
+  const input = document.getElementById('magicLinkEmail');
+  const btn   = document.getElementById('magicLinkBtn');
+  const email = (input?.value || '').trim();
+
+  if (!email || !email.includes('@')) {
+    _showLoginMessage('Ange en giltig e-postadress');
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  // Preserve any ?join=CODE across the magic link redirect
+  const urlCode = new URLSearchParams(window.location.search).get('join');
+  if (urlCode) localStorage.setItem('pendingJoinCode', urlCode.trim().toUpperCase());
+
+  const { error } = await _supabaseClient.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin + window.location.pathname }
+  });
+
+  if (error) {
+    _showLoginMessage(error.message);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send" style="font-size:15px"></i>Skicka inloggningslänk'; }
+    return;
+  }
+
+  // Show confirmation state
+  const form = document.getElementById('loginForm');
+  const sent = document.getElementById('loginSent');
+  const sentTo = document.getElementById('magicLinkSentTo');
+  if (form) form.style.display = 'none';
+  if (sent) sent.style.display = 'flex';
+  if (sentTo) sentTo.textContent = email;
+}
+
 /** Sign out of Supabase and show the login screen. */
 async function signOut() {
   await stopSchoolChannel();
