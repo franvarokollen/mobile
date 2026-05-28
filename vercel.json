@@ -39,6 +39,8 @@
     { "src": "/js/(.*)",           "dest": "/js/$1" },
     { "src": "/view",              "dest": "/view/index.html" },
     { "src": "/view/(.*)",         "dest": "/view/$1" },
+    { "src": "/privacy",           "dest": "/privacy.html" },
+    { "src": "/terms",             "dest": "/terms.html" },
     { "src": "/(.*)",              "dest": "/index.html" }
   ]
 }
