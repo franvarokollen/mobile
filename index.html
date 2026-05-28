@@ -384,6 +384,53 @@
   </div>
 </div>
 
+<!-- DPA SIGNING MODAL -->
+<div id="dpaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:0.5px solid var(--border)">
+      <div style="font-size:15px;font-weight:700"><i class="ti ti-file-certificate" style="margin-right:7px;color:var(--accent)"></i><span data-i18n="dpa.modal_title">Personuppgiftsbiträdesavtal</span></div>
+      <button onclick="closeDpaModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);line-height:1">×</button>
+    </div>
+
+    <!-- Scrollable summary -->
+    <div style="overflow-y:auto;padding:1.25rem 1.5rem;flex:1;font-size:13px;color:var(--text2);line-height:1.65">
+      <p style="margin-bottom:12px" data-i18n="dpa.summary_intro">Innan Lurkollen tas i bruk måste skolan ingå ett personuppgiftsbiträdesavtal (PUB-avtal) med Frånvarokollen Sverige AB i enlighet med GDPR artikel 28.</p>
+      <div style="background:var(--surface2);border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:8px" data-i18n="dpa.key_points_title">Avtalets huvudpunkter</div>
+        <ul style="margin:0 0 0 1rem;padding:0;display:flex;flex-direction:column;gap:5px">
+          <li data-i18n="dpa.point_owner">Skolan äger all data — vi behandlar den enbart på skolans uppdrag.</li>
+          <li data-i18n="dpa.point_purpose">Data används uteslutande för att driva tjänsten Lurkollen.</li>
+          <li data-i18n="dpa.point_security">All data krypteras i transit (TLS) och i vila (AES-256).</li>
+          <li data-i18n="dpa.point_deletion">All data raderas inom 30 dagar efter avtalets upphörande.</li>
+          <li data-i18n="dpa.point_breach">Vi informerar er om incidenter inom 48 timmar.</li>
+          <li data-i18n="dpa.point_law">Avtalet regleras av svensk lag, Stockholms tingsrätt.</li>
+        </ul>
+      </div>
+      <a href="/dpa" target="_blank" style="font-size:12px;color:var(--text2);text-decoration:underline" data-i18n="dpa.full_link">Läs hela avtalet (öppnas i ny flik) →</a>
+    </div>
+
+    <!-- Sign form -->
+    <div style="padding:1.25rem 1.5rem;border-top:0.5px solid var(--border)">
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px" data-i18n="dpa.name_label">Ditt namn</div>
+        <input id="dpaSignerName" type="text" autocomplete="name"
+          style="width:100%;padding:9px 12px;border:0.5px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif"
+          data-i18n-placeholder="dpa.name_placeholder">
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:14px">
+        <input type="checkbox" id="dpaCheckbox" style="margin-top:2px;flex-shrink:0;width:15px;height:15px;cursor:pointer">
+        <span style="font-size:12px;color:var(--text2);line-height:1.5" id="dpaCheckboxLabel" data-i18n="dpa.checkbox_label">Jag har läst och accepterar detta avtal på uppdrag av skolan.</span>
+      </label>
+      <div id="dpaError" style="font-size:12px;color:var(--accent);margin-bottom:10px;min-height:16px"></div>
+      <button id="dpaSignBtn" onclick="signDpa()"
+        style="width:100%;padding:11px;background:var(--text);color:var(--bg);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif"
+        data-i18n="dpa.sign_btn">Signera avtal</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRIVACY NOTICE MODAL -->
 <div id="privacyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;padding:1rem">
   <div style="background:var(--surface);border-radius:16px;padding:1.5rem;width:100%;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,0.2)">

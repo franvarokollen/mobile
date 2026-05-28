@@ -139,13 +139,15 @@ document.addEventListener('keydown', e => {
         <div style="font-size:13px">${t('loading.students')}</div>
       </div>`;
     // Fire all fetches in parallel — cuts load time to the slowest single request
-    const [,,,, remote] = await Promise.all([
+    const [,,,, remote, dpaStatus] = await Promise.all([
       fetchSettingsFromServer(),
       fetchStudentsFromServer(),
       fetchExtraFromServer(),
       loadFlagsFromServer(),
-      serverGet(currentDate)
+      serverGet(currentDate),
+      authFetch(`${API}/dpa`).then(r => r.json()).catch(() => ({ signed: false })),
     ]);
+    window._dpaSigned = !!(dpaStatus && dpaStatus.signed);
     if (remote !== null) {
       const logs = loadLogs();
       logs[currentDate] = remote;

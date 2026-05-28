@@ -20,6 +20,12 @@ function renderOnboarding() {
 
   const steps = [
     {
+      done: !!(window._dpaSigned),
+      label: t('onboarding.step_dpa'),
+      action: () => openDpaModal(),
+      actionLabel: t('onboarding.go_sign'),
+    },
+    {
       done: !!(s.schoolName && s.schoolName.trim()),
       label: t('onboarding.step_name'),
       action: () => switchView('settings'),

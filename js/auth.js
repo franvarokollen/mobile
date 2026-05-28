@@ -423,6 +423,58 @@ async function createBackup() {
   } catch(e) { showToast(t('backup.failed')); }
 }
 
+// ── DPA signing ──────────────────────────────────────────────
+function openDpaModal() {
+  const modal = document.getElementById('dpaModal');
+  if (!modal) return;
+  // Personalise the checkbox label with the school name
+  const schoolName = getSettings().schoolName || '';
+  const lbl = document.getElementById('dpaCheckboxLabel');
+  if (lbl) lbl.textContent = t('dpa.checkbox_label').replace('{school}', schoolName || t('dpa.your_school'));
+  // Fill placeholder
+  const inp = document.getElementById('dpaSignerName');
+  if (inp) inp.placeholder = t('dpa.name_placeholder');
+  modal.style.display = 'flex';
+}
+
+function closeDpaModal() {
+  const modal = document.getElementById('dpaModal');
+  if (modal) modal.style.display = 'none';
+  document.getElementById('dpaError').textContent = '';
+}
+
+async function signDpa() {
+  const name = document.getElementById('dpaSignerName')?.value.trim();
+  const checked = document.getElementById('dpaCheckbox')?.checked;
+  const err = document.getElementById('dpaError');
+  if (!name) { if (err) err.textContent = t('dpa.error_name'); return; }
+  if (!checked) { if (err) err.textContent = t('dpa.error_checkbox'); return; }
+  if (err) err.textContent = '';
+
+  const btn = document.getElementById('dpaSignBtn');
+  if (btn) { btn.disabled = true; btn.textContent = t('dpa.signing'); }
+
+  try {
+    const r = await authFetch(`${API}/dpa`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ signerName: name }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      window._dpaSigned = true;
+      showToast(t('dpa.signed_ok'));
+      closeDpaModal();
+      renderOnboarding();
+    } else {
+      if (err) err.textContent = d.error || t('dpa.error_failed');
+    }
+  } catch(e) {
+    if (err) err.textContent = t('dpa.error_failed');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = t('dpa.sign_btn'); }
+}
+
 // ── Privacy notice ───────────────────────────────────────────
 function checkPrivacyNotice() {
   if (!localStorage.getItem('phc_privacy_ok')) {
