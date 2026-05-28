@@ -130,26 +130,50 @@ async function showBackups() {
     files.forEach(function(f) {
       const d = new Date(f.time);
       const label = d.toLocaleDateString('sv-SE') + ' ' + d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-      const kb = Math.round(f.size / 1024 * 10) / 10;
-      const isDaily = f.name.startsWith('daily-');
+      const kb = Math.round((f.size || 0) / 1024 * 10) / 10;
+      const isAuto = f.type === 'auto' || f.name.startsWith('daily-');
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:13px;border-left:3px solid ' + (isDaily ? '#16a34a' : 'var(--border)');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:13px;border-left:3px solid ' + (isAuto ? '#16a34a' : 'var(--border)');
       const info = document.createElement('div');
-      info.innerHTML = '<div style="font-weight:500;color:var(--text)">' + label + (isDaily ? ' <span style="font-size:10px;background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px">' + t('backup.daily_badge') + '</span>' : '') + '</div><div style="color:var(--text3);font-size:11px">' + kb + 'KB</div>';
-      const btn = document.createElement('button');
-      btn.textContent = t('students.restore');
-      btn.style.cssText = 'padding:5px 12px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600';
-      btn.onclick = function() { restoreBackup(f.name); };
-      row.appendChild(info); row.appendChild(btn);
+      info.style.cssText = 'flex:1;min-width:0';
+      info.innerHTML = '<div style="font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + label +
+        (isAuto ? ' <span style="font-size:10px;background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px">' + t('backup.auto_badge') + '</span>' : '') +
+        '</div><div style="color:var(--text3);font-size:11px">' + kb + ' KB</div>';
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:5px;flex-shrink:0';
+      const dlBtn = document.createElement('button');
+      dlBtn.title = t('backup.download');
+      dlBtn.innerHTML = '<i class="ti ti-download"></i>';
+      dlBtn.style.cssText = 'padding:5px 8px;background:var(--surface);border:0.5px solid var(--border2);border-radius:6px;cursor:pointer;font-size:13px;color:var(--text2);line-height:1';
+      dlBtn.onclick = function() { downloadBackup(f.name); };
+      const restoreBtn = document.createElement('button');
+      restoreBtn.textContent = t('students.restore');
+      restoreBtn.style.cssText = 'padding:5px 12px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600';
+      restoreBtn.onclick = function() { restoreBackup(f.name); };
+      btns.appendChild(dlBtn); btns.appendChild(restoreBtn);
+      row.appendChild(info); row.appendChild(btns);
       list.appendChild(row);
     });
   } catch(e) { list.innerHTML = `<div style="color:var(--red-text);font-size:13px">${t('backup.failed')}</div>`; }
 }
 
-async function restoreBackup(name) {
-  if (!confirm(t('backup.hint') + '\n' + name)) return;
+async function downloadBackup(name) {
   try {
-    const r = await authFetch(`${API}/backups/restore/${name}`, { method: 'POST' });
+    const r = await authFetch(`${API}/backups?action=download&name=${encodeURIComponent(name)}`);
+    if (!r.ok) { showToast(t('backup.failed')); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `lurkollen-backup-${name}.json`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  } catch(e) { showToast(t('backup.failed')); }
+}
+
+async function restoreBackup(name) {
+  if (!confirm(t('backup.restore_confirm') + '\n' + name)) return;
+  try {
+    const r = await authFetch(`${API}/backups?action=restore&name=${encodeURIComponent(name)}`, { method: 'POST' });
     const d = await r.json();
     if (d.ok) {
       showToast('✓ ' + name.slice(7, 19));
@@ -160,6 +184,6 @@ async function restoreBackup(name) {
       const remote = await serverGet(currentDate);
       if (remote) { const logs = loadLogs(); logs[currentDate] = remote; saveLogs(logs); }
       renderDash(); renderGrid();
-    }
+    } else { showToast(t('backup.failed')); }
   } catch(e) { showToast(t('backup.failed')); }
 }

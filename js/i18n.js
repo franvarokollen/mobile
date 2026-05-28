@@ -245,9 +245,12 @@ const TRANSLATIONS = {
     'inactivity.stay':  'Stanna inloggad',
 
     // Backup modal
-    'backup.title':       '💾 Återställ säkerhetskopia',
-    'backup.hint':        'Välj en säkerhetskopia att återställa. Detta skriver över all aktuell data.',
-    'backup.daily_badge': 'DAGLIG',
+    'backup.title':           '💾 Säkerhetskopior',
+    'backup.hint':            'Inga säkerhetskopior sparade ännu.',
+    'backup.restore_confirm': 'Återställ från den här säkerhetskopian? All nuvarande data skrivs över.',
+    'backup.daily_badge':     'AUTO',
+    'backup.auto_badge':      'AUTO',
+    'backup.download':        'Ladda ned',
 
     // Drill modal
     'drill.not_in':      'Ej inlämnad',
@@ -623,9 +626,12 @@ const TRANSLATIONS = {
     'inactivity.stay':  'Stay logged in',
 
     // Backup modal
-    'backup.title':       '💾 Restore Backup',
-    'backup.hint':        'Select a backup to restore. This will overwrite all current data.',
-    'backup.daily_badge': 'DAILY',
+    'backup.title':           '💾 Backups',
+    'backup.hint':            'No backups saved yet.',
+    'backup.restore_confirm': 'Restore from this backup? All current data will be overwritten.',
+    'backup.daily_badge':     'AUTO',
+    'backup.auto_badge':      'AUTO',
+    'backup.download':        'Download',
 
     // Drill modal
     'drill.not_in':      'Not in',

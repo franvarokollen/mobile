@@ -413,10 +413,10 @@ function purgeOldLogs() {
 async function createBackup() {
   showToast(t('backup.creating'));
   try {
-    const r = await authFetch(`${API}/backups`, {
+    const r = await authFetch(`${API}/backups?action=manual`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'manual-' + new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-') })
+      body: JSON.stringify({})
     });
     if (r.ok) showToast(t('backup.done'));
     else showToast(t('backup.failed'));

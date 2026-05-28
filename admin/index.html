@@ -432,6 +432,7 @@ body {
       <button class="stab" data-sec="retention" onclick="switchStab(this,'retention')">🗄️ <span id="stab_retention"></span></button>
       <button class="stab" data-sec="users" onclick="switchStab(this,'users')">👥 <span id="stab_users"></span></button>
       <button class="stab" data-sec="invites" onclick="switchStab(this,'invites')">🔗 <span id="stab_invites"></span></button>
+      <button class="stab" data-sec="backups" onclick="switchStab(this,'backups')">💾 <span id="stab_backups"></span></button>
     </div>
 
     <!-- School section -->
@@ -546,6 +547,20 @@ body {
       </div>
     </div>
 
+    <!-- Backups section -->
+    <div class="ssec" id="ssec_backups">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase" id="lbl_backups_title"></div>
+        <button onclick="adminCreateBackup()" id="adminCreateBackupBtn"
+          style="height:30px;padding:0 12px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px">
+          <i class="ti ti-device-floppy"></i> <span id="lbl_backup_create_btn"></span>
+        </button>
+      </div>
+      <div id="adminBackupsList" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto">
+        <div style="font-size:13px;color:var(--text3)" id="backupsLoadingMsg"></div>
+      </div>
+    </div>
+
     <!-- Invites section -->
     <div class="ssec" id="ssec_invites">
       <!-- Create invite row -->
@@ -649,6 +664,17 @@ const TR = {
     lbl_bulk_title: 'Massimport av personal (en e-post per rad)',
     bulk_import_btn: 'Importera', bulk_result: '{added} tillagda · {invited} inbjudningar skapade · {already} redan med · {failed} misslyckades',
     invite_link_copied: 'Länk kopierad!',
+    sect_backups: 'Säkerhetskopior',
+    lbl_backups_title: 'Säkerhetskopior',
+    backup_create_btn: 'Skapa nu',
+    backup_auto_badge: 'AUTO', backup_manual_badge: 'MANUELL',
+    backup_download: 'Ladda ned', backup_delete: 'Radera',
+    backup_restore: 'Återställ',
+    backup_creating: 'Skapar…', backup_created: 'Säkerhetskopia skapad',
+    backup_deleted: 'Raderad', backup_failed: 'Misslyckades',
+    backup_restore_confirm: 'Återställ från denna säkerhetskopia? ALL nuvarande data för skolan skrivs över permanent.',
+    backup_restored: 'Återställning klar',
+    no_backups: 'Inga säkerhetskopior ännu', loading_backups: 'Laddar…',
   },
   en: {
     schools: 'schools', active: 'active', trial: 'trial',
@@ -722,6 +748,17 @@ const TR = {
     lbl_bulk_title: 'Bulk import staff (one email per line)',
     bulk_import_btn: 'Import', bulk_result: '{added} added · {invited} invites created · {already} already in school · {failed} failed',
     invite_link_copied: 'Link copied!',
+    sect_backups: 'Backups',
+    lbl_backups_title: 'Backups',
+    backup_create_btn: 'Create now',
+    backup_auto_badge: 'AUTO', backup_manual_badge: 'MANUAL',
+    backup_download: 'Download', backup_delete: 'Delete',
+    backup_restore: 'Restore',
+    backup_creating: 'Creating…', backup_created: 'Backup created',
+    backup_deleted: 'Deleted', backup_failed: 'Failed',
+    backup_restore_confirm: 'Restore from this backup? ALL current data for this school will be permanently overwritten.',
+    backup_restored: 'Restore complete',
+    no_backups: 'No backups yet', loading_backups: 'Loading…',
   }
 };
 
@@ -1133,6 +1170,7 @@ function switchStab(btn, sec) {
   if (sec === 'school')  loadAdminDomains();
   if (sec === 'users')   loadAdminUsers();
   if (sec === 'invites') loadAdminInvites();
+  if (sec === 'backups') loadAdminBackups();
 }
 
 function toggleEodEnable(label) {
@@ -1165,6 +1203,10 @@ function populateSettingsLabels() {
   _setText('stab_retention',        t('sect_retention'));
   _setText('stab_users',            t('sect_users'));
   _setText('stab_invites',          t('sect_invites'));
+  _setText('stab_backups',          t('sect_backups'));
+  _setText('lbl_backups_title',     t('lbl_backups_title'));
+  _setText('lbl_backup_create_btn', t('backup_create_btn'));
+  _setText('backupsLoadingMsg',     t('loading_backups'));
   _setText('lbl_schoolDisplayName', t('lbl_school_display_name'));
   _setText('deleteSchoolBtn',       t('delete_school_btn'));
   _setText('lbl_domains_title',     t('lbl_domains_title'));
@@ -1561,6 +1603,87 @@ async function sendBulkInviteEmails(invites) {
     if (result) result.textContent = t('save_failed');
   }
   if (btn) btn.disabled = false;
+}
+
+// ── Admin backup management ───────────────────────────────────
+async function loadAdminBackups() {
+  const container = document.getElementById('adminBackupsList');
+  if (!container || !_settingsModalId) return;
+  container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('loading_backups')}</div>`;
+  try {
+    const r = await apiFetch(`/api/admin/backups?school_id=${_settingsModalId}`);
+    if (!r.ok) { container.innerHTML = ''; return; }
+    const backups = await r.json();
+    if (!backups.length) {
+      container.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('no_backups')}</div>`;
+      return;
+    }
+    container.innerHTML = backups.map(b => {
+      const d = new Date(b.time);
+      const label = d.toLocaleDateString('sv-SE') + ' ' + d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+      const kb = Math.round((b.size || 0) / 1024 * 10) / 10;
+      const isAuto = b.type === 'auto';
+      const badgeCss = isAuto
+        ? 'background:#16a34a;color:#fff;'
+        : 'background:var(--indigo-bg);color:var(--indigo);';
+      const badgeText = isAuto ? t('backup_auto_badge') : t('backup_manual_badge');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);border-left:3px solid ${isAuto ? '#16a34a' : 'var(--border2)'}">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;color:var(--text)">
+            ${label}
+            <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;${badgeCss}">${badgeText}</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3)">${kb} KB · ${esc(b.name)}</div>
+        </div>
+        <a href="/api/admin/backups?action=download&school_id=${encodeURIComponent(_settingsModalId)}&name=${encodeURIComponent(b.name)}"
+           data-backup-name="${esc(b.name)}"
+           onclick="adminDownloadBackup(event, '${esc(b.name)}')"
+           style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:4px 9px;text-decoration:none;display:flex;align-items:center;gap:3px">
+          <i class="ti ti-download"></i> ${t('backup_download')}
+        </a>
+        <button onclick="deleteAdminBackup('${esc(b.name)}')"
+          style="flex-shrink:0;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 4px;line-height:1">✕</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = `<div style="font-size:12px;color:var(--text3)">Error</div>`;
+  }
+}
+
+async function adminCreateBackup() {
+  const btn = document.getElementById('adminCreateBackupBtn');
+  if (btn) { btn.disabled = true; btn.querySelector('span').textContent = t('backup_creating'); }
+  try {
+    const r = await apiFetch(`/api/admin/backups?school_id=${encodeURIComponent(_settingsModalId)}`, {
+      method: 'POST', body: JSON.stringify({})
+    });
+    toast(r.ok ? t('backup_created') : t('backup_failed'));
+    if (r.ok) loadAdminBackups();
+  } catch(e) { toast(t('backup_failed')); }
+  if (btn) { btn.disabled = false; btn.querySelector('span').textContent = t('backup_create_btn'); }
+}
+
+function adminDownloadBackup(e, name) {
+  e.preventDefault();
+  apiFetch(`/api/admin/backups?action=download&school_id=${encodeURIComponent(_settingsModalId)}&name=${encodeURIComponent(name)}`)
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `lurkollen-backup-${name}.json`;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    })
+    .catch(() => toast(t('backup_failed')));
+}
+
+async function deleteAdminBackup(name) {
+  if (!confirm(`Delete backup "${name}"?`)) return;
+  try {
+    const r = await apiFetch(`/api/admin/backups?school_id=${encodeURIComponent(_settingsModalId)}&name=${encodeURIComponent(name)}`, { method: 'DELETE' });
+    if (r.ok) { toast(t('backup_deleted')); loadAdminBackups(); }
+    else toast(t('backup_failed'));
+  } catch(e) { toast(t('backup_failed')); }
 }
 
 // ── Delete school ─────────────────────────────────────────────
