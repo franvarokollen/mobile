@@ -3,10 +3,10 @@
 let _supabaseClient  = null;
 let _currentSession  = null;
 let _meInfo          = null;   // { user, school } from /api/me
-let _presenceChannel = null;
+let _schoolChannel   = null;   // single Realtime channel: presence + broadcast
 
 // ── Presence helpers ─────────────────────────────────────────
-const _PRESENCE_COLORS = ['#4f7ef8','#e04f4f','#27a872','#f0922b','#7c5cbf','#0ea5a0','#d4469a','#647987'];
+const _PRESENCE_COLORS = ['#e8e6df','#e8e6df','#e8e6df','#e8e6df','#e8e6df','#e8e6df','#e8e6df','#e8e6df'];
 
 function _presenceColor(uid) {
   let h = 0;
@@ -34,34 +34,77 @@ function renderPresenceAvatars(presences, myId) {
   ).join('') + (extra > 0 ? `<div class="presence-avatar" style="background:rgba(255,255,255,0.15)" title="${extra} more">+${extra}</div>` : '');
 }
 
-async function startPresence(schoolId, user) {
-  if (_presenceChannel) { try { await _supabaseClient.removeChannel(_presenceChannel); } catch(e){} }
+// ── Single school channel: presence + broadcast in one WebSocket ──
+async function startSchoolChannel(schoolId, user) {
+  if (_schoolChannel) { try { await _supabaseClient.removeChannel(_schoolChannel); } catch(e){} }
+
   const meta = user.user_metadata || {};
   const name = meta.full_name || meta.name || user.email;
 
-  _presenceChannel = _supabaseClient.channel(`school-presence:${schoolId}`, {
-    config: { presence: { key: user.id } }
+  _schoolChannel = _supabaseClient.channel(`school:${schoolId}`, {
+    config: {
+      presence:  { key: user.id },
+      broadcast: { self: false }   // don't echo our own broadcasts back to us
+    }
   });
 
-  _presenceChannel.on('presence', { event: 'sync' }, () => {
-    const presences = Object.values(_presenceChannel.presenceState()).flat();
+  // ── Presence ──────────────────────────────────────────────
+  _schoolChannel.on('presence', { event: 'sync' }, () => {
+    const presences = Object.values(_schoolChannel.presenceState()).flat();
     renderPresenceAvatars(presences, user.id);
   });
 
-  await _presenceChannel.subscribe(async status => {
+  // ── Status broadcast (another user tapped a student) ──────
+  _schoolChannel.on('broadcast', { event: 'status' }, ({ payload }) => {
+    const { date, id, status } = payload || {};
+    if (!date || !id || !status) return;
+    const logs = loadLogs();
+    if (!logs[date]) logs[date] = {};
+    logs[date][id] = status;
+    saveLogs(logs);
+    if (typeof renderDash === 'function' && currentView === 'dash') renderDash();
+  });
+
+  // ── Extra broadcast (star / house / note changed) ─────────
+  _schoolChannel.on('broadcast', { event: 'extra' }, () => {
+    if (Date.now() < _extraDirtyUntil) return;
+    fetchExtraFromServer().then(() => {
+      if (typeof renderDash === 'function' && currentView === 'dash') renderDash();
+    });
+  });
+
+  await _schoolChannel.subscribe(async status => {
     if (status === 'SUBSCRIBED') {
-      await _presenceChannel.track({ user_id: user.id, name, email: user.email });
+      await _schoolChannel.track({ user_id: user.id, name, email: user.email });
     }
   });
 }
 
-async function stopPresence() {
-  if (_presenceChannel && _supabaseClient) {
-    try { await _supabaseClient.removeChannel(_presenceChannel); } catch(e) {}
-    _presenceChannel = null;
+async function stopSchoolChannel() {
+  if (_schoolChannel && _supabaseClient) {
+    try { await _supabaseClient.removeChannel(_schoolChannel); } catch(e) {}
+    _schoolChannel = null;
   }
   renderPresenceAvatars([], null);
 }
+
+/** Push a status change to every other connected user instantly */
+function broadcastStatus(date, id, status) {
+  if (!_schoolChannel) return;
+  _schoolChannel.send({ type: 'broadcast', event: 'status', payload: { date, id, status } });
+}
+
+/** Signal peers to refresh their extra data */
+function broadcastExtra() {
+  if (!_schoolChannel) return;
+  _schoolChannel.send({ type: 'broadcast', event: 'extra', payload: {} });
+}
+
+// Legacy aliases kept so nothing else breaks
+function startPresence(schoolId, user) { return startSchoolChannel(schoolId, user); }
+function stopPresence()                { return stopSchoolChannel(); }
+function startSync()                   {}
+function stopSync()                    {}
 
 /**
  * Fetch runtime config, initialise the Supabase browser client, restore any
@@ -128,7 +171,7 @@ async function initAuth() {
   hideLoginOverlay();
   hideInviteOverlay();
   _updateUserDisplay(session.user);
-  startPresence(_meInfo.school.id, session.user);
+  startSchoolChannel(_meInfo.school.id, session.user);
   return session;
 }
 
@@ -160,7 +203,7 @@ async function signInWithGoogle() {
 
 /** Sign out of Supabase and show the login screen. */
 async function signOut() {
-  await stopPresence();
+  await stopSchoolChannel();
   if (_supabaseClient) await _supabaseClient.auth.signOut();
   _currentSession = null;
   _meInfo = null;

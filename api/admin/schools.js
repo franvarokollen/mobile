@@ -53,11 +53,17 @@ module.exports = async (req, res) => {
         .eq('school_id', school.id)
         .maybeSingle();
 
-      // User count
+      // User count and admin count
       const { count: userCount } = await supabase
         .from('school_users')
         .select('*', { count: 'exact', head: true })
         .eq('school_id', school.id);
+
+      const { count: adminCount } = await supabase
+        .from('school_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('school_id', school.id)
+        .eq('role', 'admin');
 
       return {
         school_id:     school.id,
@@ -68,6 +74,7 @@ module.exports = async (req, res) => {
         activeStudents,
         lastActive:    lastLog?.date   || null,
         userCount:     userCount || 0,
+        adminCount:    adminCount || 0,
         createdAt:     school.created_at,
       };
     }));

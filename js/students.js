@@ -18,6 +18,11 @@ function openEditStudent(id) {
   document.getElementById('editStudentBarcode').value = existingBarcode;
   const ex = getExtra(id);
   document.getElementById('editStudentNote').value = ex.note || '';
+  // Number field — label updates to match school setting
+  const cfg = typeof getSettings === 'function' ? getSettings() : {};
+  const numLabelEl = document.getElementById('editNumLabel');
+  if (numLabelEl) numLabelEl.textContent = cfg.studentNumLabel || 'Nummer';
+  document.getElementById('editStudentNum').value = s.num != null ? s.num : '';
   document.getElementById('editStudentModal').style.display = 'flex';
 }
 
@@ -32,6 +37,9 @@ function saveEditStudent() {
   const s = students[oldId];
   s.name = newName;
   s.cls = newCls;
+  const rawNum = document.getElementById('editStudentNum')?.value.trim();
+  s.num = rawNum !== '' && rawNum != null ? parseInt(rawNum) || rawNum : null;
+  if (s.num === null) delete s.num;
   students[oldId] = s;
   saveStudents(students);
   const bm = loadBarcodeMap();
@@ -93,6 +101,17 @@ async function reactivateStudent(id) {
   await patchStudentOnServer(id, { active: true });
   showToast(t('toast.student_updated'));
   renderStudentList();
+}
+
+function setStudentNum(id, raw) {
+  const students = loadStudents();
+  if (!students[id]) return;
+  const trimmed = String(raw || '').trim();
+  const n = trimmed === '' ? null : (parseInt(trimmed) || trimmed);
+  if (n === null) delete students[id].num;
+  else students[id].num = n;
+  saveStudents(students);
+  if (SERVER) patchStudentOnServer(id, students[id]);
 }
 
 function hasStudents() {

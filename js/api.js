@@ -52,6 +52,8 @@ async function serverSet(date, id, status) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date, id, status }),
     });
+    // Push change to all other connected clients instantly via Realtime
+    if (typeof broadcastStatus === 'function') broadcastStatus(date, id, status);
   } catch(e) {}
 }
 
@@ -83,7 +85,7 @@ async function pollServer() {
 
 function startPolling() {
   if (syncInterval) clearInterval(syncInterval);
-  syncInterval = setInterval(pollServer, 15000); // every 15s
+  syncInterval = setInterval(pollServer, 60000); // every 60s fallback (Realtime handles instant sync)
 }
 
 async function fetchStudentsFromServer() {

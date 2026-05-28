@@ -13,6 +13,9 @@ function setExtra(id, patch) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, ...patch })
+  }).then(() => {
+    // Tell peers to refresh their extra data
+    if (typeof broadcastExtra === 'function') broadcastExtra();
   }).catch(() => {});
 }
 

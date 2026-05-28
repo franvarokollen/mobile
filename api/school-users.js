@@ -1,12 +1,13 @@
-// GET  /api/school-users        → list users in school
-// DELETE /api/school-users?userId=xxx → remove user from school
+// GET    /api/school-users           → list users in school
+// PATCH  /api/school-users           → update role { userId, role }
+// DELETE /api/school-users?userId=xx → remove user from school
 
 const { supabase } = require('./_lib/supabase');
 const { requireAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -37,6 +38,33 @@ module.exports = async (req, res) => {
       email: userMap[r.user_id]?.email || '',
       name: userMap[r.user_id]?.name || '',
     })));
+  }
+
+  if (req.method === 'PATCH') {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { userId, role } = body || {};
+    if (!userId || !role) return res.status(400).json({ error: 'userId and role required' });
+    if (!['admin', 'teacher'].includes(role)) return res.status(400).json({ error: 'invalid_role' });
+
+    // Prevent demoting the very last admin
+    if (role === 'teacher') {
+      const { data: admins } = await supabase
+        .from('school_users')
+        .select('user_id')
+        .eq('school_id', auth.schoolId)
+        .eq('role', 'admin');
+      if ((admins || []).length === 1 && admins[0].user_id === userId) {
+        return res.status(400).json({ error: 'cannot_demote_last_admin' });
+      }
+    }
+
+    const { error } = await supabase
+      .from('school_users')
+      .update({ role })
+      .eq('school_id', auth.schoolId)
+      .eq('user_id', userId);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true });
   }
 
   if (req.method === 'DELETE') {

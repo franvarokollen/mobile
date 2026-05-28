@@ -149,7 +149,10 @@ function renderSettings() {
         <button class="settings-nav-item" onclick="switchSettingsSection('statuses',this)">${t('settings.section_statuses')}</button>
         <button class="settings-nav-item" onclick="switchSettingsSection('automation',this)">${t('settings.section_automation')}</button>
         <button class="settings-nav-item" onclick="switchSettingsSection('data',this)">${t('settings.section_data')}</button>
-        ${getMyRole() === 'admin' ? `<button class="settings-nav-item" onclick="switchSettingsSection('users',this);settingsLoadUsers();settingsLoadInvites()">${t('settings.section_users')}</button>` : ''}
+        ${getMyRole() === 'admin' ? `
+          <button class="settings-nav-item" onclick="switchSettingsSection('notifications',this)">${t('settings.section_notifications')}</button>
+          <button class="settings-nav-item" onclick="switchSettingsSection('users',this);settingsLoadUsers();settingsLoadInvites()">${t('settings.section_users')}</button>
+        ` : ''}
       </nav>
 
       <!-- Right content -->
@@ -165,6 +168,17 @@ function renderSettings() {
               <input id="setting_schoolName" value="${escHtml(s.schoolName || '')}" placeholder="${t('settings.school_ph')}">
               <div class="hint">${t('settings.school_hint')}</div>
             </div>
+
+            <div class="settings-field" style="margin-top:16px;padding-top:16px;border-top:0.5px solid var(--border)">
+              <label style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:block">${t('settings.studentnum_title')}</label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:10px">
+                <input type="checkbox" id="setting_studentNumEnabled" ${s.studentNumEnabled ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
+                ${t('settings.studentnum_enable')}
+              </label>
+              <label style="font-size:12px;color:var(--text2);margin-bottom:3px;display:block">${t('settings.studentnum_label')}</label>
+              <input id="setting_studentNumLabel" value="${escHtml(s.studentNumLabel || '')}" placeholder="${t('settings.studentnum_label_ph')}" style="max-width:260px">
+            </div>
+
             <div class="settings-save-bar">
               <button class="btn" onclick="saveSettings()" style="padding:9px 22px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border-color:var(--text)">
                 <i class="ti ti-device-floppy"></i>${t('settings.save')}
@@ -337,7 +351,7 @@ function renderSettings() {
               </div>
               <div style="margin-top:4px">
                 <div style="font-size:11px;color:var(--text3);margin-bottom:5px">
-                  ${t('settings.csv_paste_label') || 'Eller klistra in CSV direkt:'} <span style="font-family:\'DM Mono\',monospace;color:var(--text3);opacity:0.7">id, förnamn, efternamn, klass</span>
+                  ${t('settings.csv_paste_label') || 'Eller klistra in CSV direkt:'} <span style="font-family:\'DM Mono\',monospace;color:var(--text3);opacity:0.7">id, förnamn, efternamn, klass, nummer</span>
                 </div>
                 <textarea id="csvPasteArea" rows="4"
                   placeholder="12345678, Anna, Andersson, 7A&#10;87654321, Erik, Eriksson, 7B"
@@ -358,6 +372,49 @@ function renderSettings() {
               </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- Notifications section (admin only) -->
+        <div class="settings-section" id="settingsSec_notifications">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_notifications')}</div>
+            <div class="settings-card-sub">${t('settings.notif_sub')}</div>
+
+            <div style="padding:10px 12px;background:rgba(30,58,95,0.05);border:0.5px solid rgba(30,58,95,0.15);border-radius:var(--radius);font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.6">
+              <i class="ti ti-info-circle" style="margin-right:5px;color:var(--text3)"></i>${t('settings.notif_resend_hint')}
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+              <div class="settings-field">
+                <label>${t('settings.notif_from_name')}</label>
+                <input id="setting_emailFromName" value="${escHtml(s.emailFromName || '')}" placeholder="${t('settings.notif_from_name_ph')}">
+              </div>
+              <div class="settings-field">
+                <label>${t('settings.notif_from_email')}</label>
+                <input id="setting_emailFromAddress" type="email" value="${escHtml(s.emailFromAddress || '')}" placeholder="${t('settings.notif_from_email_ph')}">
+              </div>
+            </div>
+
+            <div class="settings-field" style="margin-bottom:14px">
+              <label>${t('settings.notif_subject')}</label>
+              <input id="setting_emailSubject" value="${escHtml(s.emailSubject || '')}" placeholder="${t('settings.notif_subject_ph')}">
+            </div>
+
+            <div class="settings-field" style="margin-bottom:6px">
+              <label>${t('settings.notif_body')}</label>
+              <textarea id="setting_emailBody" rows="12"
+                style="width:100%;box-sizing:border-box;padding:10px 12px;font-family:'DM Mono',monospace;font-size:11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);resize:vertical;line-height:1.6"
+                placeholder="HTML e-postinnehåll…"
+              >${escHtml(s.emailBody || '')}</textarea>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px"><i class="ti ti-variable" style="font-size:10px;margin-right:3px"></i>${t('settings.notif_vars')}</div>
+            </div>
+
+            <div class="settings-save-bar">
+              <button class="btn" onclick="saveSettings()" style="padding:9px 22px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border-color:var(--text)">
+                <i class="ti ti-device-floppy"></i>${t('settings.save')}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -506,10 +563,17 @@ async function saveSettings() {
     });
   });
 
-  const eodEnabled       = document.getElementById('setting_eodEnabled')?.checked || false;
-  const eodTime          = document.getElementById('setting_eodTime')?.value || '16:00';
-  const eodAction        = document.getElementById('setting_eodAction')?.value || 'clear';
+  const eodEnabled        = document.getElementById('setting_eodEnabled')?.checked || false;
+  const eodTime           = document.getElementById('setting_eodTime')?.value || '16:00';
+  const eodAction         = document.getElementById('setting_eodAction')?.value || 'clear';
   const dataRetentionDays = parseInt(document.getElementById('setting_retentionDays')?.value) || 90;
+  const studentNumEnabled = document.getElementById('setting_studentNumEnabled')?.checked || false;
+  const studentNumLabel   = document.getElementById('setting_studentNumLabel')?.value.trim() || '';
+
+  const emailFromName    = document.getElementById('setting_emailFromName')?.value.trim() || '';
+  const emailFromAddress = document.getElementById('setting_emailFromAddress')?.value.trim() || '';
+  const emailSubject     = document.getElementById('setting_emailSubject')?.value.trim() || '';
+  const emailBody        = document.getElementById('setting_emailBody')?.value || '';
 
   const data = {
     schoolName,
@@ -521,7 +585,13 @@ async function saveSettings() {
     eodEnabled,
     eodTime,
     eodAction,
-    dataRetentionDays
+    dataRetentionDays,
+    studentNumEnabled,
+    studentNumLabel,
+    emailFromName,
+    emailFromAddress,
+    emailSubject,
+    emailBody,
   };
 
   _settings = data;
@@ -742,17 +812,35 @@ async function settingsLoadUsers() {
     const myId = getMyUserId();
     container.innerHTML = users.map(u => {
       const isMe = u.userId === myId;
-      const roleLabel = u.role === 'admin' ? t('settings.users_role_admin') : t('settings.users_role_teacher');
+      const isAdmin = u.role === 'admin';
+      const roleLabel = isAdmin ? t('settings.users_role_admin') : t('settings.users_role_teacher');
       const joined = new Date(u.joinedAt).toLocaleDateString('sv-SE');
       const initial = (u.name || u.email || '?')[0].toUpperCase();
+
+      const roleBadge = `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;flex-shrink:0;
+        ${isAdmin
+          ? 'background:rgba(232,64,64,0.1);color:#e84040;border:0.5px solid rgba(232,64,64,0.25)'
+          : 'background:var(--surface3);color:var(--text3);border:0.5px solid var(--border2)'}"
+      >${roleLabel}</span>`;
+
+      const roleToggleBtn = !isMe
+        ? `<button onclick="settingsSetUserRole('${u.userId}','${isAdmin ? 'teacher' : 'admin'}','${escHtml(u.email)}')"
+            title="${isAdmin ? t('settings.users_demote') : t('settings.users_promote')}"
+            style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-size:11px;padding:4px 10px;font-family:'DM Sans',sans-serif">
+            ${isAdmin ? '↓ ' + t('settings.users_demote') : '↑ ' + t('settings.users_promote')}
+          </button>`
+        : '';
+
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius)">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;color:var(--text2)">${initial}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(u.name || u.email)}</div>
-          <div style="font-size:11px;color:var(--text3)">${escHtml(u.email)} · ${roleLabel} · ${joined}</div>
+          <div style="font-size:11px;color:var(--text3)">${escHtml(u.email)} · ${joined}</div>
         </div>
+        ${roleBadge}
         ${isMe ? `<span style="font-size:11px;color:var(--text3);padding:2px 8px;border:0.5px solid var(--border2);border-radius:10px;flex-shrink:0">${t('settings.users_you')}</span>` : ''}
-        ${!isMe ? `<button onclick="settingsRemoveUser('${u.userId}','${escHtml(u.email)}')" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:4px 10px">${t('settings.users_remove')}</button>` : ''}
+        ${roleToggleBtn}
+        ${!isMe ? `<button onclick="settingsRemoveUser('${u.userId}','${escHtml(u.email)}')" style="flex-shrink:0;background:none;border:0.5px solid var(--red-border);border-radius:6px;color:var(--red-text);cursor:pointer;font-size:12px;padding:4px 10px">${t('settings.users_remove')}</button>` : ''}
       </div>`;
     }).join('');
   } catch(e) {
@@ -769,6 +857,27 @@ async function settingsRemoveUser(userId, email) {
     } else {
       const d = await r.json().catch(() => ({}));
       showToast(d.error === 'cannot_remove_self' ? t('settings.users_cannot_remove_self') : t('settings.users_remove_error'));
+    }
+  } catch(e) { showToast(t('settings.users_remove_error')); }
+}
+
+async function settingsSetUserRole(userId, newRole, email) {
+  const actionLabel = newRole === 'admin' ? t('settings.users_promote') : t('settings.users_demote');
+  if (!confirm(`${actionLabel}: ${email}?`)) return;
+  try {
+    const r = await authFetch('/api/school-users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, role: newRole })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      showToast(t('settings.users_role_changed'));
+      settingsLoadUsers();
+    } else if (d.error === 'cannot_demote_last_admin') {
+      showToast(t('settings.users_last_admin'));
+    } else {
+      showToast(d.error || t('settings.users_remove_error'));
     }
   } catch(e) { showToast(t('settings.users_remove_error')); }
 }
@@ -792,6 +901,7 @@ async function settingsLoadInvites() {
       const used = !!inv.used_by && !!inv.email; // open invites (no email) never lock
       const expires = new Date(inv.expires_at).toLocaleDateString('sv-SE');
       const joinUrl = `${window.location.origin}/?join=${inv.code}`;
+      const canSendEmail = !used && !!inv.email;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);${used ? 'opacity:0.5' : ''}">
         <div style="flex:1;min-width:0">
           <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${joinUrl}</div>
@@ -801,6 +911,7 @@ async function settingsLoadInvites() {
           ${used ? `<span>${t('settings.invite_used')}</span>` : `exp ${expires}`}
         </div>
         ${!used ? `<button onclick="settingsCopyInviteLink('${escHtml(joinUrl)}')" title="${t('settings.invite_copy')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:3px 10px"><i class="ti ti-copy"></i></button>` : ''}
+        ${canSendEmail ? `<button onclick="settingsSendInviteEmail('${inv.id}','${escHtml(inv.email)}')" title="${t('settings.notif_send')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-size:12px;padding:3px 10px;display:flex;align-items:center;gap:4px"><i class="ti ti-send"></i>${t('settings.notif_send')}</button>` : ''}
         <button onclick="settingsDeleteInvite('${inv.id}')" title="Delete" style="flex-shrink:0;background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:2px 4px;line-height:1">✕</button>
       </div>`;
     }).join('') + `</div>`;
@@ -843,4 +954,23 @@ async function settingsDeleteInvite(id) {
 
 function settingsCopyInviteLink(url) {
   navigator.clipboard.writeText(url).then(() => showToast(t('settings.invite_code_copied')));
+}
+
+async function settingsSendInviteEmail(inviteId, email) {
+  if (!confirm(`${t('settings.notif_send')}: ${email}?`)) return;
+  try {
+    const r = await authFetch('/api/send-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteId })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      showToast(t('settings.notif_sent'));
+    } else if (d.error === 'email_not_configured') {
+      showToast(t('settings.notif_no_api'));
+    } else {
+      showToast(d.error || t('settings.notif_send_error'));
+    }
+  } catch(e) { showToast(t('settings.notif_send_error')); }
 }

@@ -2,6 +2,8 @@
 
 // ── View switching ──────────────────────────────────────────
 function switchView(v) {
+  // Teachers cannot access Settings
+  if (v === 'settings' && getMyRole() !== 'admin') { v = 'dash'; }
   viewHistory.push(v);
   if (viewHistory.length > 10) viewHistory.shift();
   // show/hide back button
@@ -150,6 +152,11 @@ document.addEventListener('keydown', e => {
       saveLogs(logs);
     }
     CLASSES = getClasses(loadStudents()) || CLASSES;
+    // Hide Settings nav for non-admin users
+    if (getMyRole() !== 'admin') {
+      const navSettings = document.getElementById('navSettings');
+      if (navSettings) navSettings.style.display = 'none';
+    }
     startPolling();
     updateDateDisplay();
     renderDash();

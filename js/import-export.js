@@ -1,7 +1,7 @@
 // ─── IMPORT / EXPORT ───────────────────────────────────────
 
 // Normalizes field names from any importer into the canonical student object shape.
-// All code expects: { id, fname, lname, name, cls, active }
+// All code expects: { id, fname, lname, name, cls, active, num? }
 function normalizeStudentObj(obj) {
   // class → cls (reserved word in old code)
   if (obj.class !== undefined && !obj.cls) { obj.cls = obj.class; }
@@ -16,6 +16,13 @@ function normalizeStudentObj(obj) {
     const parts = obj.name.trim().split(/\s+/);
     obj.fname = parts[0] || '';
     obj.lname = parts.slice(1).join(' ') || '';
+  }
+  // num — coerce to integer if numeric, keep string otherwise, drop if empty
+  if (obj.num !== undefined && obj.num !== '') {
+    const n = parseInt(obj.num);
+    obj.num = isNaN(n) ? String(obj.num).trim() : n;
+  } else {
+    delete obj.num;
   }
   if (obj.active === undefined) obj.active = true;
 }
@@ -272,15 +279,15 @@ function exportGuardianXLSX(mode) {
 
 function downloadTemplate() {
   const rows = [
-    'ID,First Name,Last Name,Class',
-    'S100001,Anna,Andersson,7A',
-    'S100002,Erik,Lindqvist,7A',
-    'S100003,Maja,Söderström,7B',
-    'S100004,Liam,Berg,7B',
-    'S100005,Sofia,Karlsson,8A',
-    'S100006,Oscar,Nilsson,8A',
-    'S100007,Ella,Johansson,8B',
-    'S100008,Noah,Petersson,9A',
+    'ID,First Name,Last Name,Class,Nummer',
+    'S100001,Anna,Andersson,7A,42',
+    'S100002,Erik,Lindqvist,7A,17',
+    'S100003,Maja,Söderström,7B,',
+    'S100004,Liam,Berg,7B,',
+    'S100005,Sofia,Karlsson,8A,',
+    'S100006,Oscar,Nilsson,8A,',
+    'S100007,Ella,Johansson,8B,',
+    'S100008,Noah,Petersson,9A,',
   ];
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
@@ -312,6 +319,7 @@ function detectField(header) {
     { field: 'lastName',  kw: ['efternamn','last name','lastname','lname','surname','family name','eftern','familyname'] },
     { field: 'name',      kw: ['name','namn','helnamn','full name','full_name','student name','elev'] },
     { field: 'class',     kw: ['klass','class','homeroom','grupp','group','year group','form','grade','kl'] },
+    { field: 'num',       kw: ['nummer','num','number','nr','locker','skåp','shelf','hylla','seat','plats','position','skåpnr','hyllnr','lockernr','locker nr','locker number'] },
     { field: 'phone',     kw: ['telefon','phone','mobil','mobile','tel','cell','contact','phonenumber','phone number'] },
     { field: 'email',     kw: ['email','e-post','epost','mail','e-mail','emailaddress'] },
     { field: 'guardian',  kw: ['målsman','vårdnadshavare','guardian','parent','contact name','förälder','guardian name','parent name'] },
@@ -348,7 +356,7 @@ function parseCSVUniversal(text) {
 
 // Show a column-mapping UI so user can confirm auto-detected fields
 function showMappingUI(headers, rows, onConfirm) {
-  const fieldOptions = ['(skip)', 'id', 'firstName', 'lastName', 'name', 'class', 'phone', 'email', 'guardian'];
+  const fieldOptions = ['(skip)', 'id', 'firstName', 'lastName', 'name', 'class', 'num', 'phone', 'email', 'guardian'];
   const mappings = headers.map(h => detectField(h) || '(skip)');
   const preview = rows.slice(0, 3);
   let html = `<div style="margin-bottom:1rem;font-size:13px;color:var(--text2)">${t('map.hint')}</div>`;

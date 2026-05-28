@@ -19,6 +19,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
+    if (auth.role !== 'admin') return res.status(403).json({ error: 'admin_required' });
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { error } = await supabase
       .from('settings')

@@ -89,7 +89,7 @@ function renderGrid() {
   }
 
   let list = Object.values(students).filter(s => s.active && inScope(s.cls) && (currentClass === 'ALL' || s.cls === currentClass));
-  if (q) list = list.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+  if (q) list = list.filter(s => s.name.toLowerCase().includes(q) || s.cls.toLowerCase().includes(q) || String(s.num ?? '').includes(q));
   // Apply status filter — supports any custom status key
   if (statusFilter === 'ok') {
     list = list.filter(s => (!dl[s.id] || dl[s.id] === 'in') && !getExtra(s.id).keepphone);
@@ -139,15 +139,23 @@ function renderGrid() {
     const fname = s.fname || s.name.split(' ')[0];
     const lname = s.lname || s.name.split(' ').slice(1).join(' ');
     const noteHtml = ex.note ? `<div class="chip-meta" style="margin-top:3px">${escHtml(ex.note).slice(0, 40)}</div>` : '';
+    const cfg = getSettings();
+
+    // Class + number pills — same pill shape, DM Sans for class (crisp), DM Mono for number (tabular)
+    const pillBase = 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.06);font-size:10px;font-weight:700;letter-spacing:0.05em;line-height:1.6';
+    const clsPill = `<span style="${pillBase};font-family:\'DM Sans\',sans-serif;color:var(--text2)">${s.cls}</span>`;
+    const numPill = (cfg.studentNumEnabled && s.num != null && s.num !== '')
+      ? `<span style="${pillBase};font-family:\'DM Mono\',monospace;color:var(--text3);letter-spacing:0.02em">#${s.num}</span>`
+      : '';
+    const tagRow = `<div style="display:flex;align-items:center;gap:4px;margin-top:4px">${clsPill}${numPill}</div>`;
+
     d.innerHTML = `
       <div class="chip-inner">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
           <div>
-            <div style="display:flex;align-items:baseline;gap:7px">
-              <div class="chip-fname">${fname}</div>
-              <span style="font-size:13px;font-weight:700;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:0.02em;flex-shrink:0">${s.cls}</span>
-            </div>
+            <div class="chip-fname">${fname}</div>
             <div class="chip-lname">${lname}</div>
+            ${tagRow}
             ${noteHtml}
           </div>
           ${badge}${slotOrQuick}

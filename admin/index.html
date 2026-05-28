@@ -396,6 +396,14 @@ body {
       <label data-t="email_label"></label>
       <input id="newEmail" data-t-placeholder="email_placeholder" type="email">
     </div>
+    <div class="modal-field" style="padding-top:12px;border-top:0.5px solid var(--border);margin-top:4px">
+      <label style="display:flex;align-items:center;gap:5px">
+        <span data-t="admin_email_label"></span>
+        <span style="font-size:10px;font-weight:700;color:var(--red);padding:1px 5px;border-radius:4px;background:var(--red-bg)">Required</span>
+      </label>
+      <input id="newAdminEmail" type="email" data-t-placeholder="admin_email_placeholder" style="border-color:var(--accent)">
+      <div style="font-size:11px;color:var(--text3);margin-top:4px" data-t="admin_email_hint"></div>
+    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeAddSchool()" data-t="cancel"></button>
       <button class="btn-primary" onclick="addSchool()" data-t="register"></button>
@@ -534,6 +542,7 @@ body {
           <button onclick="bulkImportUsers()" style="padding:6px 14px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" id="bulkImportBtn"></button>
         </div>
         <div id="bulkImportResult" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+        <div id="bulkInviteLinks"></div>
       </div>
     </div>
 
@@ -596,6 +605,12 @@ const TR = {
     api_error: 'Kunde inte nå API', server_error: 'Serverfel: ',
     save_failed: 'Sparning misslyckades', school_registered: 'Skola registrerad',
     school_name_required: 'Skolnamn krävs', wrong_token: 'Fel token — försök igen',
+    admin_email_label: 'Administratörens e-post',
+    admin_email_placeholder: 'admin@skolan.se',
+    admin_email_hint: 'Personen måste ha ett Lurkollen-konto. De tilldelas rollen Administratör.',
+    admin_email_required: 'En administratörsepost krävs för att skapa en skola.',
+    school_registered_no_admin: 'Skola skapad — administratören hittades inte. Lägg till dem via Konfigurera → Användare.',
+    no_admin_warning: 'Ingen admin',
     users_chip: 'lärare',
     fmt_letter: 'Bokstav (5A)', fmt_dot: 'Punkt (5.1)',
     fmt_number: 'Nummer (51)', fmt_none: 'Enbart år',
@@ -614,6 +629,9 @@ const TR = {
     role_teacher: 'Lärare', role_admin: 'Administratör',
     user_added: 'Användare tillagd', user_not_found: 'Ingen användare med den e-posten — skapar inbjudan…',
     user_removed: 'Användare borttagen', role_updated: 'Roll uppdaterad',
+    invite_links_title: 'Inbjudningslänkar', invite_links_hint: 'Dessa personer saknar konto — klicka för att kopiera deras unika länk, eller skicka alla med e-post.',
+    send_invite_emails: 'Skicka mail till alla', emails_sent: '{n} mail skickade', emails_failed: '{n} misslyckades',
+    email_not_configured: 'E-postservice ej konfigurerad (RESEND_API_KEY saknas i Vercel).',
     lbl_inv_email: 'E-post (valfritt)', lbl_inv_expiry: 'Giltighetstid',
     inv_1day: '1 dag', inv_7days: '7 dagar', inv_30days: '30 dagar', inv_365days: '1 år',
     create_invite_btn: 'Skapa kod', invite_created: 'Kod skapad & kopierad!',
@@ -658,6 +676,12 @@ const TR = {
     api_error: 'Could not reach API', server_error: 'Server error: ',
     save_failed: 'Save failed', school_registered: 'School registered',
     school_name_required: 'School name is required', wrong_token: 'Wrong token — try again',
+    admin_email_label: 'Administrator email',
+    admin_email_placeholder: 'admin@school.com',
+    admin_email_hint: 'Person must have a Lurkollen account. They will be assigned the Administrator role.',
+    admin_email_required: 'An administrator email is required to create a school.',
+    school_registered_no_admin: 'School created — administrator not found. Add them via Configure → Users.',
+    no_admin_warning: 'No admin',
     users_chip: 'teachers',
     fmt_letter: 'Letter (5A)', fmt_dot: 'Dot (5.1)',
     fmt_number: 'Number (51)', fmt_none: 'Year only',
@@ -676,6 +700,9 @@ const TR = {
     role_teacher: 'Teacher', role_admin: 'Administrator',
     user_added: 'User added', user_not_found: 'No user with that email — creating invite…',
     user_removed: 'User removed', role_updated: 'Role updated',
+    invite_links_title: 'Invite links', invite_links_hint: 'These people don\'t have an account yet — click to copy their unique link, or email them all at once.',
+    send_invite_emails: 'Email all', emails_sent: '{n} emails sent', emails_failed: '{n} failed',
+    email_not_configured: 'Email service not configured (RESEND_API_KEY missing in Vercel).',
     lbl_inv_email: 'Email (optional)', lbl_inv_expiry: 'Valid for',
     inv_1day: '1 day', inv_7days: '7 days', inv_30days: '30 days', inv_365days: '1 year',
     create_invite_btn: 'Generate code', invite_created: 'Code created & copied!',
@@ -902,6 +929,9 @@ function renderCard(school) {
           <div class="stat-chip"><i class="ti ti-users"></i>${school.activeStudents || 0} ${t('students_chip')}</div>
           <div class="stat-chip"><i class="ti ti-user-check"></i>${school.userCount || 0} ${t('users_chip')}</div>
           <div class="stat-chip"><i class="ti ti-calendar"></i>${school.lastActive || '—'}</div>
+          ${(school.adminCount || 0) === 0
+            ? `<div class="stat-chip" style="background:var(--red-bg);color:var(--red);border-color:rgba(220,38,38,0.25)"><i class="ti ti-alert-triangle"></i>${t('no_admin_warning')}</div>`
+            : ''}
         </div>
 
         <div class="block-label">${t('settings_lbl')}</div>
@@ -983,9 +1013,12 @@ async function addSchool() {
   const schoolName = document.getElementById('newSchoolName').value.trim();
   const contact    = document.getElementById('newContact').value.trim();
   const email      = document.getElementById('newEmail').value.trim();
-  if (!schoolName) { toast(t('school_name_required')); return; }
+  const adminEmail = document.getElementById('newAdminEmail').value.trim();
+  if (!schoolName)  { toast(t('school_name_required')); return; }
+  if (!adminEmail)  { toast(t('admin_email_required')); return; }
 
   try {
+    // 1. Create the school
     const r = await apiFetch('/api/admin/schools', {
       method: 'POST',
       body: JSON.stringify({
@@ -995,10 +1028,19 @@ async function addSchool() {
       })
     });
     if (!r.ok) { const d = await r.json().catch(()=>({})); toast(d.error || t('save_failed')); return; }
+    const d = await r.json();
+
+    // 2. Add the admin user
+    const r2 = await apiFetch('/api/admin/school-users', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: d.school_id, email: adminEmail, role: 'admin' })
+    });
+    const d2 = await r2.json().catch(()=>({}));
+
     closeAddSchool();
-    ['newSchoolName','newContact','newEmail'].forEach(id => document.getElementById(id).value = '');
+    ['newSchoolName','newContact','newEmail','newAdminEmail'].forEach(id => document.getElementById(id).value = '');
     await loadSchools();
-    toast(t('school_registered'));
+    toast(d2.not_found ? t('school_registered_no_admin') : t('school_registered'));
   } catch(e) { toast(t('save_failed')); }
 }
 
@@ -1066,6 +1108,12 @@ function openSettingsModal(schoolId) {
 function closeSettingsModal() {
   document.getElementById('settingsModal').classList.remove('open');
   _settingsModalId = null;
+  // Clear bulk invite state
+  const bli = document.getElementById('bulkInviteLinks');
+  if (bli) bli.innerHTML = '';
+  const bir = document.getElementById('bulkImportResult');
+  if (bir) bir.innerHTML = '';
+  window._lastBulkInvited = null;
 }
 
 function switchStab(btn, sec) {
@@ -1436,10 +1484,70 @@ async function bulkImportUsers() {
         .replace('{invited}', d.invited?.length  || 0)
         .replace('{already}', d.already?.length  || 0)
         .replace('{failed}',  d.failed?.length   || 0);
-      if (result) result.textContent = msg;
+      if (result) result.innerHTML = msg;
+
+      // Show invite links if any were created
+      if (d.invited?.length) {
+        const base = window.location.origin.replace(/\/admin.*$/, '');
+        const linksHtml = d.invited.map(inv => {
+          const url = `${base}/?join=${inv.code}`;
+          return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);font-size:11px">
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${esc(inv.email)}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0">${inv.code}</span>
+            <button onclick="navigator.clipboard.writeText('${url}').then(()=>toast('Kopierad!'))"
+              style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:4px;cursor:pointer;padding:2px 8px;font-size:10px;color:var(--text2);font-family:'DM Sans',sans-serif">
+              <i class="ti ti-copy"></i>
+            </button>
+          </div>`;
+        }).join('');
+
+        const container = document.getElementById('bulkInviteLinks');
+        if (container) {
+          container.innerHTML = `
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin:12px 0 6px">${t('invite_links_title')}</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${t('invite_links_hint')}</div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">${linksHtml}</div>
+            <button id="sendAllEmailsBtn" onclick="sendBulkInviteEmails(${JSON.stringify(d.invited).replace(/"/g,'&quot;')})"
+              style="padding:6px 14px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px">
+              <i class="ti ti-send"></i> ${t('send_invite_emails')}
+            </button>
+            <div id="sendEmailsResult" style="font-size:12px;color:var(--text3);margin-top:6px"></div>`;
+          window._lastBulkInvited = d.invited;
+        }
+      }
       loadAdminUsers();
     } else {
       if (result) result.textContent = d.error || t('save_failed');
+    }
+  } catch(e) {
+    if (result) result.textContent = t('save_failed');
+  }
+  if (btn) btn.disabled = false;
+}
+
+// ── Bulk send invite emails ───────────────────────────────────
+async function sendBulkInviteEmails(invites) {
+  const btn = document.getElementById('sendAllEmailsBtn');
+  const result = document.getElementById('sendEmailsResult');
+  if (btn) btn.disabled = true;
+  if (result) result.textContent = '…';
+
+  const base = window.location.origin.replace(/\/admin.*$/, '');
+  try {
+    const r = await apiFetch('/api/admin/send-invites', {
+      method: 'POST',
+      body: JSON.stringify({ school_id: _settingsModalId, invites, baseUrl: base })
+    });
+    const d = await r.json().catch(()=>({}));
+    if (r.ok) {
+      const sentMsg  = t('emails_sent').replace('{n}', d.sent?.length  || 0);
+      const failMsg  = d.failed?.length ? ' · ' + t('emails_failed').replace('{n}', d.failed.length) : '';
+      if (result) result.textContent = sentMsg + failMsg;
+      toast(sentMsg);
+    } else {
+      const msg = d.error?.includes('RESEND_API_KEY') ? t('email_not_configured') : (d.error || t('save_failed'));
+      if (result) result.textContent = msg;
+      toast(msg);
     }
   } catch(e) {
     if (result) result.textContent = t('save_failed');
