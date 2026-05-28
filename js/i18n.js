@@ -195,6 +195,18 @@ const TRANSLATIONS = {
     'settings.studentnum_label_ph':'t.ex. Skåp, Hylla, Plats…',
     'nav.section':                 'Navigation',
 
+    // Onboarding
+    'onboarding.title':        'Kom igång med Lurkollen',
+    'onboarding.completed':    'steg klara',
+    'onboarding.dismiss':      'Stäng',
+    'onboarding.step_name':    'Ange skolans namn',
+    'onboarding.step_classes': 'Konfigurera klasser',
+    'onboarding.step_students':'Importera elever',
+    'onboarding.step_invite':  'Bjud in lärare',
+    'onboarding.go_settings':  'Inställningar',
+    'onboarding.go_import':    'Importera',
+    'onboarding.go_invite':    'Bjud in',
+
     // Default status/flag labels (before first settings save)
     'default.status.out':  'Ej inlämnad',
     'default.status.late': 'Sen',
@@ -560,6 +572,18 @@ const TRANSLATIONS = {
     'settings.studentnum_label':   'What does the number represent?',
     'settings.studentnum_label_ph':'e.g. Locker, Shelf, Seat…',
     'nav.section':                 'Navigation',
+
+    // Onboarding
+    'onboarding.title':        'Get started with Lurkollen',
+    'onboarding.completed':    'steps done',
+    'onboarding.dismiss':      'Dismiss',
+    'onboarding.step_name':    'Set your school name',
+    'onboarding.step_classes': 'Configure classes',
+    'onboarding.step_students':'Import students',
+    'onboarding.step_invite':  'Invite teachers',
+    'onboarding.go_settings':  'Settings',
+    'onboarding.go_import':    'Import',
+    'onboarding.go_invite':    'Invite',
 
     // Default status/flag labels
     'default.status.out':  'Not handed in',

@@ -2,7 +2,93 @@
 
 function renderDash() {
   if (!document.getElementById('statsRow') || !document.getElementById('studentGrid')) return;
-  renderStats(); renderTabs(); renderGrid();
+  renderOnboarding(); renderStats(); renderTabs(); renderGrid();
+}
+
+function renderOnboarding() {
+  const el = document.getElementById('onboardingCard');
+  if (!el) return;
+
+  // Only show to admins
+  if (getMyRole() !== 'admin') { el.innerHTML = ''; return; }
+
+  // Dismissed?
+  if (localStorage.getItem('phc_onboarding_dismissed')) { el.innerHTML = ''; return; }
+
+  const s = getSettings();
+  const students = loadStudents();
+
+  const steps = [
+    {
+      done: !!(s.schoolName && s.schoolName.trim()),
+      label: t('onboarding.step_name'),
+      action: () => switchView('settings'),
+      actionLabel: t('onboarding.go_settings'),
+    },
+    {
+      done: !!(CLASSES && CLASSES.length > 0),
+      label: t('onboarding.step_classes'),
+      action: () => { switchView('settings'); setTimeout(() => switchSettingsSection('classes', null), 80); },
+      actionLabel: t('onboarding.go_settings'),
+    },
+    {
+      done: hasStudents(),
+      label: t('onboarding.step_students'),
+      action: () => openImportModal(),
+      actionLabel: t('onboarding.go_import'),
+    },
+    {
+      done: false, // always actionable — invite team
+      label: t('onboarding.step_invite'),
+      action: () => { switchView('settings'); setTimeout(() => switchSettingsSection('users', null), 80); },
+      actionLabel: t('onboarding.go_invite'),
+    },
+  ];
+
+  const allDone = steps.every(s => s.done);
+  if (allDone) { el.innerHTML = ''; return; }
+
+  const completed = steps.filter(s => s.done).length;
+
+  el.innerHTML = `
+    <div style="margin-bottom:1rem;padding:16px 20px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">${t('onboarding.title')}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${completed} / ${steps.length} ${t('onboarding.completed')}</div>
+        </div>
+        <button onclick="localStorage.setItem('phc_onboarding_dismissed','1');document.getElementById('onboardingCard').innerHTML=''"
+          style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px 6px;line-height:1" title="${t('onboarding.dismiss')}">✕</button>
+      </div>
+
+      <!-- Progress bar -->
+      <div style="height:3px;background:var(--surface3);border-radius:2px;margin-bottom:14px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(completed / steps.length * 100)}%;background:var(--text);border-radius:2px;transition:width 0.4s"></div>
+      </div>
+
+      <!-- Steps -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+        ${steps.map((step, i) => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);background:var(--surface2);border:0.5px solid ${step.done ? 'rgba(22,163,74,0.2)' : 'var(--border)'}">
+            <div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+              ${step.done
+                ? 'background:rgba(22,163,74,0.12);color:#16a34a'
+                : 'background:var(--surface3);color:var(--text3)'}">
+              ${step.done
+                ? '<i class="ti ti-check" style="font-size:13px"></i>'
+                : `<span style="font-size:11px;font-weight:700">${i + 1}</span>`}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:500;color:${step.done ? 'var(--text3)' : 'var(--text)'};${step.done ? 'text-decoration:line-through' : ''}">${step.label}</div>
+            </div>
+            ${!step.done ? `<button onclick="(${step.action})()"
+              style="flex-shrink:0;background:var(--text);color:var(--bg);border:none;border-radius:6px;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">
+              ${step.actionLabel}
+            </button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
 }
 
 function setStatusFilter(f) {
