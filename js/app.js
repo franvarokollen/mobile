@@ -138,21 +138,46 @@ document.addEventListener('keydown', e => {
         <i class="ti ti-loader-2 spin" style="font-size:28px"></i>
         <div style="font-size:13px">${t('loading.students')}</div>
       </div>`;
-    // Fire all fetches in parallel — cuts load time to the slowest single request
-    const [,,,, remote, dpaStatus] = await Promise.all([
-      fetchSettingsFromServer(),
-      fetchStudentsFromServer(),
-      fetchExtraFromServer(),
-      loadFlagsFromServer(),
-      serverGet(currentDate),
-      authFetch(`${API}/dpa`).then(r => r.json()).catch(() => ({ signed: false })),
-    ]);
-    window._dpaSigned = !!(dpaStatus && dpaStatus.signed);
-    if (remote !== null) {
-      const logs = loadLogs();
-      logs[currentDate] = remote;
-      saveLogs(logs);
+
+    // Single /api/init call — one cold start, one round trip, all data in parallel on the server
+    const init = await authFetch(`${API}/init?date=${currentDate}`)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
+
+    if (init) {
+      // Settings
+      if (init.settings && typeof init.settings === 'object') {
+        _settings = init.settings;
+        applySettings();
+      }
+      // Students
+      if (init.students && typeof init.students === 'object' && Object.keys(init.students).length > 0) {
+        saveStudents(init.students);
+        CLASSES = getClasses(init.students) || CLASSES;
+      }
+      // Extra (starred, flags, notes, slot)
+      if (init.extra && typeof init.extra === 'object') {
+        saveExtra(init.extra);
+      }
+      // Per-day flags (explained, unreported etc.) — merge into logs
+      if (init.flags && typeof init.flags === 'object') {
+        const logs = loadLogs();
+        Object.entries(init.flags).forEach(([d, flagData]) => {
+          if (!logs[d]) logs[d] = {};
+          Object.assign(logs[d], flagData);
+        });
+        saveLogs(logs);
+      }
+      // Today's status log
+      if (init.daylog && typeof init.daylog === 'object') {
+        const logs = loadLogs();
+        logs[currentDate] = init.daylog;
+        saveLogs(logs);
+      }
+      // DPA status
+      window._dpaSigned = !!(init.dpa && init.dpa.signed);
     }
+
     CLASSES = getClasses(loadStudents()) || CLASSES;
     // Show Settings nav only for admins (hidden by default in HTML)
     if (getMyRole() === 'admin') {

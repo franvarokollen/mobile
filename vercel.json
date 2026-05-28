@@ -38,6 +38,7 @@
     { "src": "/api/school-users",  "dest": "/api/school-users" },
     { "src": "/api/invites",       "dest": "/api/invites" },
     { "src": "/api/me",            "dest": "/api/me" },
+    { "src": "/api/init",          "dest": "/api/init" },
     { "src": "/api/(.*)",          "dest": "/api/$1" },
     { "src": "/admin/(.*)",        "dest": "/admin/$1" },
     { "src": "/admin",             "dest": "/admin/index.html" },
