@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personuppgiftsbiträdesavtal — Lurkollen</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231a1a18'/><rect x='10' y='4' width='12' height='20' rx='3' fill='none' stroke='%23f5f4f0' stroke-width='2'/><circle cx='16' cy='21' r='1' fill='%23f5f4f0'/><line x1='8' y1='27' x2='24' y2='27' stroke='%23e24b4a' stroke-width='2.5' stroke-linecap='round'/><line x1='11' y1='30' x2='21' y2='30' stroke='%23e24b4a' stroke-width='2' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #f5f4f0;
+  color: #1a1a18;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.topbar {
+  position: sticky; top: 0;
+  background: rgba(245,244,240,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid rgba(0,0,0,0.08);
+  padding: 0 2rem;
+  display: flex; align-items: center; gap: 1rem; height: 52px;
+}
+.brand {
+  font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+  text-decoration: none; color: #1a1a18;
+}
+.topbar-spacer { flex: 1; }
+.back-link {
+  font-size: 13px; color: #5a5a56; text-decoration: none;
+  display: flex; align-items: center; gap: 5px;
+}
+.back-link:hover { color: #1a1a18; }
+.print-btn {
+  font-size: 13px; color: #5a5a56;
+  background: none; border: 0.5px solid rgba(0,0,0,0.12);
+  border-radius: 20px; padding: 4px 14px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; gap: 5px;
+}
+.print-btn:hover { color: #1a1a18; border-color: rgba(0,0,0,0.25); }
+.wrap {
+  max-width: 720px; margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+h1 {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.meta {
+  font-size: 13px; color: #9a9a94; margin-bottom: 2.5rem;
+  padding-bottom: 2rem; border-bottom: 0.5px solid rgba(0,0,0,0.08);
+}
+h2 {
+  font-size: 17px; font-weight: 700; margin: 2.5rem 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+h3 {
+  font-size: 14px; font-weight: 600; margin: 1.5rem 0 0.5rem;
+  color: #1a1a18;
+}
+p { margin-bottom: 1rem; color: #3a3a36; }
+ul, ol {
+  margin: 0.5rem 0 1rem 1.5rem; color: #3a3a36;
+}
+li { margin-bottom: 0.35rem; }
+.highlight {
+  background: #fff; border: 0.5px solid rgba(0,0,0,0.08);
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+}
+.highlight p:last-child { margin: 0; }
+a { color: #1a1a18; }
+a:hover { opacity: 0.7; }
+table {
+  width: 100%; border-collapse: collapse; font-size: 13px; margin: 1rem 0;
+}
+th {
+  text-align: left; padding: 8px 12px; font-weight: 600;
+  background: rgba(0,0,0,0.03); border-bottom: 0.5px solid rgba(0,0,0,0.1);
+}
+td {
+  padding: 8px 12px; border-bottom: 0.5px solid rgba(0,0,0,0.06);
+  color: #3a3a36; vertical-align: top;
+}
+.annex-title {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #9a9a94;
+  margin: 3rem 0 0.5rem; padding-top: 2rem;
+  border-top: 0.5px solid rgba(0,0,0,0.08);
+}
+footer {
+  text-align: center; padding: 2rem;
+  font-size: 12px; color: #9a9a94;
+  border-top: 0.5px solid rgba(0,0,0,0.08);
+}
+@media print {
+  .topbar, footer { display: none; }
+  .wrap { padding: 0; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="/">Lurkollen</a>
+  <div class="topbar-spacer"></div>
+  <button class="print-btn" onclick="window.print()">⬇ Spara som PDF</button>
+  <a class="back-link" href="/">← Tillbaka till appen</a>
+</div>
+
+<div class="wrap">
+
+  <h1>Personuppgiftsbiträdesavtal</h1>
+  <div class="meta">
+    Frånvarokollen Sverige AB · Version 1.0 · Senast uppdaterad: maj 2026
+  </div>
+
+  <div class="highlight">
+    <p>Detta avtal ("PUB-avtal") reglerar hur <strong>Frånvarokollen Sverige AB</strong> behandlar personuppgifter på uppdrag av den skola eller organisation som ingår avtalet. Avtalet uppfyller kraven i artikel 28 i GDPR (förordning EU 2016/679).</p>
+  </div>
+
+  <h2>1. Parter</h2>
+  <p><strong>Personuppgiftsansvarig ("Kunden")</strong><br>
+  Den skola eller organisation som har ingått avtal om användning av tjänsten Lurkollen. Kunden är ansvarig för att personuppgifter behandlas i enlighet med tillämplig dataskyddslagstiftning.</p>
+
+  <p><strong>Personuppgiftsbiträde ("Biträdet")</strong><br>
+  Frånvarokollen Sverige AB, org. nr 559585-6450, med adress i Sverige. Biträdet tillhandahåller den tekniska plattformen Lurkollen och behandlar personuppgifter uteslutande på Kundens uppdrag.</p>
+
+  <h2>2. Bakgrund och syfte</h2>
+  <p>Kunden använder tjänsten Lurkollen för att administrera insamling av mobiltelefoner i skolan. I samband med detta behandlar Biträdet personuppgifter om Kundens elever och personal.</p>
+  <p>Syftet med detta avtal är att fastställa parternas skyldigheter och rättigheter avseende behandlingen av personuppgifter, i enlighet med artikel 28 GDPR.</p>
+
+  <h2>3. Behandlingens föremål och varaktighet</h2>
+  <p>Biträdet behandlar personuppgifter under den tid Kunden är abonnent på tjänsten. En fullständig beskrivning av behandlingen finns i <strong>Bilaga 1</strong>.</p>
+
+  <h2>4. Biträdets skyldigheter</h2>
+
+  <h3>4.1 Instruktioner</h3>
+  <p>Biträdet ska behandla personuppgifter enbart på dokumenterade instruktioner från Kunden, inklusive vad som framgår av detta avtal och tjänstens funktionalitet. Om Biträdet bedömer att en instruktion strider mot GDPR eller annan tillämplig dataskyddslagstiftning ska Biträdet omedelbart informera Kunden.</p>
+
+  <h3>4.2 Konfidentialitet</h3>
+  <p>Biträdet ska säkerställa att personer som har tillgång till personuppgifterna har åtagit sig att iaktta konfidentialitet eller omfattas av lagstadgad tystnadsplikt.</p>
+
+  <h3>4.3 Säkerhet</h3>
+  <p>Biträdet ska vidta lämpliga tekniska och organisatoriska säkerhetsåtgärder i enlighet med artikel 32 GDPR. De konkreta åtgärder som tillämpas framgår av <strong>Bilaga 3</strong>.</p>
+
+  <h3>4.4 Underbiträden</h3>
+  <p>Kunden ger Biträdet ett generellt förhandsgodkännande att anlita underbiträden. De underbiträden som används vid avtalets ingående framgår av <strong>Bilaga 2</strong>. Biträdet ska informera Kunden om planerade förändringar avseende anlitande av nya eller utbyte av befintliga underbiträden, och därigenom ge Kunden möjlighet att invända mot sådana förändringar. Biträdet ska ålägga underbiträden motsvarande dataskyddsskyldigheter som framgår av detta avtal.</p>
+
+  <h3>4.5 Assistans till den registrerade</h3>
+  <p>Biträdet ska, med beaktande av behandlingens art, bistå Kunden med lämpliga tekniska och organisatoriska åtgärder för att Kunden ska kunna fullgöra sin skyldighet att svara på begäran om utövande av de registrerades rättigheter enligt kapitel III GDPR.</p>
+
+  <h3>4.6 Assistans avseende säkerhet och incidenter</h3>
+  <p>Biträdet ska bistå Kunden med att säkerställa att skyldigheterna enligt artiklarna 32–36 GDPR fullgörs, inbegripet hantering av personuppgiftsincidenter. Biträdet ska utan onödigt dröjsmål, och senast inom 48 timmar, meddela Kunden om en personuppgiftsincident som rör de personuppgifter Biträdet behandlar på Kundens uppdrag.</p>
+
+  <h3>4.7 Radering och återlämnande</h3>
+  <p>Efter att behandlingen av personuppgifter upphört ska Biträdet, efter Kundens val, radera eller återlämna alla personuppgifter till Kunden, samt radera befintliga kopior, om inte lagstiftning kräver att personuppgifterna bevaras. Radering sker senast 30 dagar efter avtalets upphörande.</p>
+
+  <h3>4.8 Granskningsrätt</h3>
+  <p>Biträdet ska tillhandahålla all information som krävs för att visa att skyldigheterna i detta avtal fullgörs, och möjliggöra och bidra till granskningar, inbegripet inspektioner, som utförs av Kunden eller en av Kunden utsedd revisor. Biträdet ska omedelbart informera Kunden om en instruktion enligt detta avtal strider mot GDPR eller annan tillämplig unionsrätt eller nationell rätt.</p>
+
+  <h2>5. Kundens skyldigheter</h2>
+  <p>Kunden ansvarar för att:</p>
+  <ul>
+    <li>behandlingen av personuppgifter sker på laglig grund och i enlighet med GDPR och skollagen,</li>
+    <li>registrerade informeras om behandlingen i enlighet med artiklarna 13–14 GDPR,</li>
+    <li>Biträdet utan dröjsmål informeras om ändringar av instruktioner som påverkar behandlingen,</li>
+    <li>de uppgifter som anges vid registrering och under avtalstiden är korrekta och aktuella.</li>
+  </ul>
+
+  <h2>6. Datalagring och radering under avtalstiden</h2>
+  <p>Löpande under avtalstiden gäller följande lagringstider:</p>
+  <ul>
+    <li><strong>Närvaro-/frånvarostatus</strong> — konfigurerbart per skola, standardvärde 90 dagar. Kunden kan ändra detta i tjänstens inställningar.</li>
+    <li><strong>Elevuppgifter och läraruppgifter</strong> — sparas till dess Kunden raderar dem manuellt.</li>
+    <li><strong>Logghändelser</strong> — 90 dagar.</li>
+  </ul>
+  <p>Vid avtalets upphörande raderas all Kundens data inom 30 dagar, om inte Kunden dessförinnan begär export av sina uppgifter.</p>
+
+  <h2>7. Överföringar till tredjeland</h2>
+  <p>Biträdets primära databas är placerad inom EU/EES (Frankfurt/Stockholm). Vissa underbiträden har sitt säte i USA men hanterar personuppgifter med stöd av EU:s standardavtalsklausuler (SCC) och/eller EU–US Data Privacy Framework. Se Bilaga 2 för detaljer.</p>
+
+  <h2>8. Ansvar och ersättning</h2>
+  <p>Parterna ansvarar för skada som uppkommer till följd av brott mot detta avtal i enlighet med vad som anges i Användarvillkoren. Biträdets samlade ansvar gentemot Kunden är under alla omständigheter begränsat till det belopp Kunden betalat för tjänsten under de senaste 12 månaderna.</p>
+
+  <h2>9. Avtalstid och upphörande</h2>
+  <p>Detta avtal gäller så länge Biträdet behandlar personuppgifter på Kundens uppdrag. Avtalet upphör automatiskt när Kundens abonnemang på Lurkollen avslutas.</p>
+
+  <h2>10. Tillämplig lag och tvistlösning</h2>
+  <p>Detta avtal regleras av <strong>svensk lag</strong>. Tvister som inte kan lösas i godo ska avgöras av allmän domstol med Stockholms tingsrätt som första instans.</p>
+
+  <h2>11. Ändringar</h2>
+  <p>Biträdet förbehåller sig rätten att uppdatera detta avtal, exempelvis vid förändringar i underbiträdeslistan eller tillämplig lagstiftning. Kunden informeras via e-post med minst 30 dagars varsel vid väsentliga förändringar. Den senaste versionen finns alltid tillgänglig på <a href="/dpa">lurkollen.com/dpa</a>.</p>
+
+  <!-- ── BILAGA 1 ─────────────────────────────────────────── -->
+  <div class="annex-title">Bilaga 1 — Beskrivning av behandlingen</div>
+
+  <h2>Behandlingens art och syfte</h2>
+  <p>Biträdet behandlar personuppgifter i syfte att tillhandahålla en webbaserad tjänst för att administrera insamling av mobiltelefoner i skolor. Behandlingen innefattar lagring, visning, uppdatering och radering av uppgifter via tjänstens gränssnitt och API.</p>
+
+  <h2>Kategorier av registrerade</h2>
+  <ul>
+    <li>Elever inskrivna vid Kundens skola</li>
+    <li>Lärare och annan personal vid Kundens skola</li>
+  </ul>
+
+  <h2>Kategorier av personuppgifter</h2>
+  <table>
+    <tr><th>Uppgift</th><th>Registrerade</th><th>Syfte</th></tr>
+    <tr><td>Namn, klass, elev-ID / personnummer</td><td>Elever</td><td>Identifiering i systemet</td></tr>
+    <tr><td>Närvaro-/frånvarostatus per dag</td><td>Elever</td><td>Registrering av mobil­inlämning</td></tr>
+    <tr><td>Anteckningar i fritextfält</td><td>Elever</td><td>Valfria noteringar av lärare</td></tr>
+    <tr><td>Namn och e-postadress</td><td>Lärare/personal</td><td>Inloggning och behörighets­hantering</td></tr>
+    <tr><td>Logghändelser (vem ändrade vad, när)</td><td>Lärare/personal</td><td>Revision och felsökning</td></tr>
+  </table>
+
+  <p>Biträdet behandlar inga känsliga personuppgifter (t.ex. hälsouppgifter, etniskt ursprung) utöver vad Kunden eventuellt själv väljer att anteckna i fritextfält.</p>
+
+  <!-- ── BILAGA 2 ─────────────────────────────────────────── -->
+  <div class="annex-title">Bilaga 2 — Underbiträden</div>
+
+  <h2>Godkända underbiträden</h2>
+  <table>
+    <tr><th>Företag</th><th>Land</th><th>Tjänst</th><th>Överföringsgrund</th></tr>
+    <tr>
+      <td>Supabase Inc.</td>
+      <td>USA (server i EU: Frankfurt / Stockholm)</td>
+      <td>Databas och autentisering</td>
+      <td>SCC + EU–US DPF</td>
+    </tr>
+    <tr>
+      <td>Vercel Inc.</td>
+      <td>USA (edge-noder globalt)</td>
+      <td>Webbhotell och server­drift</td>
+      <td>SCC + EU–US DPF</td>
+    </tr>
+    <tr>
+      <td>Resend Inc.</td>
+      <td>USA</td>
+      <td>Transaktions­e-post (inbjudningslänkar)</td>
+      <td>SCC + EU–US DPF</td>
+    </tr>
+    <tr>
+      <td>Google LLC</td>
+      <td>USA</td>
+      <td>OAuth-autentisering (Google Sign-In)</td>
+      <td>SCC + EU–US DPF</td>
+    </tr>
+    <tr>
+      <td>Microsoft Corporation</td>
+      <td>USA</td>
+      <td>OAuth-autentisering (Microsoft Sign-In)</td>
+      <td>SCC + EU–US DPF</td>
+    </tr>
+  </table>
+
+  <p>Inga elevuppgifter skickas till Resend, Google eller Microsoft. Resend hanterar endast e-postadresser till personal vid inbjudningar. Google och Microsoft hanterar endast autentiseringsflödet och tar inte del av lagrad skoldata.</p>
+
+  <!-- ── BILAGA 3 ─────────────────────────────────────────── -->
+  <div class="annex-title">Bilaga 3 — Tekniska och organisatoriska säkerhetsåtgärder</div>
+
+  <h2>Säkerhetsåtgärder</h2>
+  <p>Biträdet tillämpar följande tekniska och organisatoriska säkerhetsåtgärder i enlighet med artikel 32 GDPR:</p>
+
+  <h3>Kryptering och kommunikation</h3>
+  <ul>
+    <li>All kommunikation mellan klient och server sker krypterat via TLS 1.2 eller högre (HTTPS).</li>
+    <li>Databaser krypteras i vila med AES-256 (hanteras av Supabase).</li>
+  </ul>
+
+  <h3>Åtkomstkontroll</h3>
+  <ul>
+    <li>Rollbaserad behörighetsstyrning: administratörer och lärare har olika åtkomstnivåer.</li>
+    <li>Autentisering sker via etablerade OAuth-leverantörer (Google, Microsoft) — inga lösenord lagras av Biträdet.</li>
+    <li>Åtkomst till produktionssystem är begränsad till behörig personal och loggas.</li>
+    <li>API-nycklar med hög behörighet (service role) exponeras aldrig i klientkod.</li>
+  </ul>
+
+  <h3>Säkerhetskopiering och återställning</h3>
+  <ul>
+    <li>Automatiska dagliga säkerhetskopior av all skoldata skapas och lagras i databasen.</li>
+    <li>Manuell säkerhetskopiering kan initieras av Kunden när som helst via tjänstens gränssnitt.</li>
+    <li>Återställning från säkerhetskopia kan utföras av Kunden utan inblandning av Biträdet.</li>
+    <li>Supabase utför egna databassäkerhetskopior med point-in-time recovery.</li>
+  </ul>
+
+  <h3>Incidenthantering</h3>
+  <ul>
+    <li>Misstänkta säkerhetsincidenter loggas och eskaleras internt.</li>
+    <li>Kunden informeras om personuppgiftsincidenter senast inom 48 timmar.</li>
+  </ul>
+
+  <h3>Organisatoriska åtgärder</h3>
+  <ul>
+    <li>Personal med tillgång till personuppgifter är bunden av konfidentialitetsskyldighet.</li>
+    <li>Tillgång till produktionssystem beviljas enligt principen om minsta möjliga behörighet.</li>
+  </ul>
+
+  <!-- ── KONTAKT ──────────────────────────────────────────── -->
+  <h2 style="margin-top:3rem">Kontakt</h2>
+  <div class="highlight">
+    <p>
+      <strong>Frånvarokollen Sverige AB</strong><br>
+      Org. nr: 559585-6450<br>
+      E-post: <a href="mailto:info@franvarokollen.com">info@franvarokollen.com</a><br><br>
+      För att ingå detta avtal digitalt, logga in på <a href="/">lurkollen.com</a> och följ onboarding-instruktionerna.
+    </p>
+  </div>
+
+</div>
+
+<footer>
+  © 2026 Frånvarokollen Sverige AB · 559585-6450 ·
+  <a href="/privacy">Integritetspolicy</a> ·
+  <a href="/terms">Användarvillkor</a> ·
+  <a href="/dpa">PUB-avtal</a>
+</footer>
+
+</body>
+</html>
