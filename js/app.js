@@ -152,10 +152,10 @@ document.addEventListener('keydown', e => {
       saveLogs(logs);
     }
     CLASSES = getClasses(loadStudents()) || CLASSES;
-    // Hide Settings nav for non-admin users
-    if (getMyRole() !== 'admin') {
+    // Show Settings nav only for admins (hidden by default in HTML)
+    if (getMyRole() === 'admin') {
       const navSettings = document.getElementById('navSettings');
-      if (navSettings) navSettings.style.display = 'none';
+      if (navSettings) navSettings.style.display = '';
     }
     startPolling();
     updateDateDisplay();
