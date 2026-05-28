@@ -46,8 +46,11 @@
     { "src": "/view",              "dest": "/view/index.html" },
     { "src": "/view/(.*)",         "dest": "/view/$1" },
     { "src": "/privacy",           "dest": "/privacy.html" },
+    { "src": "/privacy.html",      "dest": "/privacy.html" },
     { "src": "/terms",             "dest": "/terms.html" },
+    { "src": "/terms.html",        "dest": "/terms.html" },
     { "src": "/dpa",               "dest": "/dpa.html" },
+    { "src": "/dpa.html",          "dest": "/dpa.html" },
     { "src": "/(.*)",              "dest": "/index.html" }
   ]
 }
