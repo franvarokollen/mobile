@@ -50,9 +50,9 @@ const DEFAULT_STATUSES = [
   { key: 'late', color: '#f59e0b' }
 ];
 const DEFAULT_FLAGS = [
-  { key: 'starred',   emoji: '⭐', activeColor: '#f59e0b' },
-  { key: 'athome',    emoji: '🏠', activeColor: '#6366f1' },
-  { key: 'keepphone', emoji: '📱', activeColor: '#0ea5e9' }
+  { key: 'starred',   emoji: '⭐', activeColor: '#f59e0b', cardColor: '' },
+  { key: 'athome',    emoji: '🏠', activeColor: '#6366f1', cardColor: '' },
+  { key: 'keepphone', emoji: '📱', activeColor: '#0ea5e9', cardColor: '' }
 ];
 
 const _defaultStatusLabels = { out: 'default.status.out', late: 'default.status.late' };
@@ -551,15 +551,18 @@ async function saveSettings() {
 
   const flags = [];
   document.querySelectorAll('#flagList [data-flag-idx]').forEach((row, i) => {
-    const label    = (row.querySelector('[data-flag-label]')?.value || '').trim();
-    const emojiEl  = row.querySelector('[id^="emojiVal_"]');
-    const colorEl  = row.querySelector('[data-flag-color]');
+    const label          = (row.querySelector('[data-flag-label]')?.value || '').trim();
+    const emojiEl        = row.querySelector('[id^="emojiVal_"]');
+    const colorEl        = row.querySelector('[data-flag-color]');
+    const cardEnabledEl  = row.querySelector('[data-flag-card-enabled]');
+    const cardColorEl    = row.querySelector('[data-flag-card-color]');
     if (!label) return;
     flags.push({
       key:         row.dataset.flagKey || ('flag_' + i),
       label,
       emoji:       emojiEl ? emojiEl.value.trim() || '⭐' : '⭐',
-      activeColor: colorEl ? colorEl.value : '#6366f1'
+      activeColor: colorEl ? colorEl.value : '#6366f1',
+      cardColor:   (cardEnabledEl?.checked && cardColorEl) ? cardColorEl.value : ''
     });
   });
 
@@ -656,7 +659,15 @@ function renderFlagRow(fl, i) {
     <input value="${escHtml(fl.label)}" placeholder="${t('settings.flag_ph')}" data-flag-label="${i}"
       style="flex:1;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px">
     <input type="color" value="${fl.activeColor}" data-flag-color="${i}"
+      title="${t('settings.flag_icon_color')}"
       style="width:32px;height:28px;border:0.5px solid var(--border2);border-radius:4px;padding:2px;cursor:pointer;background:var(--surface)">
+    <label title="${t('settings.flag_card_color')}" style="display:flex;align-items:center;gap:3px;cursor:pointer;flex-shrink:0">
+      <input type="checkbox" data-flag-card-enabled="${i}" ${fl.cardColor ? 'checked' : ''}
+        onchange="var cp=this.closest('[data-flag-idx]').querySelector('[data-flag-card-color]');cp.style.opacity=this.checked?'1':'0.35';cp.style.pointerEvents=this.checked?'':'none'"
+        style="cursor:pointer;width:13px;height:13px;accent-color:var(--text)">
+      <input type="color" value="${fl.cardColor || '#a78bfa'}" data-flag-card-color="${i}"
+        style="width:32px;height:28px;border:0.5px solid var(--border2);border-radius:4px;padding:2px;cursor:pointer;background:var(--surface);opacity:${fl.cardColor ? '1' : '0.35'};pointer-events:${fl.cardColor ? 'auto' : 'none'}">
+    </label>
     <button onclick="settingsMoveFlag(${i},-1)" title="${t('settings.move_up') || '↑'}"
       style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:12px;width:24px;height:26px;display:flex;align-items:center;justify-content:center">↑</button>
     <button onclick="settingsMoveFlag(${i},1)" title="${t('settings.move_down') || '↓'}"
@@ -724,17 +735,22 @@ function settingsAddFlag() {
   const list = document.getElementById('flagList');
   const i = list.children.length;
   const div = document.createElement('div');
-  div.innerHTML = renderFlagRow({ key: 'flag_new_' + i, label: '', emoji: '⭐', activeColor: '#6366f1' }, i);
+  div.innerHTML = renderFlagRow({ key: 'flag_new_' + i, label: '', emoji: '⭐', activeColor: '#6366f1', cardColor: '' }, i);
   list.appendChild(div.firstElementChild);
 }
 
 function _readFlagRows() {
-  return [...document.querySelectorAll('#flagList [data-flag-idx]')].map(row => ({
-    key:         row.dataset.flagKey || '',
-    label:       row.querySelector('[data-flag-label]').value,
-    emoji:       row.querySelector('[id^="emojiVal_"]').value || '⭐',
-    activeColor: row.querySelector('[data-flag-color]').value
-  }));
+  return [...document.querySelectorAll('#flagList [data-flag-idx]')].map(row => {
+    const cardEnabledEl = row.querySelector('[data-flag-card-enabled]');
+    const cardColorEl   = row.querySelector('[data-flag-card-color]');
+    return {
+      key:         row.dataset.flagKey || '',
+      label:       row.querySelector('[data-flag-label]').value,
+      emoji:       row.querySelector('[id^="emojiVal_"]').value || '⭐',
+      activeColor: row.querySelector('[data-flag-color]').value,
+      cardColor:   (cardEnabledEl?.checked && cardColorEl) ? cardColorEl.value : ''
+    };
+  });
 }
 
 function settingsMoveFlag(i, dir) {

@@ -200,7 +200,14 @@ function renderGrid() {
     const statusConfig = statuses.find(x => x.key === st);
     const d = document.createElement('div');
 
-    if (statusConfig) {
+    // Flag card colour overrides status colour (first active flag with a cardColor wins)
+    const activeFlagCardColor = flags.find(fl => ex[fl.key] && fl.cardColor)?.cardColor || '';
+
+    if (activeFlagCardColor) {
+      d.className = 'chip';
+      d.style.background = activeFlagCardColor + '18';
+      d.style.borderColor = activeFlagCardColor + '60';
+    } else if (statusConfig) {
       d.className = 'chip';
       d.style.background = statusConfig.color + '18';
       d.style.borderColor = statusConfig.color + '60';
