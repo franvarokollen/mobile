@@ -943,7 +943,7 @@ function settingsSummary(s) {
 }
 
 function checkItem(schoolId, field, label, checked) {
-  return `<label class="check-item${checked ? ' checked' : ''}" onclick="toggleCheck(this,'${schoolId}','${field}')">
+  return `<label class="check-item${checked ? ' checked' : ''}" onclick="toggleCheck(this,'${schoolId}','${field}',event)">
     <input type="checkbox" ${checked ? 'checked' : ''}><div class="check-box"></div>${label}
   </label>`;
 }
@@ -1033,7 +1033,8 @@ function renderSchools(schools) {
 }
 
 // ── Inline interactions ───────────────────────────────────────
-function toggleCheck(label, schoolId, field) {
+function toggleCheck(label, schoolId, field, event) {
+  if (event) event.preventDefault(); // stop browser re-firing click on the hidden input
   const isChecked = label.classList.toggle('checked');
   saveMeta(schoolId, { [field]: isChecked });
   const cb = label.querySelector('input[type=checkbox]');
