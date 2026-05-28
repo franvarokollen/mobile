@@ -902,6 +902,7 @@ async function settingsLoadInvites() {
       const expires = new Date(inv.expires_at).toLocaleDateString('sv-SE');
       const joinUrl = `${window.location.origin}/?join=${inv.code}`;
       const canSendEmail = !used && !!inv.email;
+      const emailSentDate = inv.email_sent_at ? new Date(inv.email_sent_at).toLocaleDateString('sv-SE') : null;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);${used ? 'opacity:0.5' : ''}">
         <div style="flex:1;min-width:0">
           <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${joinUrl}</div>
@@ -910,8 +911,9 @@ async function settingsLoadInvites() {
         <div style="font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0">
           ${used ? `<span>${t('settings.invite_used')}</span>` : `exp ${expires}`}
         </div>
+        ${emailSentDate ? `<span title="${t('settings.invite_email_sent_on')} ${emailSentDate}" style="flex-shrink:0;display:flex;align-items:center;gap:3px;font-size:10px;color:#16a34a;padding:2px 7px;background:rgba(22,163,74,0.08);border:0.5px solid rgba(22,163,74,0.25);border-radius:10px;white-space:nowrap"><i class="ti ti-mail-check" style="font-size:11px"></i>${emailSentDate}</span>` : ''}
         ${!used ? `<button onclick="settingsCopyInviteLink('${escHtml(joinUrl)}')" title="${t('settings.invite_copy')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:3px 10px"><i class="ti ti-copy"></i></button>` : ''}
-        ${canSendEmail ? `<button onclick="settingsSendInviteEmail('${inv.id}','${escHtml(inv.email)}')" title="${t('settings.notif_send')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-size:12px;padding:3px 10px;display:flex;align-items:center;gap:4px"><i class="ti ti-send"></i>${t('settings.notif_send')}</button>` : ''}
+        ${canSendEmail ? `<button onclick="settingsSendInviteEmail('${inv.id}','${escHtml(inv.email)}')" title="${emailSentDate ? t('settings.invite_resend') : t('settings.notif_send')}" style="flex-shrink:0;background:none;border:0.5px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-size:12px;padding:3px 10px;display:flex;align-items:center;gap:4px"><i class="ti ti-send"></i>${emailSentDate ? t('settings.invite_resend') : t('settings.notif_send')}</button>` : ''}
         <button onclick="settingsDeleteInvite('${inv.id}')" title="Delete" style="flex-shrink:0;background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:2px 4px;line-height:1">✕</button>
       </div>`;
     }).join('') + `</div>`;
@@ -967,6 +969,7 @@ async function settingsSendInviteEmail(inviteId, email) {
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
       showToast(t('settings.notif_sent'));
+      settingsLoadInvites();
     } else if (d.error === 'email_not_configured') {
       showToast(t('settings.notif_no_api'));
     } else {

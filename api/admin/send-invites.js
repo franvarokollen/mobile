@@ -26,7 +26,7 @@ const DEFAULT_BODY = `
     <p style="font-size:14px;color:#5a5a56;line-height:1.6;margin:0 0 20px">Du har bjudits in att gå med i <strong>{{schoolName}}</strong> i Lurkollen — ett system för insamling av mobiltelefoner i skolan.</p>
     <a href="{{inviteLink}}" style="display:inline-block;padding:12px 24px;background:#1a1a18;color:#f5f4f0;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-bottom:20px">Gå med nu →</a>
     <p style="font-size:12px;color:#9a9a94;margin:0">Eller ange koden manuellt: <strong style="font-family:monospace;color:#1a1a18;letter-spacing:0.08em">{{code}}</strong></p>
-    <p style="font-size:12px;color:#9a9a94;margin:8px 0 0">Länken är giltig i 30 dagar. Vid frågor, kontakta din skoladministratör.</p>
+    <p style="font-size:12px;color:#9a9a94;margin:8px 0 0">Länken är giltig till {{expiresAt}}. Vid frågor, kontakta din skoladministratör.</p>
   </div>
   <p style="font-size:11px;color:#9a9a94;text-align:center;margin:16px 0 0">Skickat via Lurkollen · {{schoolName}}</p>
 </div>`.trim();
@@ -64,16 +64,29 @@ module.exports = async (req, res) => {
   const from         = `${fromName} <${fromAddress}>`;
   const origin       = baseUrl || 'https://lurkollen.vercel.app';
 
+  // Batch-fetch invite IDs and expiry dates so we can track email_sent_at and format dates
+  const codes = invites.map(i => i.code).filter(Boolean);
+  const { data: inviteRows } = await supabase
+    .from('invites')
+    .select('id, code, expires_at')
+    .eq('school_id', school_id)
+    .in('code', codes);
+  const inviteMap = Object.fromEntries((inviteRows || []).map(r => [r.code, r]));
+
   const sent   = [];
   const failed = [];
 
   for (const inv of invites) {
     if (!inv.email || !inv.code) continue;
+    const inviteRow = inviteMap[inv.code];
     try {
       const vars = {
         schoolName,
         inviteLink: `${origin}/?join=${inv.code}`,
         code: inv.code,
+        expiresAt: inviteRow?.expires_at
+          ? new Date(inviteRow.expires_at).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })
+          : '',
       };
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -87,6 +100,9 @@ module.exports = async (req, res) => {
       });
       if (r.ok) {
         sent.push(inv.email);
+        if (inviteRow?.id) {
+          await supabase.from('invites').update({ email_sent_at: new Date().toISOString() }).eq('id', inviteRow.id);
+        }
       } else {
         const e = await r.json().catch(() => ({}));
         failed.push({ email: inv.email, error: e?.message || `HTTP ${r.status}` });

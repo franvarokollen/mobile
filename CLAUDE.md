@@ -85,7 +85,7 @@ All tables have a `school_id` column (UUID FK to `schools.id`). Every query filt
 |---|---|
 | `schools` | `id (uuid), name, slug, meta (jsonb), created_at` |
 | `school_users` | `school_id, user_id, role ('admin'\|'teacher'), created_at` |
-| `invites` | `school_id, code, email, expires_at, used_by, used_at` |
+| `invites` | `school_id, code, email, expires_at, used_by, used_at, email_sent_at` |
 | `students` | `school_id, id, data (jsonb)` |
 | `status_logs` | `school_id, date, student_id, status` |
 | `extra` | `school_id, student_id, data (jsonb)` |
