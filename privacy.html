@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integritetspolicy — Lurkollen</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231a1a18'/><rect x='10' y='4' width='12' height='20' rx='3' fill='none' stroke='%23f5f4f0' stroke-width='2'/><circle cx='16' cy='21' r='1' fill='%23f5f4f0'/><line x1='8' y1='27' x2='24' y2='27' stroke='%23e24b4a' stroke-width='2.5' stroke-linecap='round'/><line x1='11' y1='30' x2='21' y2='30' stroke='%23e24b4a' stroke-width='2' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #f5f4f0;
+  color: #1a1a18;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.topbar {
+  position: sticky; top: 0;
+  background: rgba(245,244,240,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid rgba(0,0,0,0.08);
+  padding: 0 2rem;
+  display: flex; align-items: center; gap: 1rem; height: 52px;
+}
+.brand {
+  font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+  text-decoration: none; color: #1a1a18;
+}
+.topbar-spacer { flex: 1; }
+.back-link {
+  font-size: 13px; color: #5a5a56; text-decoration: none;
+  display: flex; align-items: center; gap: 5px;
+}
+.back-link:hover { color: #1a1a18; }
+.wrap {
+  max-width: 720px; margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+h1 {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.meta {
+  font-size: 13px; color: #9a9a94; margin-bottom: 2.5rem;
+  padding-bottom: 2rem; border-bottom: 0.5px solid rgba(0,0,0,0.08);
+}
+h2 {
+  font-size: 17px; font-weight: 700; margin: 2.5rem 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+h3 {
+  font-size: 14px; font-weight: 600; margin: 1.5rem 0 0.5rem;
+  color: #1a1a18;
+}
+p { margin-bottom: 1rem; color: #3a3a36; }
+ul, ol {
+  margin: 0.5rem 0 1rem 1.5rem; color: #3a3a36;
+}
+li { margin-bottom: 0.35rem; }
+.highlight {
+  background: #fff; border: 0.5px solid rgba(0,0,0,0.08);
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+}
+.highlight p { margin: 0; }
+a { color: #1a1a18; }
+a:hover { opacity: 0.7; }
+.chip {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.chip-blue { background: rgba(30,58,95,0.08); color: #1e3a5f; border: 0.5px solid rgba(30,58,95,0.2); }
+.chip-green { background: rgba(22,163,74,0.08); color: #16a34a; border: 0.5px solid rgba(22,163,74,0.2); }
+table {
+  width: 100%; border-collapse: collapse; font-size: 13px; margin: 1rem 0;
+}
+th {
+  text-align: left; padding: 8px 12px; font-weight: 600;
+  background: rgba(0,0,0,0.03); border-bottom: 0.5px solid rgba(0,0,0,0.1);
+}
+td {
+  padding: 8px 12px; border-bottom: 0.5px solid rgba(0,0,0,0.06);
+  color: #3a3a36; vertical-align: top;
+}
+footer {
+  text-align: center; padding: 2rem;
+  font-size: 12px; color: #9a9a94;
+  border-top: 0.5px solid rgba(0,0,0,0.08);
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="/">Lurkollen</a>
+  <div class="topbar-spacer"></div>
+  <a class="back-link" href="/">← Tillbaka till appen</a>
+</div>
+
+<div class="wrap">
+
+  <h1>Integritetspolicy</h1>
+  <div class="meta">
+    Frånvarokollen Sverige AB · Senast uppdaterad: maj 2026
+  </div>
+
+  <div class="highlight">
+    <p><strong>Kort sammanfattning:</strong> Lurkollen är ett verktyg för skolor att hantera insamling av mobiltelefoner. <strong>Din skola är personuppgiftsansvarig</strong> — vi på Frånvarokollen Sverige AB behandlar bara uppgifterna på skolans uppdrag och enligt dess instruktioner. Vi säljer aldrig data och vi delar den inte med tredje part utöver vad som krävs för att driften ska fungera.</p>
+  </div>
+
+  <h2>1. Vem är ansvarig för dina uppgifter?</h2>
+  <p>Det finns två roller enligt GDPR:</p>
+  <ul>
+    <li><span class="chip chip-blue">Personuppgiftsansvarig</span> — <strong>Din skola</strong> bestämmer varför och hur elevuppgifter behandlas. Det är skolan som har det yttersta ansvaret.</li>
+    <li><span class="chip chip-green">Personuppgiftsbiträde</span> — <strong>Frånvarokollen Sverige AB</strong> (org. nr 559585-6450) tillhandahåller den tekniska plattformen och behandlar uppgifterna enbart på skolans uppdrag.</li>
+  </ul>
+  <p>Skolan och Frånvarokollen Sverige AB ska teckna ett <strong>personuppgiftsbiträdesavtal (PUB-avtal)</strong> innan Lurkollen tas i bruk. Kontakta oss på <a href="mailto:info@franvarokollen.com">info@franvarokollen.com</a> för att upprätta ett sådant.</p>
+
+  <h2>2. Vilka uppgifter behandlas?</h2>
+  <table>
+    <tr><th>Uppgift</th><th>Syfte</th><th>Lagringstid</th></tr>
+    <tr><td>Elevens namn, klass och ID/personnummer</td><td>Identifiera eleven i systemet</td><td>Till dess skolan raderar eleven</td></tr>
+    <tr><td>Närvaro-/frånvarostatus per dag</td><td>Registrera inlämning av mobil</td><td>Konfigurerbart per skola (standard 90 dagar)</td></tr>
+    <tr><td>Lärarens namn och e-postadress</td><td>Inloggning och behörighetshantering</td><td>Till dess kontot tas bort</td></tr>
+    <tr><td>Logghändelser (vem ändrade vad, när)</td><td>Revision och felsökning</td><td>90 dagar</td></tr>
+  </table>
+  <p>Vi behandlar <strong>inga känsliga personuppgifter</strong> (t.ex. hälsouppgifter, etniskt ursprung) utöver vad skolan själv väljer att anteckna i fritextfält.</p>
+
+  <h2>3. Rättslig grund för behandlingen</h2>
+  <p>För skolor utgörs den rättsliga grunden för behandling av elevuppgifter av <strong>artikel 6.1 e i GDPR</strong> (uppgift av allmänt intresse / myndighetsutövning) i kombination med skolans skyldigheter enligt skollagen. Kommunala skolor och fristående skolor kan ha något olika rättsliga grunder — det är respektive skolas ansvar att fastställa rätt grund.</p>
+  <p>Frånvarokollen Sverige AB behandlar uppgifterna med stöd av personuppgiftsbiträdesavtalet med skolan.</p>
+
+  <h2>4. Vem delar vi uppgifter med?</h2>
+  <p>Vi delar inte elevuppgifter med tredje part annat än i följande fall:</p>
+  <ul>
+    <li><strong>Supabase Inc.</strong> — databas och autentisering, servrar i EU (Frankfurt / Stockholm). Supabase behandlar uppgifterna som underbiträde.</li>
+    <li><strong>Vercel Inc.</strong> — webbhotell och serverdrift. Vercel lagrar inga databasuppgifter.</li>
+    <li><strong>Resend Inc.</strong> — e-postutskick (inbjudningslänkar). Inga elevuppgifter skickas via e-post.</li>
+    <li><strong>Myndigheter</strong> — om vi är rättsligt skyldiga att lämna ut uppgifter.</li>
+  </ul>
+  <p>Samtliga underleverantörer är föremål för databehandlingsavtal och uppfyller GDPR:s krav.</p>
+
+  <h2>5. Överföring utanför EU/EES</h2>
+  <p>Vår primära databas är placerad i EU. Vissa tjänsteleverantörer (Vercel, Resend) har sitt säte i USA men hanterar personuppgifter med stöd av EU:s standardavtalsklausuler (SCC) och/eller EU–US Data Privacy Framework.</p>
+
+  <h2>6. Dina rättigheter</h2>
+  <p>Eftersom skolan är personuppgiftsansvarig ska registrerade (elever, lärare) i första hand kontakta <strong>sin skola</strong> för att utöva sina rättigheter. Som personuppgiftsbiträde hjälper vi skolan att uppfylla följande rättigheter:</p>
+  <ul>
+    <li><strong>Rätt till information</strong> — du har rätt att veta vilka uppgifter som behandlas om dig.</li>
+    <li><strong>Rätt till rättelse</strong> — felaktiga uppgifter ska rättas.</li>
+    <li><strong>Rätt till radering</strong> — uppgifter ska raderas när de inte längre behövs.</li>
+    <li><strong>Rätt till dataportabilitet</strong> — du kan begära att få ut dina uppgifter i ett maskinläsbart format.</li>
+    <li><strong>Rätt att invända</strong> — du kan invända mot viss behandling.</li>
+  </ul>
+  <p>Du har även rätt att lämna klagomål till <strong>Integritetsskyddsmyndigheten (IMY)</strong> på <a href="https://www.imy.se" target="_blank">imy.se</a>.</p>
+
+  <h2>7. Säkerhet</h2>
+  <p>Vi vidtar lämpliga tekniska och organisatoriska åtgärder för att skydda personuppgifter mot obehörig åtkomst, förlust eller förstöring:</p>
+  <ul>
+    <li>All kommunikation krypteras med TLS/HTTPS.</li>
+    <li>Databaser krypteras i vila.</li>
+    <li>Åtkomst till produktionssystem är begränsad och loggas.</li>
+    <li>Regelbundna säkerhetskopior tas automatiskt.</li>
+    <li>Autentisering sker via etablerade OAuth-leverantörer (Google) eller engångslänkar.</li>
+  </ul>
+
+  <h2>8. Cookies och lokal lagring</h2>
+  <p>Lurkollen använder <strong>inga spårningscookies</strong> eller tredjepartsannonsering. Vi använder:</p>
+  <ul>
+    <li><strong>Sessionscookies</strong> — för inloggning och autentisering. Raderas när du stänger webbläsaren.</li>
+    <li><strong>localStorage</strong> — för att spara inställningar och tillfällig data lokalt i webbläsaren. Innehåller inga känsliga personuppgifter.</li>
+  </ul>
+
+  <h2>9. Lagring och radering</h2>
+  <p>Varje skola konfigurerar sin egen lagringstid för frånvarodata (standard 90 dagar). När en skola avslutar sin prenumeration raderas all data inom 30 dagar, om inte skolan begär en export dessförinnan.</p>
+
+  <h2>10. Kontakt</h2>
+  <p>Har du frågor om hur vi behandlar personuppgifter, eller vill du teckna ett PUB-avtal?</p>
+  <div class="highlight">
+    <p>
+      <strong>Frånvarokollen Sverige AB</strong><br>
+      Org. nr: 559585-6450<br>
+      E-post: <a href="mailto:info@franvarokollen.com">info@franvarokollen.com</a>
+    </p>
+  </div>
+
+  <h2>11. Ändringar i denna policy</h2>
+  <p>Vi kan komma att uppdatera denna integritetspolicy. Vid väsentliga förändringar informerar vi skolan via e-post. Den senaste versionen finns alltid tillgänglig på <a href="/privacy.html">lurkollen.com/privacy</a>.</p>
+
+</div>
+
+<footer>
+  © 2026 Frånvarokollen Sverige AB · 559585-6450 ·
+  <a href="/privacy.html">Integritetspolicy</a> ·
+  <a href="/terms.html">Användarvillkor</a>
+</footer>
+
+</body>
+</html>
