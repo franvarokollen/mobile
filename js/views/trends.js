@@ -481,27 +481,21 @@ function _heatmap(daily, statuses) {
 
 // ─── ⑤ Student leaderboard ────────────────────────────────────
 function _stuTable(stuList, dates, logs, statuses) {
+  const INITIAL = 3;
   const top = stuList.slice(0, 20);
+  if (!top.length) return `<div style="color:var(--text3);font-size:13px;padding:1rem 0">${t('trends.no_data')}</div>`;
+
   const maxTotal = top[0].total;
   const recentDates = dates.slice(-28);
   const gtc = `1fr ${statuses.map(() => '40px').join(' ')} 120px 32px`;
+  const extra = top.length - INITIAL;
 
-  let html = `<div style="display:flex;flex-direction:column;gap:1px">
-    <div style="display:grid;grid-template-columns:${gtc};gap:8px;padding:0 8px 8px;border-bottom:0.5px solid var(--border);margin-bottom:2px">
-      <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em">Elev</span>
-      ${statuses.map(st => `<span style="font-size:10px;font-weight:700;color:${st.color};text-align:right;text-transform:uppercase;letter-spacing:0.05em">${st.label.slice(0,3)}</span>`).join('')}
-      <span></span>
-      <span style="font-size:10px;font-weight:700;color:var(--text3);text-align:right;text-transform:uppercase;letter-spacing:0.05em">Tot</span>
-    </div>`;
-
-  top.forEach(entry => {
+  const renderRow = entry => {
     const s = entry.student;
     const fname = s.fname || s.name.split(' ')[0] || '';
     const lname = s.lname || s.name.split(' ').slice(1).join(' ') || '';
     const initials = ((fname[0] || '') + (lname[0] || '')).toUpperCase() || s.name.slice(0,2).toUpperCase();
-    const barPct = ((entry.total / maxTotal) * 100).toFixed(1);
 
-    // Activity dots: one per recent date
     const dots = recentDates.map(date => {
       const status = (logs[date] || {})[s.id];
       if (!status) return `<span style="width:6px;height:6px;border-radius:50%;background:var(--surface3);display:inline-block;flex-shrink:0"></span>`;
@@ -509,7 +503,7 @@ function _stuTable(stuList, dates, logs, statuses) {
       return `<span style="width:6px;height:6px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0" title="${date}"></span>`;
     }).join('');
 
-    html += `<div onclick="openDrill('${s.id}')"
+    return `<div onclick="openDrill('${s.id}')"
       style="display:grid;grid-template-columns:${gtc};gap:8px;align-items:center;padding:6px 8px;border-radius:var(--radius);cursor:pointer;transition:background 0.1s"
       onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
       <div style="display:flex;align-items:center;gap:8px;min-width:0">
@@ -523,7 +517,38 @@ function _stuTable(stuList, dates, logs, statuses) {
       <div style="display:flex;gap:2px;align-items:center;flex-wrap:nowrap;overflow:hidden">${dots}</div>
       <div style="font-size:14px;font-weight:700;color:var(--text);text-align:right">${entry.total}</div>
     </div>`;
-  });
+  };
+
+  let html = `<div style="display:flex;flex-direction:column;gap:1px">
+    <div style="display:grid;grid-template-columns:${gtc};gap:8px;padding:0 8px 8px;border-bottom:0.5px solid var(--border);margin-bottom:2px">
+      <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em">Elev</span>
+      ${statuses.map(st => `<span style="font-size:10px;font-weight:700;color:${st.color};text-align:right;text-transform:uppercase;letter-spacing:0.05em">${st.label.slice(0,3)}</span>`).join('')}
+      <span></span>
+      <span style="font-size:10px;font-weight:700;color:var(--text3);text-align:right;text-transform:uppercase;letter-spacing:0.05em">Tot</span>
+    </div>`;
+
+  // First INITIAL rows always visible
+  top.slice(0, INITIAL).forEach(entry => { html += renderRow(entry); });
+
+  // Remaining rows — hidden by default
+  if (extra > 0) {
+    html += `<div id="stuExtraRows" style="display:none;flex-direction:column;gap:1px">`;
+    top.slice(INITIAL).forEach(entry => { html += renderRow(entry); });
+    html += `</div>`;
+
+    html += `<button id="stuToggleBtn" onclick="
+      var el=document.getElementById('stuExtraRows');
+      var btn=document.getElementById('stuToggleBtn');
+      var open=el.style.display==='flex';
+      el.style.display=open?'none':'flex';
+      btn.innerHTML=open
+        ? '＋ ${extra} fler'
+        : '－ Visa färre';
+    " style="margin-top:8px;background:none;border:0.5px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.15s;align-self:flex-start"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      ＋ ${extra} fler
+    </button>`;
+  }
 
   html += `</div>`;
   return html;
