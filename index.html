@@ -43,8 +43,8 @@
           <div style="flex:1;height:0.5px;background:var(--border)"></div>
         </div>
 
-        <!-- Magic link -->
-        <div style="display:flex;flex-direction:column;gap:8px">
+        <!-- Magic link (disabled until custom SMTP configured) -->
+        <div style="display:flex;flex-direction:column;gap:8px;opacity:0.4;pointer-events:none" title="Kommer snart">
           <input id="magicLinkEmail" type="email" placeholder="din@epost.se"
             style="width:100%;padding:11px 14px;border:0.5px solid var(--border2);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--surface2);color:var(--text);outline:none;box-sizing:border-box"
             onkeydown="if(event.key==='Enter')signInWithMagicLink()">
