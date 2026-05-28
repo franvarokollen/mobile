@@ -22,7 +22,7 @@ let currentClass = 'ALL';
 let currentStudentClass = 'ALL';
 let statusFilter = 'ALL';
 let trendClass = 'ALL';
-let trendPeriod = 'week';
+let trendPeriod = 'all';
 
 // Extra dirty flag (blocks overwrite for 10s after any change)
 let _extraDirtyUntil = 0;
