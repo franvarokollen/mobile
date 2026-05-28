@@ -28,6 +28,10 @@ function updateDateDisplay() {
 function changeDate(delta) {
   var d = new Date(currentDate + 'T12:00:00');
   d.setDate(d.getDate() + delta);
+  // Skip weekends: Saturday → Friday (back) or Monday (forward); Sunday → Friday (back) or Monday (forward)
+  var dow = d.getDay();
+  if (dow === 6) d.setDate(d.getDate() + (delta > 0 ? 2 : -1)); // Sat → Mon or Fri
+  if (dow === 0) d.setDate(d.getDate() + (delta > 0 ? 1 : -2)); // Sun → Mon or Fri
   var y = d.getFullYear(), mo = String(d.getMonth() + 1).padStart(2, '0'), dy = String(d.getDate()).padStart(2, '0');
   currentDate = y + '-' + mo + '-' + dy;
   var dp = document.getElementById('datePicker');
