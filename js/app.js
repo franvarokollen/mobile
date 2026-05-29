@@ -140,9 +140,17 @@ document.addEventListener('keydown', e => {
       </div>`;
 
     // Single /api/init call — one cold start, one round trip, all data in parallel on the server
-    const init = await authFetch(`${API}/init?date=${currentDate}`)
-      .then(r => r.ok ? r.json() : null)
-      .catch(() => null);
+    let _initRaw = null;
+    try {
+      const _initRes = await authFetch(`${API}/init?date=${currentDate}`);
+      console.log('[init] HTTP status:', _initRes.status);
+      _initRaw = _initRes.ok ? await _initRes.json() : null;
+      if (!_initRaw) console.warn('[init] non-ok response, status', _initRes.status);
+    } catch(e) {
+      console.error('[init] fetch error:', e);
+    }
+    const init = _initRaw;
+    console.log('[init] result:', init ? `ok, students=${Object.keys(init.students||{}).length}` : 'null');
 
     let serverStudentCount = 0;
 
