@@ -144,6 +144,8 @@ document.addEventListener('keydown', e => {
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
 
+    let serverStudentCount = 0;
+
     if (init) {
       // Settings
       if (init.settings && typeof init.settings === 'object') {
@@ -151,9 +153,12 @@ document.addEventListener('keydown', e => {
         applySettings();
       }
       // Students
-      if (init.students && typeof init.students === 'object' && Object.keys(init.students).length > 0) {
-        saveStudents(init.students);
-        CLASSES = getClasses(init.students) || CLASSES;
+      if (init.students && typeof init.students === 'object') {
+        serverStudentCount = Object.keys(init.students).length;
+        if (serverStudentCount > 0) {
+          saveStudents(init.students);
+          CLASSES = getClasses(init.students) || CLASSES;
+        }
       }
       // Extra (starred, flags, notes, slot)
       if (init.extra && typeof init.extra === 'object') {
@@ -187,7 +192,10 @@ document.addEventListener('keydown', e => {
     startPolling();
     updateDateDisplay();
     renderDash();
-    if (!hasStudents()) showUploadScreen();
+    // Show upload screen only if server confirmed there are no students.
+    // Never show it when init failed (null) — that's a network/auth issue, not a missing-data issue.
+    // Also check localStorage as fallback for the case init was skipped.
+    if (init !== null ? serverStudentCount === 0 : !hasStudents()) showUploadScreen();
   } else {
     setServerIndicator(false);
     if (!hasStudents()) showUploadScreen();
