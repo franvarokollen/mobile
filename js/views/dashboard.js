@@ -207,8 +207,11 @@ function renderGrid() {
     const statusConfig = statuses.find(x => x.key === st);
     const d = document.createElement('div');
 
-    // Flag card colour overrides status colour (first active flag with a cardColor wins)
-    const activeFlagCardColor = flags.find(fl => ex[fl.key] && fl.cardColor)?.cardColor || '';
+    // Flag card colour — per-day flags read from logs, persistent from extra
+    const activeFlagCardColor = flags.find(fl => {
+      const active = fl.perDay ? !!dl[s.id + '_' + fl.key] : !!ex[fl.key];
+      return active && fl.cardColor;
+    })?.cardColor || '';
 
     if (activeFlagCardColor) {
       d.className = 'chip';
@@ -226,10 +229,10 @@ function renderGrid() {
     d.title = t('dash.click_cycle');
 
     const flagIcons = flags.map(fl => {
-      const isActive = ex[fl.key] || false;
+      const isActive = fl.perDay ? !!dl[s.id + '_' + fl.key] : !!ex[fl.key];
       const color = isActive ? fl.activeColor : 'var(--text3)';
       const shortLabel = fl.label.length > 8 ? fl.label.slice(0, 7) + '…' : fl.label;
-      return `<button class="chip-icon${isActive ? ' active' : ''}" onclick="(function(e){e.stopPropagation();toggleFlag(e,'${s.id}','${fl.key}');})(event)" title="${fl.label}" style="flex-direction:column;align-items:center">
+      return `<button class="chip-icon${isActive ? ' active' : ''}" onclick="(function(e){e.stopPropagation();toggleFlag(e,'${s.id}','${fl.key}',${!!fl.perDay});})(event)" title="${fl.label}" style="flex-direction:column;align-items:center">
         <span style="font-family:Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif">${fl.emoji}</span>
         <span style="font-size:8px;font-weight:600;color:${color};line-height:1.2;font-family:DM Sans,sans-serif;margin-top:2px">${shortLabel}</span>
       </button>`;

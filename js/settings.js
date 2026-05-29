@@ -50,9 +50,9 @@ const DEFAULT_STATUSES = [
   { key: 'late', color: '#f59e0b' }
 ];
 const DEFAULT_FLAGS = [
-  { key: 'starred',   emoji: '⭐', activeColor: '#f59e0b', cardColor: '' },
-  { key: 'athome',    emoji: '🏠', activeColor: '#6366f1', cardColor: '' },
-  { key: 'keepphone', emoji: '📱', activeColor: '#0ea5e9', cardColor: '' }
+  { key: 'starred',   emoji: '⭐', activeColor: '#f59e0b', cardColor: '', perDay: true  },
+  { key: 'athome',    emoji: '🏠', activeColor: '#6366f1', cardColor: '', perDay: false },
+  { key: 'keepphone', emoji: '📱', activeColor: '#0ea5e9', cardColor: '', perDay: false }
 ];
 
 const _defaultStatusLabels = { out: 'default.status.out', late: 'default.status.late' };
@@ -598,13 +598,15 @@ async function saveSettings() {
     const colorEl        = row.querySelector('[data-flag-color]');
     const cardEnabledEl  = row.querySelector('[data-flag-card-enabled]');
     const cardColorEl    = row.querySelector('[data-flag-card-color]');
+    const perDayEl       = row.querySelector('[data-flag-per-day]');
     if (!label) return;
     flags.push({
       key:         row.dataset.flagKey || ('flag_' + i),
       label,
       emoji:       emojiEl ? emojiEl.value.trim() || '⭐' : '⭐',
       activeColor: colorEl ? colorEl.value : '#6366f1',
-      cardColor:   (cardEnabledEl?.checked && cardColorEl) ? cardColorEl.value : ''
+      cardColor:   (cardEnabledEl?.checked && cardColorEl) ? cardColorEl.value : '',
+      perDay:      !!perDayEl?.checked
     });
   });
 
@@ -712,6 +714,11 @@ function renderFlagRow(fl, i) {
       <input type="color" value="${fl.cardColor || '#a78bfa'}" data-flag-card-color="${i}"
         style="width:32px;height:28px;border:0.5px solid var(--border2);border-radius:4px;padding:2px;cursor:pointer;background:var(--surface);opacity:${fl.cardColor ? '1' : '0.35'};pointer-events:${fl.cardColor ? 'auto' : 'none'}">
     </label>
+    <label title="${t('settings.flag_per_day')}" style="display:flex;align-items:center;gap:3px;cursor:pointer;flex-shrink:0;font-size:11px;color:var(--text3)">
+      <input type="checkbox" data-flag-per-day="${i}" ${fl.perDay ? 'checked' : ''}
+        style="cursor:pointer;width:13px;height:13px;accent-color:var(--text)">
+      <span>${t('settings.flag_per_day_short')}</span>
+    </label>
     <button onclick="settingsMoveFlag(${i},-1)" title="${t('settings.move_up') || '↑'}"
       style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--text3);cursor:pointer;font-size:12px;width:24px;height:26px;display:flex;align-items:center;justify-content:center">↑</button>
     <button onclick="settingsMoveFlag(${i},1)" title="${t('settings.move_down') || '↓'}"
@@ -792,7 +799,8 @@ function _readFlagRows() {
       label:       row.querySelector('[data-flag-label]').value,
       emoji:       row.querySelector('[id^="emojiVal_"]').value || '⭐',
       activeColor: row.querySelector('[data-flag-color]').value,
-      cardColor:   (cardEnabledEl?.checked && cardColorEl) ? cardColorEl.value : ''
+      cardColor:   (cardEnabledEl?.checked && cardColorEl) ? cardColorEl.value : '',
+      perDay:      !!row.querySelector('[data-flag-per-day]')?.checked
     };
   });
 }

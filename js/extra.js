@@ -27,10 +27,20 @@ function renderSlot(id) {
   </div>`;
 }
 
-function toggleFlag(e, id, key) {
+function toggleFlag(e, id, key, perDay) {
   e.stopPropagation();
-  const ex = getExtra(id);
-  setExtra(id, { [key]: !ex[key] || null });
+  if (perDay) {
+    // Per-day: store in logs[currentDate][id_key]
+    const logKey = id + '_' + key;
+    const dl = getDayLogs(currentDate);
+    const cur = !!dl[logKey];
+    setDayLog(currentDate, logKey, cur ? null : true);
+    if (SERVER) saveFlagsToServer(loadLogs(), [currentDate]);
+  } else {
+    // Persistent: store in extra
+    const ex = getExtra(id);
+    setExtra(id, { [key]: !ex[key] || null });
+  }
   renderGrid();
 }
 

@@ -144,7 +144,8 @@ async function saveFlagsToServer(logs, dates) {
     const flags = {};
     if (logs[date]) {
       Object.entries(logs[date]).forEach(([k, v]) => {
-        if (k.endsWith('_explained') || k.endsWith('_unreported')) flags[k] = v;
+        // Save any flag-style key (contains underscore) — covers _explained, _unreported, and per-day emoji flags
+        if (k.includes('_')) flags[k] = v;
       });
     }
     try {
