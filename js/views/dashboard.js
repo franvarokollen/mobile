@@ -267,7 +267,29 @@ function renderGrid() {
 }
 
 function showUploadScreen() {
-  document.getElementById('uploadScreen').style.display = 'flex';
+  const el = document.getElementById('uploadScreen');
+  if (!el) return;
+  el.style.display = 'flex';
+
+  // Populate school chip
+  const schoolName = typeof getMySchoolName === 'function' ? getMySchoolName() : null;
+  const schoolChip = document.getElementById('uploadSchoolChip');
+  const schoolNameEl = document.getElementById('uploadSchoolName');
+  if (schoolChip && schoolNameEl && schoolName) {
+    schoolNameEl.textContent = schoolName;
+    schoolChip.style.display = 'flex';
+  }
+
+  // Populate user chip
+  const email = typeof getMyEmail === 'function' ? getMyEmail() : null;
+  const userChip   = document.getElementById('uploadUserChip');
+  const userAvatar = document.getElementById('uploadUserAvatar');
+  const userEmailEl = document.getElementById('uploadUserEmail');
+  if (userChip && email) {
+    if (userEmailEl)  userEmailEl.textContent = email;
+    if (userAvatar)   userAvatar.textContent  = email.slice(0, 2).toUpperCase();
+    userChip.style.display = 'flex';
+  }
 }
 
 function hideUploadScreen() {

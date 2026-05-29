@@ -181,10 +181,16 @@ function getAuthToken() {
 }
 
 /** Return the current user's role in their school ('admin' | 'teacher' | null). */
-function getMyRole()   { return _meInfo?.school?.role || null; }
+function getMyRole()       { return _meInfo?.school?.role  || null; }
 
 /** Return the current user's Supabase auth UUID. */
-function getMyUserId() { return _meInfo?.user?.id || null; }
+function getMyUserId()     { return _meInfo?.user?.id      || null; }
+
+/** Return the current user's email address. */
+function getMyEmail()      { return _meInfo?.user?.email   || null; }
+
+/** Return the current user's school display name. */
+function getMySchoolName() { return _meInfo?.school?.name  || null; }
 
 /** Kick off Google OAuth redirect via Supabase. */
 async function signInWithGoogle() {

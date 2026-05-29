@@ -108,7 +108,24 @@
 </div>
 
 <!-- UPLOAD SCREEN -->
-<div id="uploadScreen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:99;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem">
+<div id="uploadScreen" style="display:none;position:fixed;inset:0;background:rgba(245,244,240,0.84);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);z-index:99;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem">
+
+  <!-- Top-right: school chip · user chip · logout -->
+  <div style="position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+    <div id="uploadSchoolChip" style="display:none;font-size:11px;color:var(--text2);background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:4px 10px;font-weight:500;display:none;align-items:center;gap:4px">
+      <i class="ti ti-school" style="font-size:12px;flex-shrink:0"></i>
+      <span id="uploadSchoolName"></span>
+    </div>
+    <div id="uploadUserChip" style="display:none;font-size:11px;color:var(--text2);background:var(--surface);border:0.5px solid var(--border);border-radius:20px;padding:3px 10px 3px 4px;align-items:center;gap:5px">
+      <div id="uploadUserAvatar" style="width:20px;height:20px;border-radius:50%;background:var(--text3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--bg);flex-shrink:0;letter-spacing:0"></div>
+      <span id="uploadUserEmail" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    </div>
+    <button onclick="signOut()" style="font-size:11px;color:var(--text3);background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif;line-height:1">
+      <i class="ti ti-logout" style="font-size:13px"></i>Logga ut
+    </button>
+  </div>
+
+  <!-- Main upload content -->
   <div style="font-size:20px;font-weight:700;color:var(--text)"><i class="ti ti-device-mobile-off" style="margin-right:8px"></i><span data-i18n="upload.title">Lurkollen</span></div>
   <div style="font-size:14px;color:var(--text2);text-align:center;max-width:360px" data-i18n="upload.subtitle">Ladda upp en elevlista för att komma igång. Behöver du en startpunkt? Ladda ned exempelfilen nedan, fyll i den och ladda upp den.</div>
   <label class="btn" style="cursor:pointer;font-size:15px;padding:12px 24px"><i class="ti ti-upload" aria-hidden="true"></i><span data-i18n="upload.btn">Ladda upp elev-CSV</span><input type="file" accept=".csv,.xml,.json,.xlsx,.tsv,.txt" style="display:none" onchange="handleSmartImport(this)"></label>
