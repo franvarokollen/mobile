@@ -368,6 +368,7 @@ body {
     <div class="topbar-stat" style="color:var(--green)"><strong id="cntActive" style="color:var(--green)">–</strong> <span data-t="active"></span></div>
     <div class="topbar-stat" style="color:var(--amber)"><strong id="cntTrial" style="color:var(--amber)">–</strong> <span data-t="trial"></span></div>
     <div class="topbar-stat" id="statStudents"><strong id="cntStudents">–</strong> <span data-t="students_total"></span></div>
+    <div class="topbar-stat" style="color:var(--red);display:none"><strong id="cntIssues" style="color:var(--red)">–</strong> <span style="color:var(--red)">⚠ issues</span></div>
     <div class="topbar-spacer"></div>
     <button class="topbar-btn" onclick="openAddSchool()"><i class="ti ti-plus"></i> <span data-t="add_school"></span></button>
     <button class="topbar-btn" onclick="loadSchools()"><i class="ti ti-refresh"></i> <span data-t="refresh"></span></button>
@@ -627,6 +628,9 @@ const TR = {
     school_registered_no_admin: 'Skola skapad — administratören hittades inte. Lägg till dem via Konfigurera → Användare.',
     no_admin_warning: 'Ingen admin',
     no_students_warning: 'Inga elever',
+    hc_no_admin: 'Ingen admin', hc_no_students: 'Inga elever', hc_no_dpa: 'DPA ej signerat',
+    hc_no_teachers: 'Inga lärare', hc_no_backup: 'Ingen backup', hc_no_name: 'Namn saknas',
+    hc_inactive: 'Inaktiv 21d', hc_pending_invites: 'väntande inbjudningar',
     invite_sent: 'Inbjudan skickad',
     users_chip: 'lärare',
     fmt_letter: 'Bokstav (5A)', fmt_dot: 'Punkt (5.1)',
@@ -711,6 +715,9 @@ const TR = {
     school_registered_no_admin: 'School created — administrator not found. Add them via Configure → Users.',
     no_admin_warning: 'No admin',
     no_students_warning: 'No students',
+    hc_no_admin: 'No admin', hc_no_students: 'No students', hc_no_dpa: 'DPA unsigned',
+    hc_no_teachers: 'No teachers', hc_no_backup: 'No backup', hc_no_name: 'Name missing',
+    hc_inactive: 'Inactive 21d', hc_pending_invites: 'pending invites',
     invite_sent: 'Invite sent',
     users_chip: 'teachers',
     fmt_letter: 'Letter (5A)', fmt_dot: 'Dot (5.1)',
@@ -877,6 +884,13 @@ function updateTopStats(schools) {
   document.getElementById('cntActive').textContent   = schools.filter(s => (s.meta?.status || 'trial') === 'active').length;
   document.getElementById('cntTrial').textContent    = schools.filter(s => (s.meta?.status || 'trial') === 'trial').length;
   document.getElementById('cntStudents').textContent = schools.reduce((n, s) => n + (s.activeStudents || 0), 0);
+  // Count schools with at least one critical (red) health issue
+  const criticalCount = schools.filter(s => getHealthChecks(s).some(c => !c.ok && c.sev === 'red')).length;
+  const issuesEl = document.getElementById('cntIssues');
+  if (issuesEl) {
+    issuesEl.textContent = criticalCount;
+    issuesEl.closest('.topbar-stat').style.display = criticalCount > 0 ? '' : 'none';
+  }
 }
 
 // ── Render ────────────────────────────────────────────────────
@@ -948,11 +962,52 @@ function checkItem(schoolId, field, label, checked) {
   </label>`;
 }
 
+// ── Health checks ─────────────────────────────────────────────
+function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 86400000) : Infinity; }
+
+function getHealthChecks(school) {
+  const s = school.settings || {};
+  return [
+    { ok: (school.adminCount  || 0) > 0,                      label: t('hc_no_admin'),    icon: 'ti-user-shield',    sev: 'red'   },
+    { ok: (school.activeStudents || 0) > 0,                   label: t('hc_no_students'), icon: 'ti-users',          sev: 'red'   },
+    { ok: !!school.dpaSigned,                                  label: t('hc_no_dpa'),      icon: 'ti-file-certificate',sev: 'red'  },
+    { ok: (school.userCount||0) > (school.adminCount||0),      label: t('hc_no_teachers'), icon: 'ti-chalkboard',     sev: 'amber' },
+    { ok: !!school.lastBackup,                                 label: t('hc_no_backup'),   icon: 'ti-device-floppy',  sev: 'amber' },
+    { ok: !!s.schoolName,                                      label: t('hc_no_name'),     icon: 'ti-building-school',sev: 'amber' },
+    { ok: daysSince(school.lastActive) < 21,                   label: t('hc_inactive'),    icon: 'ti-activity',       sev: 'amber' },
+  ];
+}
+
+function healthBar(school) {
+  const checks = getHealthChecks(school);
+  const done   = checks.filter(c => c.ok).length;
+  const total  = checks.length;
+  const pct    = Math.round(done / total * 100);
+  const issues = checks.filter(c => !c.ok);
+  const color  = issues.some(c => c.sev === 'red') ? 'var(--red)' : issues.length ? 'var(--amber)' : 'var(--green)';
+
+  const pills = issues.map(c =>
+    `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--${c.sev}-bg);color:var(--${c.sev});border:0.5px solid currentColor;opacity:0.85">
+      <i class="ti ${c.icon}" style="font-size:11px"></i>${c.label}
+    </span>`
+  ).join('');
+
+  return `<div style="padding:8px 14px;border-bottom:0.5px solid var(--border);background:var(--surface2)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:${issues.length?'6':'0'}px">
+      <div style="flex:1;height:5px;background:var(--surface3);border-radius:4px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width 0.4s"></div>
+      </div>
+      <span style="font-size:10px;font-weight:700;color:${color};white-space:nowrap">${done}/${total}</span>
+    </div>
+    ${issues.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${pills}</div>` : ''}
+  </div>`;
+}
+
 function renderCard(school) {
-  const id   = school.school_id;
-  const meta = school.meta || {};
-  const s    = school.settings || {};
-  const name = meta.display_name || s.schoolName || school.name || school.slug || id;
+  const id     = school.school_id;
+  const meta   = school.meta || {};
+  const s      = school.settings || {};
+  const name   = meta.display_name || s.schoolName || school.name || school.slug || id;
   const status = meta.status || 'trial';
 
   return `<div class="card" id="card-${id}">
@@ -963,6 +1018,8 @@ function renderCard(school) {
       <div class="last-seen">${relativeDate(school.lastActive)}</div>
     </div>
 
+    ${healthBar(school)}
+
     <div class="card-body">
       <div class="card-left">
         <div class="block-label">${t('stats')}</div>
@@ -970,12 +1027,7 @@ function renderCard(school) {
           <div class="stat-chip"><i class="ti ti-users"></i>${school.activeStudents || 0} ${t('students_chip')}</div>
           <div class="stat-chip"><i class="ti ti-user-check"></i>${school.userCount || 0} ${t('users_chip')}</div>
           <div class="stat-chip"><i class="ti ti-calendar"></i>${school.lastActive || '—'}</div>
-          ${(school.adminCount || 0) === 0
-            ? `<div class="stat-chip" style="background:var(--red-bg);color:var(--red);border-color:rgba(220,38,38,0.25)"><i class="ti ti-alert-triangle"></i>${t('no_admin_warning')}</div>`
-            : ''}
-          ${(school.activeStudents || 0) === 0
-            ? `<div class="stat-chip" style="background:var(--amber-bg);color:var(--amber);border-color:rgba(217,119,6,0.25)"><i class="ti ti-users-group"></i>${t('no_students_warning')}</div>`
-            : ''}
+          ${school.pendingInvites ? `<div class="stat-chip" style="background:var(--indigo-bg);color:var(--indigo);border-color:rgba(30,58,95,0.2)"><i class="ti ti-mail"></i>${school.pendingInvites} ${t('hc_pending_invites')}</div>` : ''}
         </div>
 
         <div class="block-label">${t('settings_lbl')}</div>
@@ -1015,6 +1067,10 @@ function renderCard(school) {
         onblur="saveMeta('${id}',{license_seats:parseInt(this.value)||0})">
       <div style="flex:1"></div>
       <span class="save-indicator" data-save="${id}">${t('saved')}</span>
+      <button class="topbar-btn" style="height:28px;font-size:11px;padding:0 10px;gap:4px"
+        onclick="adminCreateBackup('${id}')">
+        <i class="ti ti-device-floppy"></i>
+      </button>
       <button class="topbar-btn" style="height:28px;font-size:11px;padding:0 10px;gap:4px"
         onclick="openSettingsModal('${id}')">
         <i class="ti ti-adjustments-horizontal"></i> ${t('configure')}
@@ -1096,6 +1152,15 @@ async function addSchool() {
     await loadSchools();
     toast(d2.not_found ? t('school_registered_no_admin') : t('school_registered'));
   } catch(e) { toast(t('save_failed')); }
+}
+
+// ── Quick action: trigger backup for a school ─────────────────
+async function adminCreateBackup(schoolId) {
+  toast('Creating backup…');
+  try {
+    const r = await apiFetch(`/api/admin/backups?school_id=${schoolId}`, { method: 'POST' });
+    toast(r.ok ? '✓ Backup created' : 'Backup failed');
+  } catch(e) { toast('Backup failed'); }
 }
 
 // ── Utils ─────────────────────────────────────────────────────

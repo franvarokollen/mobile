@@ -53,29 +53,49 @@ module.exports = async (req, res) => {
         .eq('school_id', school.id)
         .maybeSingle();
 
-      // User count and admin count
-      const { count: userCount } = await supabase
+      // User counts
+      const { data: usersData } = await supabase
         .from('school_users')
-        .select('*', { count: 'exact', head: true })
+        .select('role')
         .eq('school_id', school.id);
+      const userCount  = (usersData || []).length;
+      const adminCount = (usersData || []).filter(u => u.role === 'admin').length;
 
-      const { count: adminCount } = await supabase
-        .from('school_users')
-        .select('*', { count: 'exact', head: true })
+      // DPA signed
+      let dpaSigned = false;
+      try {
+        const { data: dpaRow } = await supabase
+          .from('dpa_signatures').select('signed_at')
+          .eq('school_id', school.id).eq('agreement_version', 'v1.0').maybeSingle();
+        dpaSigned = !!dpaRow;
+      } catch(e) {}
+
+      // Latest backup
+      const { data: backupRow } = await supabase
+        .from('backups').select('created_at')
         .eq('school_id', school.id)
-        .eq('role', 'admin');
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+      // Pending (un-redeemed) invites
+      const { data: pendingInvites } = await supabase
+        .from('invites').select('code, email')
+        .eq('school_id', school.id).is('used_by', null)
+        .gt('expires_at', new Date().toISOString());
 
       return {
-        school_id:     school.id,
-        name:          school.name,
-        slug:          school.slug,
-        meta:          school.meta   || {},
-        settings:      settingsRow?.data || {},
+        school_id:      school.id,
+        name:           school.name,
+        slug:           school.slug,
+        meta:           school.meta   || {},
+        settings:       settingsRow?.data || {},
         activeStudents,
-        lastActive:    lastLog?.date   || null,
-        userCount:     userCount || 0,
-        adminCount:    adminCount || 0,
-        createdAt:     school.created_at,
+        lastActive:     lastLog?.date   || null,
+        userCount,
+        adminCount,
+        dpaSigned,
+        lastBackup:     backupRow?.created_at || null,
+        pendingInvites: (pendingInvites || []).length,
+        createdAt:      school.created_at,
       };
     }));
 
