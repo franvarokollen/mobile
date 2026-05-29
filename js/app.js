@@ -192,6 +192,25 @@ document.addEventListener('keydown', e => {
     startPolling();
     updateDateDisplay();
     renderDash();
+
+    // Background sync of ALL historical status logs so Trends is correct on any device.
+    // Runs after renderDash so it never delays the initial screen.
+    (async () => {
+      try {
+        const r = await authFetch(`${API}/logs`);
+        if (!r.ok) return;
+        const remoteLogs = await r.json();
+        if (remoteLogs && typeof remoteLogs === 'object' && Object.keys(remoteLogs).length > 0) {
+          const local = loadLogs();
+          // Remote is authoritative per date; preserve any local flag keys (e.g. _explained)
+          Object.entries(remoteLogs).forEach(([d, dayData]) => {
+            local[d] = Object.assign({}, local[d] || {}, dayData);
+          });
+          saveLogs(local);
+          if (currentView === 'trends') renderTrends();
+        }
+      } catch(e) {}
+    })();
     // Show upload screen only if server confirmed there are no students.
     // Never show it when init failed (null) — that's a network/auth issue, not a missing-data issue.
     // Also check localStorage as fallback for the case init was skipped.
