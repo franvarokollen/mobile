@@ -32,9 +32,8 @@ module.exports = async (req, res) => {
       .maybeSingle(),
 
     supabase.from('students')
-      .select('data')
-      .eq('school_id', schoolId)
-      .maybeSingle(),
+      .select('id, data')
+      .eq('school_id', schoolId),
 
     supabase.from('extra')
       .select('student_id, data')
@@ -76,9 +75,12 @@ module.exports = async (req, res) => {
     ? { signed: true, signedAt: dpaR.data.signed_at, signerName: dpaR.data.signer_name, version: dpaR.data.agreement_version }
     : { signed: false };
 
+  const students = {};
+  (studentsR.data || []).forEach(r => { students[r.id] = r.data; });
+
   return res.json({
     settings: settingsR.data?.data || {},
-    students: studentsR.data?.data || {},
+    students,
     extra,
     flags,
     daylog,
