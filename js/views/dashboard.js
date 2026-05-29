@@ -44,9 +44,16 @@ function renderOnboarding() {
       actionLabel: t('onboarding.go_import'),
     },
     {
-      done: false, // always actionable — invite team
+      done: (window._schoolUserCount || 0) > 1, // true once at least one other user has joined
       label: t('onboarding.step_invite'),
-      action: () => { switchView('settings'); setTimeout(() => switchSettingsSection('users', null), 80); },
+      action: () => {
+        switchView('settings');
+        setTimeout(() => {
+          switchSettingsSection('users', null);
+          settingsLoadUsers();
+          settingsLoadInvites();
+        }, 80);
+      },
       actionLabel: t('onboarding.go_invite'),
     },
   ];

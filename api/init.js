@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   const date = req.query.date || new Date().toISOString().slice(0, 10);
 
   // ── All queries in parallel ───────────────────────────────
-  const [settingsR, studentsR, extraR, flagsR, daylogR, dpaR] = await Promise.all([
+  const [settingsR, studentsR, extraR, flagsR, daylogR, usersR, dpaR] = await Promise.all([
     supabase.from('settings')
       .select('data')
       .eq('school_id', schoolId)
@@ -47,6 +47,9 @@ module.exports = async (req, res) => {
       .select('student_id, status')
       .eq('school_id', schoolId)
       .eq('date', date),
+
+    // User count for this school
+    supabase.from('school_users').select('user_id', { count: 'exact', head: true }).eq('school_id', schoolId),
 
     // DPA — errors handled in response shaping below (table may not exist)
     supabase.from('dpa_signatures')
@@ -78,11 +81,12 @@ module.exports = async (req, res) => {
   (studentsR.data || []).forEach(r => { students[r.id] = r.data; });
 
   return res.json({
-    settings: settingsR.data?.data || {},
+    settings:   settingsR.data?.data || {},
     students,
     extra,
     flags,
     daylog,
     dpa,
+    userCount:  usersR.count || 0,
   });
 };

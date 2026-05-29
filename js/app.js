@@ -181,6 +181,8 @@ document.addEventListener('keydown', e => {
       }
       // DPA status
       window._dpaSigned = !!(init.dpa && init.dpa.signed);
+      // User count (for onboarding "Invite teachers" step)
+      window._schoolUserCount = init.userCount || 0;
     }
 
     CLASSES = getClasses(loadStudents()) || CLASSES;
