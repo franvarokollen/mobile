@@ -820,6 +820,13 @@ if (TOKEN) {
     if (ok) {
       document.getElementById('authGate').style.display = 'none';
       document.getElementById('app').style.display = 'block';
+      // Poll every 20s so checkboxes and health flags stay in sync across devices.
+      // Skip if user is actively typing in an input to avoid wiping their work.
+      setInterval(() => {
+        const tag = document.activeElement?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        loadSchools();
+      }, 20000);
     } else {
       sessionStorage.removeItem('mk_admin_token');
       TOKEN = '';
