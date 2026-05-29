@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -808,6 +809,7 @@ function authenticate() {
       sessionStorage.setItem('mk_admin_token', TOKEN);
       document.getElementById('authGate').style.display = 'none';
       document.getElementById('app').style.display = 'block';
+      initRealtimeSync();
     } else {
       document.getElementById('authError').textContent = t('wrong_token');
       TOKEN = '';
@@ -820,18 +822,36 @@ if (TOKEN) {
     if (ok) {
       document.getElementById('authGate').style.display = 'none';
       document.getElementById('app').style.display = 'block';
-      // Poll every 20s so checkboxes and health flags stay in sync across devices.
-      // Skip if user is actively typing in an input to avoid wiping their work.
+      initRealtimeSync();
+      // 30s poll as fallback for missed broadcast messages
       setInterval(() => {
         const tag = document.activeElement?.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
         loadSchools();
-      }, 20000);
+      }, 30000);
     } else {
       sessionStorage.removeItem('mk_admin_token');
       TOKEN = '';
     }
   });
+}
+
+// ── Realtime broadcast sync ───────────────────────────────────
+let _adminChannel = null;
+
+async function initRealtimeSync() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    const sb = supabase.createClient(cfg.url, cfg.anonKey);
+    _adminChannel = sb.channel('admin-panel-sync', { config: { broadcast: { self: false } } });
+    _adminChannel
+      .on('broadcast', { event: 'refresh' }, () => loadSchools())
+      .subscribe();
+  } catch(e) {}
+}
+
+function broadcastRefresh() {
+  if (_adminChannel) _adminChannel.send({ type: 'broadcast', event: 'refresh', payload: {} }).catch(() => {});
 }
 
 // ── API helpers ───────────────────────────────────────────────
@@ -849,6 +869,7 @@ async function saveMeta(schoolId, patch) {
     });
     if (!r.ok) throw new Error();
     flashSave(schoolId);
+    broadcastRefresh(); // instantly notify all other open admin sessions
   } catch(e) { toast(t('save_failed')); }
 }
 
