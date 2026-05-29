@@ -6,9 +6,6 @@ function switchView(v) {
   if (v === 'settings' && getMyRole() !== 'admin') { v = 'dash'; }
   viewHistory.push(v);
   if (viewHistory.length > 10) viewHistory.shift();
-  // show/hide back button
-  const bb = document.getElementById('backBtn');
-  if (bb) bb.style.display = viewHistory.length > 1 ? 'flex' : 'none';
   currentView = v;
   // Import/Export only on dashboard
   const isDash = v === 'dash';
