@@ -39,21 +39,17 @@ function handleStudentsXML(input) {
       var parser = new DOMParser(), xml = parser.parseFromString(e.target.result, 'text/xml');
       var nodes = xml.querySelectorAll('student');
       if (!nodes.length) { showToast(t('toast.no_students_xml')); return; }
-      var students = {}, nameMap = {};
+      var incoming = {}, nameMap = {};
       nodes.forEach(function(node) {
         var get = function(tag) { var el = node.querySelector(tag); return el ? el.textContent.trim() : ''; };
         var schoolId = get('id'), fname = get('fname'), lname = get('lname'), cls = get('class'), active = get('active');
         if (!schoolId || !fname || !lname || active === '0') return;
         var name = fname + ' ' + lname;
-        students[schoolId] = { id: schoolId, name: name, fname: fname, lname: lname, cls: cls, active: true };
+        incoming[schoolId] = { id: schoolId, name: name, fname: fname, lname: lname, cls: cls, active: true };
         if (cls) nameMap[name.toLowerCase() + '|' + cls.toUpperCase()] = schoolId;
       });
-      saveStudents(students); saveNameMap(nameMap);
-      var result = await bulkUploadToServer(Object.values(students));
-      await fetchStudentsFromServer();
-      hideUploadScreen();
-      showToast(t('toast.imported', { added: result.added, updated: result.updated }));
-      renderDash(); renderStudentList();
+      saveNameMap(nameMap);
+      showImportModeModal(incoming);
     } catch(err) { showToast(t('toast.xml_error', { msg: err.message })); }
     input.value = '';
   };
@@ -182,18 +178,7 @@ function handleCSVUpload(input) {
     });
     const count = Object.keys(students).length;
     if (count === 0) { showToast(t('toast.no_valid_rows')); return; }
-    // send to server (merges on server side), then refresh local cache
-    const arr = Object.values(students);
-    showToast(t('toast.uploading', { n: arr.length }));
-    const result = await bulkUploadToServer(arr);
-    await fetchStudentsFromServer();
-    await fetchGuardiansFromServer();
-    await fetchExtraFromServer();
-    await loadFlagsFromServer();
-    hideUploadScreen();
-    showToast(t('toast.imported', { added: result.added, updated: result.updated }));
-    renderDash();
-    renderStudentList();
+    showImportModeModal(students);
     input.value = '';
   };
   reader.readAsText(file);
@@ -381,8 +366,7 @@ async function confirmMapping(headers, rows) {
     const sel = document.getElementById(`map_${i}`);
     if (sel && sel.value !== '(skip)') mapping[i] = sel.value;
   });
-  const students = loadStudents();
-  let added = 0, updated = 0;
+  const incoming = {};
   rows.forEach(row => {
     const obj = {};
     Object.entries(mapping).forEach(([i, field]) => { obj[field] = row[i] || ''; });
@@ -391,18 +375,12 @@ async function confirmMapping(headers, rows) {
     if (!obj.id) obj.id = ((obj.fname || '') + '_' + (obj.lname || '') + '_' + (obj.cls || '')).trim();
     obj.id = obj.id.trim();
     if (!obj.id) return;
-    if (students[obj.id]) updated++; else added++;
-    students[obj.id] = { ...students[obj.id], ...obj };
+    obj.active = true;
+    incoming[obj.id] = obj;
   });
-  saveStudents(students);
   document.getElementById('importModal').style.display = 'none';
-  showToast(t('toast.uploading', { n: added + updated }));
-  await bulkUploadToServer(Object.values(students));
-  await fetchStudentsFromServer();
-  hideUploadScreen();
-  showToast(t('toast.imported', { added, updated }));
-  renderDash();
-  renderStudentList();
+  if (!Object.keys(incoming).length) { showToast(t('toast.no_valid_rows')); return; }
+  showImportModeModal(incoming);
 }
 
 function handleSmartImport(input) {
@@ -475,8 +453,7 @@ function importFromPaste() {
 async function confirmMappingAuto(headers, rows, mappings) {
   const mapping = {};
   headers.forEach((h, i) => { if (mappings[i]) mapping[i] = mappings[i]; });
-  const students = loadStudents();
-  let added = 0, updated = 0;
+  const incoming = {};
   rows.forEach(row => {
     const obj = {};
     Object.entries(mapping).forEach(([i, field]) => { obj[field] = row[i] || ''; });
@@ -484,15 +461,82 @@ async function confirmMappingAuto(headers, rows, mappings) {
     if (!obj.fname && !obj.lname && !obj.name) return;
     if (!obj.id) obj.id = ((obj.fname || '') + '_' + (obj.lname || '') + '_' + (obj.cls || '')).trim();
     if (!obj.id) return;
-    if (students[obj.id]) updated++; else added++;
-    students[obj.id] = { ...students[obj.id], ...obj };
+    obj.active = true;
+    incoming[obj.id] = obj;
   });
-  saveStudents(students);
-  showToast(t('toast.uploading', { n: added + updated }));
-  await bulkUploadToServer(Object.values(students));
+  if (!Object.keys(incoming).length) { showToast(t('toast.no_valid_rows')); return; }
+  showImportModeModal(incoming);
+}
+
+// ── Import mode modal ────────────────────────────────────────
+let _importPending = null;
+
+function showImportModeModal(incoming) {
+  _importPending = incoming;
+  const inCount  = Object.keys(incoming).length;
+  const existing = loadStudents();
+  const exCount  = Object.values(existing).filter(s => s.active !== false).length;
+
+  const titleEl  = document.getElementById('importModeTitle');
+  const subEl    = document.getElementById('importModeSubtitle');
+  const replDesc = document.getElementById('importModeReplaceDesc');
+
+  if (titleEl)  titleEl.textContent  = t('import.mode_title').replace('{n}', inCount);
+  if (subEl)    subEl.textContent    = exCount > 0
+    ? t('import.mode_subtitle').replace('{ex}', exCount)
+    : t('import.mode_subtitle_empty');
+  if (replDesc) replDesc.textContent = exCount > 0
+    ? t('import.mode_replace_desc').replace('{ex}', exCount).replace('{n}', inCount)
+    : t('import.mode_replace_desc_empty').replace('{n}', inCount);
+
+  const radio = document.querySelector(`input[name=importMode][value="${exCount > 0 ? 'replace' : 'add'}"]`);
+  if (radio) radio.checked = true;
+  _importModeUpdateUI();
+
+  const modal = document.getElementById('importModeModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function _importModeUpdateUI() {
+  const mode = document.querySelector('input[name=importMode]:checked')?.value || 'replace';
+  const rLabel = document.getElementById('importModeReplaceLabel');
+  const aLabel = document.getElementById('importModeAddLabel');
+  if (rLabel) rLabel.style.borderColor = mode === 'replace' ? 'var(--accent)' : 'var(--border)';
+  if (aLabel) aLabel.style.borderColor = mode === 'add'     ? 'var(--accent)' : 'var(--border)';
+}
+
+async function _importModeConfirm() {
+  const modal = document.getElementById('importModeModal');
+  if (modal) modal.style.display = 'none';
+  const mode     = document.querySelector('input[name=importMode]:checked')?.value || 'replace';
+  const incoming = _importPending;
+  _importPending = null;
+  if (!incoming) return;
+  await _finalizeImport(incoming, mode);
+}
+
+async function _finalizeImport(incoming, mode) {
+  const n = Object.keys(incoming).length;
+  showToast(t('toast.uploading', { n }));
+
+  if (mode === 'replace') {
+    saveStudents(incoming);
+  } else {
+    const existing = loadStudents();
+    Object.assign(existing, incoming);
+    saveStudents(existing);
+  }
+
+  const result = await bulkUploadToServer(Object.values(incoming), mode);
   await fetchStudentsFromServer();
+  await fetchExtraFromServer();
+  await loadFlagsFromServer();
   hideUploadScreen();
-  showToast(t('toast.imported', { added, updated }));
+
+  const msg = mode === 'replace'
+    ? t('toast.imported_replaced').replace('{n}', result.added || n)
+    : t('toast.imported').replace('{added}', result.added || 0).replace('{updated}', result.updated || 0);
+  showToast(msg);
   renderDash();
   renderStudentList();
 }

@@ -13,25 +13,30 @@ module.exports = async (req, res) => {
   const incoming = req.body;
   if (!incoming || typeof incoming !== 'object') return res.status(400).json({ error: 'object required' });
 
-  const rows = Object.entries(incoming).map(([id, s]) => ({
-    school_id: auth.schoolId, id, data: s,
-  }));
+  const mode = req.query.mode || 'add'; // 'replace' | 'add'
+  const rows = Object.entries(incoming).map(([id, s]) => ({ school_id: auth.schoolId, id, data: s }));
 
-  const { data: existing, error: fetchErr } = await supabase
-    .from('students')
-    .select('id')
-    .eq('school_id', auth.schoolId)
-    .in('id', Object.keys(incoming));
-  if (fetchErr) return res.status(500).json({ error: fetchErr.message });
+  // Replace mode: wipe existing students first
+  let deleted = 0;
+  if (mode === 'replace') {
+    const { data: existing } = await supabase.from('students').select('id').eq('school_id', auth.schoolId);
+    deleted = (existing || []).length;
+    const { error: delErr } = await supabase.from('students').delete().eq('school_id', auth.schoolId);
+    if (delErr) return res.status(500).json({ error: delErr.message });
+  }
 
-  const existingIds = new Set((existing || []).map(r => r.id));
-  let added = 0, updated = 0;
-  rows.forEach(r => { if (existingIds.has(r.id)) updated++; else added++; });
+  // Count add vs update (only meaningful in add mode)
+  let added = rows.length, updated = 0;
+  if (mode === 'add') {
+    const { data: existing } = await supabase
+      .from('students').select('id').eq('school_id', auth.schoolId).in('id', Object.keys(incoming));
+    const existingIds = new Set((existing || []).map(r => r.id));
+    added = 0;
+    rows.forEach(r => { if (existingIds.has(r.id)) updated++; else added++; });
+  }
 
-  const { error } = await supabase
-    .from('students')
-    .upsert(rows, { onConflict: 'school_id,id' });
+  const { error } = await supabase.from('students').upsert(rows, { onConflict: 'school_id,id' });
   if (error) return res.status(500).json({ error: error.message });
 
-  return res.json({ ok: true, added, updated });
+  return res.json({ ok: true, added, updated, deleted });
 };

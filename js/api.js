@@ -125,18 +125,18 @@ async function patchStudentOnServer(id, patch) {
   } catch(e) {}
 }
 
-async function bulkUploadToServer(arr) {
+async function bulkUploadToServer(arr, mode = 'add') {
   try {
     const obj = {};
     arr.forEach(s => { obj[s.id] = s; });
-    const r = await authFetch(`${API}/students-bulk`, {
+    const r = await authFetch(`${API}/students-bulk?mode=${mode}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(obj),
     });
-    if (!r.ok) return { added: 0, updated: 0 };
+    if (!r.ok) return { added: 0, updated: 0, deleted: 0 };
     return await r.json();
-  } catch(e) { return { added: 0, updated: 0 }; }
+  } catch(e) { return { added: 0, updated: 0, deleted: 0 }; }
 }
 
 async function saveFlagsToServer(logs, dates) {
