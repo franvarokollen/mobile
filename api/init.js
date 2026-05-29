@@ -56,14 +56,6 @@ module.exports = async (req, res) => {
       .maybeSingle(),
   ]);
 
-  // ── Log any query errors ─────────────────────────────────
-  if (settingsR.error) console.error('[init] settings error:', settingsR.error.message);
-  if (studentsR.error) console.error('[init] students error:', studentsR.error.message);
-  if (extraR.error)    console.error('[init] extra error:',    extraR.error.message);
-  if (flagsR.error)    console.error('[init] flags error:',    flagsR.error.message);
-  if (daylogR.error)   console.error('[init] daylog error:',   daylogR.error.message);
-  console.log('[init] student rows:', (studentsR.data||[]).length, 'schoolId:', schoolId);
-
   // ── Shape responses ───────────────────────────────────────
   const extra = {};
   (extraR.data || []).forEach(r => {
