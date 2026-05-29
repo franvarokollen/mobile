@@ -48,13 +48,12 @@ module.exports = async (req, res) => {
       .eq('school_id', schoolId)
       .eq('date', date),
 
-    // DPA table may not exist yet — swallow errors gracefully
+    // DPA — errors handled in response shaping below (table may not exist)
     supabase.from('dpa_signatures')
       .select('signed_at, signer_name, agreement_version')
       .eq('school_id', schoolId)
       .eq('agreement_version', DPA_VERSION)
-      .maybeSingle()
-      .catch(() => ({ data: null })),
+      .maybeSingle(),
   ]);
 
   // ── Log any query errors ─────────────────────────────────
@@ -79,7 +78,7 @@ module.exports = async (req, res) => {
   const daylog = {};
   (daylogR.data || []).forEach(r => { daylog[r.student_id] = r.status; });
 
-  const dpa = dpaR.data
+  const dpa = (!dpaR.error && dpaR.data)
     ? { signed: true, signedAt: dpaR.data.signed_at, signerName: dpaR.data.signer_name, version: dpaR.data.agreement_version }
     : { signed: false };
 
