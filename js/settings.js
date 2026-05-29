@@ -68,8 +68,18 @@ function getFlags() {
 }
 
 function applySettings() {
-  const generated = buildClassList(_settings);
-  if (generated.length > 0) CLASSES = generated;
+  const generated   = buildClassList(_settings);
+  const fromStudents = getClasses(loadStudents());
+
+  if (generated.length > 0) {
+    // Settings define the base order; append any student classes not covered by settings
+    const inSettings = new Set(generated);
+    const extras = fromStudents.filter(c => !inSettings.has(c));
+    CLASSES = [...generated, ...extras];
+  } else if (fromStudents.length > 0) {
+    CLASSES = fromStudents;
+  }
+
   const sn = document.getElementById('sidebarSchoolName');
   if (sn && _settings.schoolName) sn.textContent = _settings.schoolName;
 }

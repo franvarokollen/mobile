@@ -10,11 +10,18 @@ const STORAGE_KEYS = {
   barcodes: 'phc_barcodes'
 };
 
-// Dynamic class list derived from loaded students
+// Dynamic class list derived from loaded students — sorted F,1,2,...,9 then by section
 function getClasses(studentsObj) {
   const set = new Set();
   Object.values(studentsObj || {}).forEach(s => { if (s.cls) set.add(s.cls); });
-  return [...set].sort();
+  const YEAR_ORDER = ['F','1','2','3','4','5','6','7','8','9'];
+  return [...set].sort((a, b) => {
+    const yearA = a.match(/^([F\d]+)/)?.[1] || a;
+    const yearB = b.match(/^([F\d]+)/)?.[1] || b;
+    const ia = YEAR_ORDER.indexOf(yearA), ib = YEAR_ORDER.indexOf(yearB);
+    if (ia !== ib) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    return a.localeCompare(b);
+  });
 }
 
 // CLASSES is kept as a live computed property so all modules can use it
