@@ -152,6 +152,7 @@ function renderSettings() {
         ${getMyRole() === 'admin' ? `
           <button class="settings-nav-item" onclick="switchSettingsSection('notifications',this)">${t('settings.section_notifications')}</button>
           <button class="settings-nav-item" onclick="switchSettingsSection('users',this);settingsLoadUsers();settingsLoadInvites()">${t('settings.section_users')}</button>
+          <button class="settings-nav-item" onclick="switchSettingsSection('auditlog',this);settingsLoadAuditLog()">${t('settings.section_auditlog')}</button>
         ` : ''}
       </nav>
 
@@ -458,6 +459,47 @@ function renderSettings() {
           </div>
         </div>
 
+        <!-- Audit log section (admin only) -->
+        <div class="settings-section" id="settingsSec_auditlog">
+          <div class="settings-card">
+            <div class="settings-card-title">${t('settings.section_auditlog')}</div>
+            <div class="settings-card-sub">${t('settings.auditlog_sub')}</div>
+
+            <!-- Retain days + purge -->
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:20px;border-bottom:0.5px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:8px">
+                <label style="font-size:13px;color:var(--text2);white-space:nowrap">${t('settings.auditlog_retain')}</label>
+                <input type="number" id="setting_auditRetainDays" min="1" max="365"
+                  value="${s.auditRetainDays ?? 2}"
+                  style="width:64px;height:32px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;text-align:center">
+                <span style="font-size:13px;color:var(--text3)">${t('settings.auditlog_days')}</span>
+              </div>
+              <button class="btn" onclick="saveSettings()" style="font-size:13px;padding:6px 14px;background:var(--text);color:var(--bg);border-color:var(--text)">
+                <i class="ti ti-device-floppy"></i>${t('settings.save')}
+              </button>
+              <button class="btn" onclick="settingsPurgeAuditLog()" style="font-size:13px;padding:6px 14px;background:none;color:var(--text3);border-color:var(--border2)">
+                <i class="ti ti-trash"></i>${t('settings.auditlog_purge_now')}
+              </button>
+            </div>
+
+            <!-- Search -->
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+              <input id="auditSearchInput" placeholder="${t('settings.auditlog_search_ph')}"
+                style="flex:1;min-width:160px;height:34px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px"
+                oninput="settingsLoadAuditLog()">
+              <input type="date" id="auditDateInput"
+                style="height:34px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px"
+                onchange="settingsLoadAuditLog()">
+              <button class="btn" onclick="document.getElementById('auditSearchInput').value='';document.getElementById('auditDateInput').value='';settingsLoadAuditLog()" style="font-size:12px;padding:6px 12px">
+                ${t('settings.auditlog_clear')}
+              </button>
+            </div>
+
+            <!-- Results table -->
+            <div id="auditLogTable" style="font-size:12px;color:var(--text3)">${t('settings.auditlog_loading')}</div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -569,7 +611,8 @@ async function saveSettings() {
   const eodEnabled        = document.getElementById('setting_eodEnabled')?.checked || false;
   const eodTime           = document.getElementById('setting_eodTime')?.value || '16:00';
   const eodAction         = document.getElementById('setting_eodAction')?.value || 'clear';
-  const dataRetentionDays = parseInt(document.getElementById('setting_retentionDays')?.value) || 90;
+  const dataRetentionDays  = parseInt(document.getElementById('setting_retentionDays')?.value)  || 90;
+  const auditRetainDays    = parseInt(document.getElementById('setting_auditRetainDays')?.value) || 2;
   const studentNumEnabled = document.getElementById('setting_studentNumEnabled')?.checked || false;
   const studentNumLabel   = document.getElementById('setting_studentNumLabel')?.value.trim() || '';
 
@@ -589,6 +632,7 @@ async function saveSettings() {
     eodTime,
     eodAction,
     dataRetentionDays,
+    auditRetainDays,
     studentNumEnabled,
     studentNumLabel,
     emailFromName,
@@ -992,4 +1036,71 @@ async function settingsSendInviteEmail(inviteId, email) {
       showToast(d.error || t('settings.notif_send_error'));
     }
   } catch(e) { showToast(t('settings.notif_send_error')); }
+}
+
+// ── Audit log ────────────────────────────────────────────────
+
+async function settingsLoadAuditLog() {
+  const container = document.getElementById('auditLogTable');
+  if (!container) return;
+  container.innerHTML = `<div style="color:var(--text3);font-size:12px">${t('settings.auditlog_loading')}</div>`;
+
+  const q    = document.getElementById('auditSearchInput')?.value.trim() || '';
+  const date = document.getElementById('auditDateInput')?.value || '';
+  const params = new URLSearchParams();
+  if (q)    params.set('q', q);
+  if (date) params.set('date', date);
+
+  try {
+    const r = await authFetch(`/api/audit?${params}`);
+    if (!r.ok) { container.innerHTML = `<div style="color:var(--red-text);font-size:12px">${t('settings.auditlog_error')}</div>`; return; }
+    const rows = await r.json();
+    if (!rows.length) { container.innerHTML = `<div style="color:var(--text3);font-size:12px">${t('settings.auditlog_empty')}</div>`; return; }
+
+    const students = loadStudents();
+    const stuName = id => {
+      const s = students[id];
+      if (!s) return id;
+      return (s.fname || s.name || id) + (s.lname ? ' ' + s.lname : '');
+    };
+    const fmtStatus = st => st === 'in' || !st ? '✓' : (getStatuses().find(s => s.key === st)?.label || st);
+    const fmtTime = iso => {
+      const d = new Date(iso);
+      return d.toLocaleDateString('sv-SE') + ' ' + d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    container.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="border-bottom:0.5px solid var(--border2);color:var(--text3)">
+            <th style="text-align:left;padding:5px 8px;font-weight:500">${t('settings.auditlog_col_time')}</th>
+            <th style="text-align:left;padding:5px 8px;font-weight:500">${t('settings.auditlog_col_student')}</th>
+            <th style="text-align:left;padding:5px 8px;font-weight:500">${t('settings.auditlog_col_change')}</th>
+            <th style="text-align:left;padding:5px 8px;font-weight:500">${t('settings.auditlog_col_by')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr style="border-bottom:0.5px solid var(--border)">
+              <td style="padding:5px 8px;color:var(--text2);white-space:nowrap">${fmtTime(r.changed_at)}</td>
+              <td style="padding:5px 8px;font-weight:500">${escHtml(stuName(r.student_id))}</td>
+              <td style="padding:5px 8px;color:var(--text2)">${escHtml(fmtStatus(r.old_status))} → ${escHtml(fmtStatus(r.new_status))}</td>
+              <td style="padding:5px 8px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;max-width:160px">${escHtml(r.changed_by || '—')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:right">${rows.length} ${t('settings.auditlog_entries')}</div>`;
+  } catch(e) {
+    container.innerHTML = `<div style="color:var(--red-text);font-size:12px">${t('settings.auditlog_error')}</div>`;
+  }
+}
+
+async function settingsPurgeAuditLog() {
+  if (!confirm(t('settings.auditlog_purge_confirm'))) return;
+  try {
+    const r = await authFetch('/api/audit?purge=1', { method: 'DELETE' });
+    const d = r.ok ? await r.json() : null;
+    showToast(d?.ok ? t('settings.auditlog_purged') : t('settings.auditlog_purge_error'));
+    if (d?.ok) settingsLoadAuditLog();
+  } catch(e) { showToast(t('settings.auditlog_purge_error')); }
 }

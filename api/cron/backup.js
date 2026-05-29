@@ -36,6 +36,17 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Purge old audit logs for each school per their auditRetainDays setting
+  for (const school of (schools || [])) {
+    try {
+      const { data: settingsRow } = await supabase.from('settings').select('data').eq('school_id', school.id).maybeSingle();
+      const retainDays = settingsRow?.data?.auditRetainDays ?? 2;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - retainDays);
+      await supabase.from('audit_logs').delete().eq('school_id', school.id).lt('changed_at', cutoff.toISOString());
+    } catch(e) {}
+  }
+
   console.log(`[cron/backup] ${results.ok.length} ok, ${results.failed.length} failed`);
   return res.json(results);
 };

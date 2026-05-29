@@ -23,10 +23,10 @@ module.exports = async (req, res) => {
     return res.json(result);
   }
 
-  // POST /api/status  body: { date, id, status }
+  // POST /api/status  body: { date, id, status, prevStatus? }
   // status='in' deletes the row (student handed in / no issue)
   if (req.method === 'POST') {
-    const { date, id, status } = req.body;
+    const { date, id, status, prevStatus } = req.body;
     if (!date || !id || !status) return res.status(400).json({ error: 'date, id, status required' });
 
     if (status === 'in') {
@@ -44,7 +44,17 @@ module.exports = async (req, res) => {
       if (error) return res.status(500).json({ error: error.message });
     }
 
-    // Purge logs older than 90 days
+    // Fire-and-forget audit log
+    supabase.from('audit_logs').insert({
+      school_id:  auth.schoolId,
+      date,
+      student_id: id,
+      old_status: prevStatus || null,
+      new_status: status,
+      changed_by: auth.user.email,
+    }).then(() => {}).catch(() => {});
+
+    // Purge status_logs older than 90 days
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 90);
     await supabase.from('status_logs').delete().eq('school_id', auth.schoolId).lt('date', cutoff.toISOString().slice(0, 10));

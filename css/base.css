@@ -57,6 +57,9 @@ input::placeholder { color: var(--text3); }
 /* TOAST */
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: #f5f4f0; padding: 10px 20px; border-radius: var(--radius); font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; }
+.toast.has-undo { pointer-events: auto; white-space: normal; display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 18px; max-width: 320px; }
+.toast-undo-btn { flex-shrink: 0; background: rgba(255,255,255,0.15); border: 0.5px solid rgba(255,255,255,0.25); color: #f5f4f0; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.toast-undo-btn:hover { background: rgba(255,255,255,0.25); }
 
 /* STATUS TEXT COLORS */
 .red { color: var(--red-text); }

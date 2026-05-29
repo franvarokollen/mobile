@@ -45,12 +45,12 @@ async function serverGet(date) {
   } catch(e) { return null; }
 }
 
-async function serverSet(date, id, status) {
+async function serverSet(date, id, status, prevStatus) {
   try {
     await authFetch(`${API}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, id, status }),
+      body: JSON.stringify({ date, id, status, prevStatus }),
     });
     // Push change to all other connected clients instantly via Realtime
     if (typeof broadcastStatus === 'function') broadcastStatus(date, id, status);

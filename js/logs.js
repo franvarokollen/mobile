@@ -14,18 +14,28 @@ function setDayLog(dk, id, status) {
 
 async function cycleStatus(id) {
   const dl = getDayLogs(currentDate);
-  const cur = dl[id] || 'in';
+  const oldStatus = dl[id] || 'in';
   const statuses = getStatuses();
   const keys = statuses.map(s => s.key);
-  const idx = keys.indexOf(cur);
+  const idx = keys.indexOf(oldStatus);
   const next = idx === -1 ? keys[0] : (idx >= keys.length - 1 ? 'in' : keys[idx + 1]);
   setDayLog(currentDate, id, next);
   renderDash();
+
   const label = next === 'in'
     ? (t('dash.handed_in') + ' ✓')
     : (statuses.find(s => s.key === next)?.label || next);
-  showToast(label);
-  if (SERVER) serverSet(currentDate, id, next);
+
+  // Show toast with Undo button (20s window)
+  const _date = currentDate; // capture for closure
+  showToast(label, () => {
+    setDayLog(_date, id, oldStatus);
+    renderDash();
+    if (SERVER) serverSet(_date, id, oldStatus, next);
+    showToast(t('toast.undone'));
+  });
+
+  if (SERVER) serverSet(currentDate, id, next, oldStatus);
 }
 
 async function setStatus(id, key) {
