@@ -20,6 +20,12 @@ function renderOnboarding() {
 
   const steps = [
     {
+      done: !!(window._serviceAgreementSigned),
+      label: t('onboarding.step_sa'),
+      action: () => openServiceAgreementModal(),
+      actionLabel: t('onboarding.go_sign'),
+    },
+    {
       done: !!(window._dpaSigned),
       label: t('onboarding.step_dpa'),
       action: () => openDpaModal(),

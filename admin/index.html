@@ -629,7 +629,7 @@ const TR = {
     school_registered_no_admin: 'Skola skapad — administratören hittades inte. Lägg till dem via Konfigurera → Användare.',
     no_admin_warning: 'Ingen admin',
     no_students_warning: 'Inga elever',
-    hc_no_admin: 'Ingen admin', hc_no_students: 'Inga elever', hc_no_dpa: 'DPA ej signerat',
+    hc_no_sa: 'Inget avtal', hc_no_admin: 'Ingen admin', hc_no_students: 'Inga elever', hc_no_dpa: 'DPA ej signerat',
     hc_no_teachers: 'Inga lärare', hc_no_backup: 'Ingen backup', hc_no_name: 'Namn saknas',
     hc_inactive: 'Inaktiv 21d', hc_pending_invites: 'väntande inbjudningar',
     invite_sent: 'Inbjudan skickad',
@@ -716,7 +716,7 @@ const TR = {
     school_registered_no_admin: 'School created — administrator not found. Add them via Configure → Users.',
     no_admin_warning: 'No admin',
     no_students_warning: 'No students',
-    hc_no_admin: 'No admin', hc_no_students: 'No students', hc_no_dpa: 'DPA unsigned',
+    hc_no_sa: 'No contract', hc_no_admin: 'No admin', hc_no_students: 'No students', hc_no_dpa: 'DPA unsigned',
     hc_no_teachers: 'No teachers', hc_no_backup: 'No backup', hc_no_name: 'Name missing',
     hc_inactive: 'Inactive 21d', hc_pending_invites: 'pending invites',
     invite_sent: 'Invite sent',
@@ -998,6 +998,7 @@ function getHealthChecks(school) {
   return [
     { ok: (school.adminCount  || 0) > 0,                      label: t('hc_no_admin'),    icon: 'ti-user-shield',    sev: 'red'   },
     { ok: (school.activeStudents || 0) > 0,                   label: t('hc_no_students'), icon: 'ti-users',          sev: 'red'   },
+    { ok: !!school.saSigned,                                   label: t('hc_no_sa'),       icon: 'ti-file-text',       sev: 'red'  },
     { ok: !!school.dpaSigned,                                  label: t('hc_no_dpa'),      icon: 'ti-file-certificate',sev: 'red'  },
     { ok: (school.userCount||0) > (school.adminCount||0),      label: t('hc_no_teachers'), icon: 'ti-chalkboard',     sev: 'amber' },
     { ok: !!school.lastBackup,                                 label: t('hc_no_backup'),   icon: 'ti-device-floppy',  sev: 'amber' },
@@ -1048,28 +1049,40 @@ function renderCard(school) {
 
     ${healthBar(school)}
 
-    <!-- DPA + Backup info strip -->
+    <!-- SA + DPA + Backup info strip -->
     <div style="display:flex;gap:0;border-bottom:0.5px solid var(--border)">
-      <div style="flex:1;padding:7px 14px;display:flex;align-items:center;gap:6px;border-right:0.5px solid var(--border)">
-        ${school.dpaSigned
+      <div style="flex:1;padding:7px 10px;display:flex;align-items:center;gap:5px;border-right:0.5px solid var(--border)">
+        ${school.saSigned
           ? `<i class="ti ti-file-check" style="font-size:13px;color:var(--green);flex-shrink:0"></i>
              <div>
-               <div style="font-size:11px;font-weight:600;color:var(--green)">DPA signed</div>
+               <div style="font-size:11px;font-weight:600;color:var(--green)">Tjänsteavtal</div>
+               <div style="font-size:10px;color:var(--text3)">${esc(school.saSignerName || '—')}${school.saSignerTitle ? ' · ' + esc(school.saSignerTitle) : ''}</div>
+               <div style="font-size:10px;color:var(--text3)">${school.saSignedAt ? new Date(school.saSignedAt).toLocaleDateString('sv-SE') : '—'}</div>
+             </div>`
+          : `<i class="ti ti-file-alert" style="font-size:13px;color:var(--red);flex-shrink:0"></i>
+             <div style="font-size:11px;font-weight:600;color:var(--red)">Tjänsteavtal ej signerat</div>`
+        }
+      </div>
+      <div style="flex:1;padding:7px 10px;display:flex;align-items:center;gap:5px;border-right:0.5px solid var(--border)">
+        ${school.dpaSigned
+          ? `<i class="ti ti-file-certificate" style="font-size:13px;color:var(--green);flex-shrink:0"></i>
+             <div>
+               <div style="font-size:11px;font-weight:600;color:var(--green)">PUB-avtal (DPA)</div>
                <div style="font-size:10px;color:var(--text3)">${esc(school.dpaSignerName || '—')} · ${school.dpaSignedAt ? new Date(school.dpaSignedAt).toLocaleDateString('sv-SE') : '—'}</div>
              </div>`
           : `<i class="ti ti-file-alert" style="font-size:13px;color:var(--red);flex-shrink:0"></i>
-             <div style="font-size:11px;font-weight:600;color:var(--red)">DPA not signed</div>`
+             <div style="font-size:11px;font-weight:600;color:var(--red)">DPA ej signerat</div>`
         }
       </div>
-      <div style="flex:1;padding:7px 14px;display:flex;align-items:center;gap:6px">
+      <div style="flex:1;padding:7px 10px;display:flex;align-items:center;gap:5px">
         ${school.lastBackup
           ? `<i class="ti ti-device-floppy" style="font-size:13px;color:var(--green);flex-shrink:0"></i>
              <div>
-               <div style="font-size:11px;font-weight:600;color:var(--text2)">Last backup</div>
+               <div style="font-size:11px;font-weight:600;color:var(--text2)">Senaste backup</div>
                <div style="font-size:10px;color:var(--text3)">${new Date(school.lastBackup).toLocaleDateString('sv-SE')} ${new Date(school.lastBackup).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'})}</div>
              </div>`
           : `<i class="ti ti-device-floppy" style="font-size:13px;color:var(--red);flex-shrink:0"></i>
-             <div style="font-size:11px;font-weight:600;color:var(--red)">No backup yet</div>`
+             <div style="font-size:11px;font-weight:600;color:var(--red)">Ingen backup ännu</div>`
         }
       </div>
     </div>

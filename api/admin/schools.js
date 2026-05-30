@@ -61,6 +61,15 @@ module.exports = async (req, res) => {
       const userCount  = (usersData || []).length;
       const adminCount = (usersData || []).filter(u => u.role === 'admin').length;
 
+      // Service agreement signed
+      let saSigned = false, saSignedAt = null, saSignerName = null, saSignerTitle = null;
+      try {
+        const { data: saRow } = await supabase
+          .from('service_agreements').select('signed_at, signer_name, signer_title')
+          .eq('school_id', school.id).eq('agreement_version', 'v1.0').maybeSingle();
+        if (saRow) { saSigned = true; saSignedAt = saRow.signed_at; saSignerName = saRow.signer_name; saSignerTitle = saRow.signer_title; }
+      } catch(e) {}
+
       // DPA signed
       let dpaSigned = false, dpaSignedAt = null, dpaSignerName = null;
       try {
@@ -92,9 +101,8 @@ module.exports = async (req, res) => {
         lastActive:     lastLog?.date   || null,
         userCount,
         adminCount,
-        dpaSigned,
-        dpaSignedAt,
-        dpaSignerName,
+        saSigned, saSignedAt, saSignerName, saSignerTitle,
+        dpaSigned, dpaSignedAt, dpaSignerName,
         lastBackup:     backupRow?.created_at || null,
         pendingInvites: (pendingInvites || []).length,
         createdAt:      school.created_at,

@@ -430,6 +430,60 @@ async function createBackup() {
 }
 
 // ── DPA signing ──────────────────────────────────────────────
+// ── Service Agreement ────────────────────────────────────────
+function openServiceAgreementModal() {
+  const modal = document.getElementById('serviceAgreementModal');
+  if (!modal) return;
+  const schoolName = getSettings().schoolName || '';
+  const lbl = document.getElementById('saCheckboxLabel');
+  if (lbl) lbl.textContent = t('sa.checkbox_label').replace('{school}', schoolName || t('dpa.your_school'));
+  const nameInp = document.getElementById('saSignerName');
+  if (nameInp) nameInp.placeholder = t('sa.name_placeholder');
+  const titleInp = document.getElementById('saSignerTitle');
+  if (titleInp) titleInp.placeholder = t('sa.title_placeholder');
+  modal.style.display = 'flex';
+}
+
+function closeServiceAgreementModal() {
+  const modal = document.getElementById('serviceAgreementModal');
+  if (modal) modal.style.display = 'none';
+  const err = document.getElementById('saError');
+  if (err) err.textContent = '';
+}
+
+async function signServiceAgreement() {
+  const name  = document.getElementById('saSignerName')?.value.trim();
+  const title = document.getElementById('saSignerTitle')?.value.trim();
+  const checked = document.getElementById('saCheckbox')?.checked;
+  const err = document.getElementById('saError');
+  if (!name)    { if (err) err.textContent = t('sa.error_name');     return; }
+  if (!checked) { if (err) err.textContent = t('sa.error_checkbox'); return; }
+  if (err) err.textContent = '';
+
+  const btn = document.getElementById('saSignBtn');
+  if (btn) { btn.disabled = true; btn.textContent = t('dpa.signing'); }
+
+  try {
+    const r = await authFetch(`${API}/service-agreement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ signerName: name, signerTitle: title }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      window._serviceAgreementSigned = true;
+      showToast(t('sa.signed_ok'));
+      closeServiceAgreementModal();
+      renderOnboarding();
+    } else {
+      if (err) err.textContent = d.error || t('dpa.error_failed');
+    }
+  } catch(e) {
+    if (err) err.textContent = t('dpa.error_failed');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = t('sa.sign_btn'); }
+}
+
 function openDpaModal() {
   const modal = document.getElementById('dpaModal');
   if (!modal) return;

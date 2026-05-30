@@ -176,8 +176,9 @@ document.addEventListener('keydown', e => {
         logs[currentDate] = init.daylog;
         saveLogs(logs);
       }
-      // DPA status
+      // DPA + Service Agreement status
       window._dpaSigned = !!(init.dpa && init.dpa.signed);
+      window._serviceAgreementSigned = !!(init.sa && init.sa.signed);
       // User count (for onboarding "Invite teachers" step)
       window._schoolUserCount = init.userCount || 0;
     }

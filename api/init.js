@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   const date = req.query.date || new Date().toISOString().slice(0, 10);
 
   // ── All queries in parallel ───────────────────────────────
-  const [settingsR, studentsR, extraR, flagsR, daylogR, usersR, dpaR] = await Promise.all([
+  const [settingsR, studentsR, extraR, flagsR, daylogR, usersR, saR, dpaR] = await Promise.all([
     supabase.from('settings')
       .select('data')
       .eq('school_id', schoolId)
@@ -50,6 +50,13 @@ module.exports = async (req, res) => {
 
     // User count for this school
     supabase.from('school_users').select('user_id', { count: 'exact', head: true }).eq('school_id', schoolId),
+
+    // Service agreement — errors handled below (table may not exist)
+    supabase.from('service_agreements')
+      .select('signed_at, signer_name, signer_title')
+      .eq('school_id', schoolId)
+      .eq('agreement_version', 'v1.0')
+      .maybeSingle(),
 
     // DPA — errors handled in response shaping below (table may not exist)
     supabase.from('dpa_signatures')
@@ -80,6 +87,10 @@ module.exports = async (req, res) => {
   const students = {};
   (studentsR.data || []).forEach(r => { students[r.id] = r.data; });
 
+  const sa = (!saR.error && saR.data)
+    ? { signed: true, signedAt: saR.data.signed_at, signerName: saR.data.signer_name, signerTitle: saR.data.signer_title }
+    : { signed: false };
+
   return res.json({
     settings:   settingsR.data?.data || {},
     students,
@@ -87,6 +98,7 @@ module.exports = async (req, res) => {
     flags,
     daylog,
     dpa,
+    sa,
     userCount:  usersR.count || 0,
   });
 };
