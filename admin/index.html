@@ -1048,6 +1048,32 @@ function renderCard(school) {
 
     ${healthBar(school)}
 
+    <!-- DPA + Backup info strip -->
+    <div style="display:flex;gap:0;border-bottom:0.5px solid var(--border)">
+      <div style="flex:1;padding:7px 14px;display:flex;align-items:center;gap:6px;border-right:0.5px solid var(--border)">
+        ${school.dpaSigned
+          ? `<i class="ti ti-file-check" style="font-size:13px;color:var(--green);flex-shrink:0"></i>
+             <div>
+               <div style="font-size:11px;font-weight:600;color:var(--green)">DPA signed</div>
+               <div style="font-size:10px;color:var(--text3)">${esc(school.dpaSignerName || '—')} · ${school.dpaSignedAt ? new Date(school.dpaSignedAt).toLocaleDateString('sv-SE') : '—'}</div>
+             </div>`
+          : `<i class="ti ti-file-alert" style="font-size:13px;color:var(--red);flex-shrink:0"></i>
+             <div style="font-size:11px;font-weight:600;color:var(--red)">DPA not signed</div>`
+        }
+      </div>
+      <div style="flex:1;padding:7px 14px;display:flex;align-items:center;gap:6px">
+        ${school.lastBackup
+          ? `<i class="ti ti-device-floppy" style="font-size:13px;color:var(--green);flex-shrink:0"></i>
+             <div>
+               <div style="font-size:11px;font-weight:600;color:var(--text2)">Last backup</div>
+               <div style="font-size:10px;color:var(--text3)">${new Date(school.lastBackup).toLocaleDateString('sv-SE')} ${new Date(school.lastBackup).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'})}</div>
+             </div>`
+          : `<i class="ti ti-device-floppy" style="font-size:13px;color:var(--red);flex-shrink:0"></i>
+             <div style="font-size:11px;font-weight:600;color:var(--red)">No backup yet</div>`
+        }
+      </div>
+    </div>
+
     <div class="card-body">
       <div class="card-left">
         <div class="block-label">${t('stats')}</div>
