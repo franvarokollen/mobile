@@ -46,7 +46,8 @@ module.exports = async (req, res) => {
                 || schoolMap[r.school_id]?.name
                 || r.school_id,
       school_slug: schoolMap[r.school_id]?.slug,
-      total: parseFloat(r.fee_setup||0) + parseFloat(r.fee_monthly||0)
+      total: parseFloat(r.fee_setup||0) + parseFloat(r.fee_additional_onetime||0)
+           + parseFloat(r.fee_monthly||0)
            + parseFloat(r.fee_per_student||0) * (r.student_count||0)
            + parseFloat(r.fee_support||0) + parseFloat(r.fee_additional||0),
     }));
@@ -92,16 +93,17 @@ module.exports = async (req, res) => {
       if (existing) { results.skipped++; continue; }
 
       const { error } = await supabase.from('billing_records').insert({
-        school_id:       school.id,
+        school_id:              school.id,
         year,
         month,
-        student_count:   studentCount,
-        fee_setup:       0, // always 0 at generation — admin adds manually
-        fee_monthly:     parseFloat(meta.fee_monthly)     || 0,
-        fee_per_student: parseFloat(meta.fee_per_student) || 0,
-        fee_support:     parseFloat(meta.fee_support)     || 0,
-        fee_additional:  parseFloat(meta.fee_additional)  || 0,
-        status:          'draft',
+        student_count:          studentCount,
+        fee_setup:              0, // always 0 at generation — admin adds manually
+        fee_additional_onetime: 0, // always 0 at generation — admin adds manually
+        fee_monthly:            parseFloat(meta.fee_monthly)     || 0,
+        fee_per_student:        parseFloat(meta.fee_per_student) || 0,
+        fee_support:            parseFloat(meta.fee_support)     || 0,
+        fee_additional:         parseFloat(meta.fee_additional)  || 0,
+        status:                 'draft',
       });
 
       if (!error) results.created++;
@@ -116,8 +118,8 @@ module.exports = async (req, res) => {
     if (!id) return res.status(400).json({ error: 'id required' });
 
     // Map allowed fields
-    const allowed = ['fee_setup','fee_monthly','fee_per_student','fee_support',
-                     'fee_additional','student_count','notes','status','sent_at','paid_at'];
+    const allowed = ['fee_setup','fee_additional_onetime','fee_monthly','fee_per_student',
+                     'fee_support','fee_additional','student_count','notes','status','sent_at','paid_at'];
     const update = {};
     allowed.forEach(k => { if (patch[k] !== undefined) update[k] = patch[k]; });
 

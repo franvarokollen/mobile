@@ -653,7 +653,11 @@ const TR = {
     admin_email_required: 'En administratörsepost krävs för att skapa en skola.',
     school_registered_no_admin: 'Skola skapad — administratören hittades inte. Lägg till dem via Konfigurera → Användare.',
     tab_schools: 'Skolor', tab_billing: 'Fakturering',
-    fee_section: 'Avgifter', fee_setup: 'Uppstartskostnad', fee_setup_hint: 'engångs',
+    fee_section: 'Avgifter',
+    fee_group_onetime: 'Engångskostnader', fee_group_recurring: 'Löpande abonnemang',
+    fee_due_today: 'Att betala idag (engång)',
+    fee_setup: 'Uppstartskostnad', fee_setup_hint: 'engångs',
+    fee_additional_onetime: 'Övrigt engångsavgift',
     fee_monthly: 'Månadsavgift', fee_monthly_hint: '/månad',
     fee_per_student: 'Per elev', fee_per_student_hint: '/elev/månad',
     fee_support: 'Supportavgift', fee_support_hint: '/månad',
@@ -764,7 +768,11 @@ const TR = {
     admin_email_required: 'An administrator email is required to create a school.',
     school_registered_no_admin: 'School created — administrator not found. Add them via Configure → Users.',
     tab_schools: 'Schools', tab_billing: 'Billing',
-    fee_section: 'Fees', fee_setup: 'Setup fee', fee_setup_hint: 'one-time',
+    fee_section: 'Fees',
+    fee_group_onetime: 'One-time charges', fee_group_recurring: 'Recurring subscription',
+    fee_due_today: 'Due today (one-time)',
+    fee_setup: 'Setup fee', fee_setup_hint: 'one-time',
+    fee_additional_onetime: 'Additional one-time fee',
     fee_monthly: 'Monthly fee', fee_monthly_hint: '/month',
     fee_per_student: 'Per student', fee_per_student_hint: '/student/month',
     fee_support: 'Support fee', fee_support_hint: '/month',
@@ -1425,6 +1433,7 @@ function renderBillingTable(records, year, month) {
             <th style="text-align:right;padding:10px 12px;font-weight:700;white-space:nowrap">${t('billing_col_total')}</th>
             <th style="text-align:left;padding:10px 8px;font-weight:600">Status</th>
             <th style="padding:10px 8px;font-weight:600">${t('billing_col_action')}</th>
+            <th style="padding:10px 8px;font-weight:600"></th>
           </tr>
         </thead>
         <tbody>
@@ -1483,6 +1492,13 @@ function renderBillingTable(records, year, month) {
                     ${t('billing_btn_unlock')}
                   </button>` : ''}
               </td>
+              <td style="padding:8px 8px">
+                <button onclick="printInvoice(${r.id})"
+                  title="Skriv ut faktura"
+                  style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px">
+                  <i class="ti ti-printer" style="font-size:12px"></i>
+                </button>
+              </td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1495,6 +1511,153 @@ function renderBillingTable(records, year, month) {
         </tfoot>
       </table>
     </div>`;
+}
+
+function printInvoice(recordId) {
+  const r = _billingRecords.find(x => x.id === recordId);
+  if (!r) return;
+
+  const period     = `${monthName(r.month)} ${r.year}`;
+  const invoiceNum = `LUR-${r.year}-${String(r.month).padStart(2,'0')}-${String(recordId).padStart(3,'0')}`;
+  const today      = new Date().toLocaleDateString('sv-SE');
+  const dueDate    = new Date(Date.now() + 14*86400000).toLocaleDateString('sv-SE');
+
+  const feeSetup    = parseFloat(r.fee_setup)    || 0;
+  const feeAotFee   = parseFloat(r.fee_additional_onetime) || 0;
+  const feeMonthly  = parseFloat(r.fee_monthly)  || 0;
+  const feePerStu   = parseFloat(r.fee_per_student) || 0;
+  const feeSupport  = parseFloat(r.fee_support)  || 0;
+  const feeAddl     = parseFloat(r.fee_additional) || 0;
+  const stuCount    = r.student_count || 0;
+
+  const dueToday    = feeSetup + feeAotFee;
+  const monthlyTotal = feeMonthly + (feePerStu * stuCount) + feeSupport + feeAddl;
+  const grandTotal   = dueToday + monthlyTotal;
+
+  const kr = v => v.toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr';
+
+  const lineItem = (desc, qty, unit, amount) => amount > 0 ? `
+    <tr>
+      <td style="padding:8px 0;border-bottom:0.5px solid #eee">${desc}</td>
+      <td style="padding:8px 0;border-bottom:0.5px solid #eee;text-align:right;white-space:nowrap">${qty}</td>
+      <td style="padding:8px 0;border-bottom:0.5px solid #eee;text-align:right;white-space:nowrap">${unit}</td>
+      <td style="padding:8px 0;border-bottom:0.5px solid #eee;text-align:right;font-weight:600;white-space:nowrap">${kr(amount)}</td>
+    </tr>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Faktura ${invoiceNum} — ${r.school_name}</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; color:#1a1a18; background:#fff; padding:40px; max-width:760px; margin:0 auto; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:40px; }
+  .brand { font-size:22px; font-weight:800; letter-spacing:-0.03em; }
+  .brand span { color:#e24b4a; }
+  .invoice-meta { text-align:right; }
+  .invoice-meta h2 { font-size:20px; font-weight:700; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em; }
+  .invoice-meta table { font-size:12px; color:#555; }
+  .invoice-meta td:first-child { padding-right:16px; color:#888; }
+  .addresses { display:flex; gap:60px; margin-bottom:36px; padding-bottom:24px; border-bottom:2px solid #1a1a18; }
+  .address-block h4 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:8px; }
+  .address-block p { line-height:1.7; font-size:13px; }
+  .section-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin:24px 0 8px; }
+  table.items { width:100%; border-collapse:collapse; }
+  table.items th { text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#888; padding:6px 0; border-bottom:1px solid #1a1a18; }
+  table.items th:last-child, table.items td:last-child { text-align:right; }
+  table.items th:nth-child(2), table.items td:nth-child(2),
+  table.items th:nth-child(3), table.items td:nth-child(3) { text-align:right; }
+  .totals { margin-top:24px; border-top:1px solid #ddd; padding-top:16px; }
+  .total-row { display:flex; justify-content:space-between; padding:5px 0; font-size:13px; }
+  .total-row.highlight { font-size:14px; font-weight:700; border-top:1px solid #1a1a18; margin-top:8px; padding-top:10px; }
+  .total-row.due-today { color:#e24b4a; font-weight:600; }
+  .payment-box { margin-top:36px; padding:20px; border:1.5px dashed #ccc; border-radius:8px; }
+  .payment-box h4 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:12px; }
+  .payment-box p { font-size:12px; color:#999; font-style:italic; line-height:1.7; }
+  .footer { margin-top:40px; padding-top:20px; border-top:0.5px solid #eee; font-size:11px; color:#aaa; text-align:center; }
+  @media print {
+    body { padding:20px; }
+    @page { margin:20mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="brand">lurk<span>ollen</span></div>
+    <div style="font-size:11px;color:#888;margin-top:4px">Frånvarokollen Sverige AB</div>
+  </div>
+  <div class="invoice-meta">
+    <h2>Faktura</h2>
+    <table>
+      <tr><td>Fakturanummer</td><td><strong>${invoiceNum}</strong></td></tr>
+      <tr><td>Fakturadatum</td><td>${today}</td></tr>
+      <tr><td>Förfallodatum</td><td>${dueDate}</td></tr>
+      <tr><td>Period</td><td>${period}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="addresses">
+  <div class="address-block">
+    <h4>Från</h4>
+    <p><strong>Frånvarokollen Sverige AB</strong><br>
+    [Adress — läggs till senare]<br>
+    [Org.nr — läggs till senare]</p>
+  </div>
+  <div class="address-block">
+    <h4>Faktureras till</h4>
+    <p><strong>${r.school_name}</strong><br>
+    [Skolans adress — läggs till senare]</p>
+  </div>
+</div>
+
+${dueToday > 0 ? `
+<div class="section-title">Engångsposter</div>
+<table class="items">
+  <thead><tr><th>Beskrivning</th><th>Antal</th><th>À-pris</th><th>Belopp</th></tr></thead>
+  <tbody>
+    ${lineItem('Uppstartskostnad', '1', feeSetup > 0 ? kr(feeSetup) : '—', feeSetup)}
+    ${lineItem('Övrigt engångsavgift', '1', feeAotFee > 0 ? kr(feeAotFee) : '—', feeAotFee)}
+  </tbody>
+</table>` : ''}
+
+<div class="section-title">Abonnemang — ${period}</div>
+<table class="items">
+  <thead><tr><th>Beskrivning</th><th>Antal</th><th>À-pris</th><th>Belopp</th></tr></thead>
+  <tbody>
+    ${lineItem('Månadsavgift', '1', feeMonthly > 0 ? kr(feeMonthly) : '—', feeMonthly)}
+    ${lineItem(`Per elev × ${stuCount} elever`, stuCount, feePerStu > 0 ? kr(feePerStu) : '—', feePerStu * stuCount)}
+    ${lineItem('Supportavgift', '1', feeSupport > 0 ? kr(feeSupport) : '—', feeSupport)}
+    ${lineItem('Övrigt tillägg', '1', feeAddl > 0 ? kr(feeAddl) : '—', feeAddl)}
+  </tbody>
+</table>
+
+<div class="totals">
+  ${dueToday > 0 ? `<div class="total-row due-today"><span>Att betala idag (engångsposter)</span><span>${kr(dueToday)}</span></div>` : ''}
+  <div class="total-row"><span>Månadsabonnemang</span><span>${kr(monthlyTotal)}</span></div>
+  <div class="total-row highlight"><span>TOTALT DENNA FAKTURA</span><span>${kr(grandTotal)}</span></div>
+  <div style="font-size:11px;color:#999;margin-top:8px">Alla priser anges exkl. moms (0% moms — Lurkollen är en digital tjänst)</div>
+</div>
+
+<div class="payment-box">
+  <h4>Betalningsinformation</h4>
+  <p>Betalningsinformation läggs till senare — bankgiro, plusgiro, IBAN eller Swish kommer att anges här.<br>
+  Ange fakturanummer <strong>${invoiceNum}</strong> som referens vid betalning.</p>
+</div>
+
+<div class="footer">
+  Lurkollen av Frånvarokollen Sverige AB · lurkollen.com · Tack för ditt förtroende!
+</div>
+
+<script>window.onload = () => window.print();<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
 }
 
 function exportBillingCSV() {
@@ -1602,6 +1765,7 @@ function renderPricingPanel(schoolId) {
       </div>
     </div>`;
 
+  const dueToday    = (parseFloat(meta.fee_setup)||0) + (parseFloat(meta.fee_additional_onetime)||0);
   const monthlyTotal = (parseFloat(meta.fee_monthly)||0) + (parseFloat(meta.fee_per_student)||0)*(school?.activeStudents||0) + (parseFloat(meta.fee_support)||0) + (parseFloat(meta.fee_additional)||0);
 
   panel.style.display = 'block';
@@ -1610,33 +1774,42 @@ function renderPricingPanel(schoolId) {
       <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px">
         <i class="ti ti-receipt" style="margin-right:4px"></i>${t('fee_section')} — ${esc(school?.settings?.schoolName || school?.name || schoolId)}
       </div>
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${t('fee_group_onetime')}</div>
       ${feeRow(t('fee_setup'), 'fee_setup', t('fee_setup_hint'))}
+      ${feeRow(t('fee_additional_onetime'), 'fee_additional_onetime', t('fee_setup_hint'))}
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin:10px 0 6px">${t('fee_group_recurring')}</div>
       ${feeRow(t('fee_monthly'), 'fee_monthly', t('fee_monthly_hint'))}
       ${feeRow(t('fee_per_student'), 'fee_per_student', t('fee_per_student_hint'))}
       ${feeRow(t('fee_support'), 'fee_support', t('fee_support_hint'))}
       ${feeRow(t('fee_additional'), 'fee_additional', t('fee_additional_hint'))}
-      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--text3)">${t('fee_total')} (${school?.activeStudents||0} ${t('fee_students')})</span>
-        <span id="pricingTotal_${schoolId}" style="font-size:14px;font-weight:700;color:var(--text)">${monthlyTotal.toLocaleString('sv-SE')} ${t('fee_per_month')}</span>
+      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;color:var(--text3)">${t('fee_due_today')}</span>
+          <span id="pricingDueToday_${schoolId}" style="font-size:13px;font-weight:700;color:var(--accent)">${dueToday > 0 ? dueToday.toLocaleString('sv-SE') + ' kr' : '—'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:12px;color:var(--text3)">${t('fee_total')} (${school?.activeStudents||0} ${t('fee_students')})</span>
+          <span id="pricingTotal_${schoolId}" style="font-size:13px;font-weight:700;color:var(--text)">${monthlyTotal.toLocaleString('sv-SE')} ${t('fee_per_month')}</span>
+        </div>
       </div>
     </div>`;
 }
 
 function updatePricingTotal(schoolId) {
-  // Re-read inputs and update total
   const school = (window._lastSchools || []).find(s => s.school_id === schoolId);
-  const panel = document.getElementById('pricing-' + schoolId);
+  const panel  = document.getElementById('pricing-' + schoolId);
   if (!panel) return;
-  const inputs = panel.querySelectorAll('input[type=number]');
-  const keys = ['fee_monthly','fee_per_student','fee_support','fee_additional'];
   const vals = {};
-  panel.querySelectorAll('input[type=number]').forEach((inp,i) => {
-    const key = ['fee_setup','fee_monthly','fee_per_student','fee_support','fee_additional'][i];
-    vals[key] = parseFloat(inp.value)||0;
+  panel.querySelectorAll('input[type=number]').forEach((inp, i) => {
+    const key = ['fee_setup','fee_additional_onetime','fee_monthly','fee_per_student','fee_support','fee_additional'][i];
+    vals[key] = parseFloat(inp.value) || 0;
   });
-  const total = vals.fee_monthly + vals.fee_per_student*(school?.activeStudents||0) + vals.fee_support + vals.fee_additional;
-  const el = document.getElementById('pricingTotal_' + schoolId);
-  if (el) el.textContent = total.toLocaleString('sv-SE') + ' ' + t('fee_per_month');
+  const dueToday = (vals.fee_setup||0) + (vals.fee_additional_onetime||0);
+  const monthly  = (vals.fee_monthly||0) + (vals.fee_per_student||0)*(school?.activeStudents||0) + (vals.fee_support||0) + (vals.fee_additional||0);
+  const dtEl = document.getElementById('pricingDueToday_' + schoolId);
+  const totEl = document.getElementById('pricingTotal_' + schoolId);
+  if (dtEl)  dtEl.textContent  = dueToday > 0 ? dueToday.toLocaleString('sv-SE') + ' kr' : '—';
+  if (totEl) totEl.textContent = monthly.toLocaleString('sv-SE') + ' ' + t('fee_per_month');
 }
 
 // ── Quick action: trigger backup for a school ─────────────────
