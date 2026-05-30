@@ -371,13 +371,38 @@ body {
     <div class="topbar-stat" id="statStudents"><strong id="cntStudents">–</strong> <span data-t="students_total"></span></div>
     <div class="topbar-stat" style="color:var(--red);display:none"><strong id="cntIssues" style="color:var(--red)">–</strong> <span style="color:var(--red)">⚠ issues</span></div>
     <div class="topbar-spacer"></div>
-    <button class="topbar-btn" onclick="openAddSchool()"><i class="ti ti-plus"></i> <span data-t="add_school"></span></button>
-    <button class="topbar-btn" onclick="loadSchools()"><i class="ti ti-refresh"></i> <span data-t="refresh"></span></button>
+    <button class="topbar-btn" id="tabSchools" onclick="switchAdminTab('schools')" style="color:var(--accent);border-color:var(--accent)"><i class="ti ti-school"></i> <span data-t="tab_schools"></span></button>
+    <button class="topbar-btn" id="tabBilling" onclick="switchAdminTab('billing')"><i class="ti ti-receipt"></i> <span data-t="tab_billing"></span></button>
+    <button class="topbar-btn" id="addSchoolBtn" onclick="openAddSchool()"><i class="ti ti-plus"></i> <span data-t="add_school"></span></button>
+    <button class="topbar-btn" id="refreshBtn" onclick="loadSchools()"><i class="ti ti-refresh"></i> <span data-t="refresh"></span></button>
   </div>
 
-  <div class="grid-wrap">
+  <div class="grid-wrap" id="schoolsView">
     <div class="school-grid" id="schoolGrid">
       <div class="empty-state"><i class="ti ti-loader-2 spinner"></i><span data-t="loading"></span></div>
+    </div>
+  </div>
+
+  <!-- BILLING VIEW -->
+  <div id="billingView" style="display:none;padding:1.5rem">
+    <!-- Billing toolbar -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem">
+      <select id="billingMonth" style="height:34px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+        <option value="1">Januari</option><option value="2">Februari</option><option value="3">Mars</option>
+        <option value="4">April</option><option value="5">Maj</option><option value="6">Juni</option>
+        <option value="7">Juli</option><option value="8">Augusti</option><option value="9">September</option>
+        <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
+      </select>
+      <select id="billingYear" style="height:34px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif"></select>
+      <button onclick="loadBilling()" style="height:34px;padding:0 14px;background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-search"></i> Visa</button>
+      <button onclick="generateBilling()" style="height:34px;padding:0 14px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-sparkles"></i> Generera period</button>
+      <button onclick="exportBillingCSV()" style="height:34px;padding:0 14px;background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px"><i class="ti ti-table-export"></i> Exportera CSV</button>
+      <div id="billingMsg" style="font-size:12px;color:var(--text3)"></div>
+    </div>
+
+    <!-- Billing table -->
+    <div id="billingTable" style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+      <div style="padding:2rem;text-align:center;color:var(--text3);font-size:13px">Välj period och klicka Visa</div>
     </div>
   </div>
 </div>
@@ -627,6 +652,7 @@ const TR = {
     admin_email_hint: 'Personen måste ha ett Lurkollen-konto. De tilldelas rollen Administratör.',
     admin_email_required: 'En administratörsepost krävs för att skapa en skola.',
     school_registered_no_admin: 'Skola skapad — administratören hittades inte. Lägg till dem via Konfigurera → Användare.',
+    tab_schools: 'Skolor', tab_billing: 'Fakturering',
     no_admin_warning: 'Ingen admin',
     no_students_warning: 'Inga elever',
     hc_no_sa: 'Inget avtal', hc_no_admin: 'Ingen admin', hc_no_students: 'Inga elever', hc_no_dpa: 'DPA ej signerat',
@@ -714,6 +740,7 @@ const TR = {
     admin_email_hint: 'Person must have a Lurkollen account. They will be assigned the Administrator role.',
     admin_email_required: 'An administrator email is required to create a school.',
     school_registered_no_admin: 'School created — administrator not found. Add them via Configure → Users.',
+    tab_schools: 'Schools', tab_billing: 'Billing',
     no_admin_warning: 'No admin',
     no_students_warning: 'No students',
     hc_no_sa: 'No contract', hc_no_admin: 'No admin', hc_no_students: 'No students', hc_no_dpa: 'DPA unsigned',
@@ -1226,6 +1253,218 @@ async function addSchool() {
     await loadSchools();
     toast(d2.not_found ? t('school_registered_no_admin') : t('school_registered'));
   } catch(e) { toast(t('save_failed')); }
+}
+
+// ── Tab switching ─────────────────────────────────────────────
+let _adminTab = 'schools';
+
+function switchAdminTab(tab) {
+  _adminTab = tab;
+  document.getElementById('schoolsView').style.display  = tab === 'schools' ? '' : 'none';
+  document.getElementById('billingView').style.display  = tab === 'billing' ? '' : 'none';
+  document.getElementById('addSchoolBtn').style.display = tab === 'schools' ? '' : 'none';
+  document.getElementById('refreshBtn').style.display   = tab === 'schools' ? '' : 'none';
+  document.getElementById('tabSchools').style.color     = tab === 'schools' ? 'var(--accent)' : '';
+  document.getElementById('tabSchools').style.borderColor = tab === 'schools' ? 'var(--accent)' : '';
+  document.getElementById('tabBilling').style.color     = tab === 'billing' ? 'var(--accent)' : '';
+  document.getElementById('tabBilling').style.borderColor = tab === 'billing' ? 'var(--accent)' : '';
+  if (tab === 'billing') initBillingView();
+}
+
+// ── Billing tab ───────────────────────────────────────────────
+let _billingRecords = [];
+
+function initBillingView() {
+  // Populate year selector
+  const yearSel = document.getElementById('billingYear');
+  if (yearSel && !yearSel.options.length) {
+    const now = new Date();
+    for (let y = now.getFullYear() + 1; y >= now.getFullYear() - 2; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === now.getFullYear()) o.selected = true;
+      yearSel.appendChild(o);
+    }
+  }
+  // Set current month
+  const monthSel = document.getElementById('billingMonth');
+  if (monthSel) monthSel.value = new Date().getMonth() + 1;
+}
+
+async function loadBilling() {
+  const year  = document.getElementById('billingYear')?.value;
+  const month = document.getElementById('billingMonth')?.value;
+  const msg   = document.getElementById('billingMsg');
+  if (msg) msg.textContent = 'Laddar…';
+  try {
+    const r = await apiFetch(`/api/admin/billing?year=${year}&month=${month}`);
+    _billingRecords = r.ok ? await r.json() : [];
+    renderBillingTable(_billingRecords, parseInt(year), parseInt(month));
+    if (msg) msg.textContent = `${_billingRecords.length} skolor`;
+  } catch(e) {
+    if (msg) msg.textContent = 'Fel vid hämtning';
+  }
+}
+
+async function generateBilling() {
+  const year  = document.getElementById('billingYear')?.value;
+  const month = document.getElementById('billingMonth')?.value;
+  const msg   = document.getElementById('billingMsg');
+  if (!confirm(`Generera faktureringsunderlag för ${monthName(parseInt(month))} ${year}?\n\nEfintliga poster hoppas över.`)) return;
+  if (msg) msg.textContent = 'Genererar…';
+  try {
+    const r = await apiFetch('/api/admin/billing', {
+      method: 'POST',
+      body: JSON.stringify({ year: parseInt(year), month: parseInt(month) })
+    });
+    const d = await r.json();
+    if (msg) msg.textContent = `✓ ${d.created} skapade, ${d.skipped} befintliga`;
+    await loadBilling();
+  } catch(e) {
+    if (msg) msg.textContent = 'Fel vid generering';
+  }
+}
+
+async function updateBillingRecord(id, patch) {
+  await apiFetch('/api/admin/billing', {
+    method: 'PATCH',
+    body: JSON.stringify({ id, ...patch })
+  });
+  await loadBilling();
+}
+
+function monthName(m) {
+  return ['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'][m-1] || m;
+}
+
+function fmtKr(v) {
+  return Number(v||0).toLocaleString('sv-SE') + ' kr';
+}
+
+function statusPillBilling(status) {
+  const map = {
+    draft: ['background:#f0f4f8;color:#4a6080', 'Utkast'],
+    sent:  ['background:rgba(217,119,6,0.1);color:#d97706', 'Skickad'],
+    paid:  ['background:rgba(22,163,74,0.1);color:#16a34a', 'Betald'],
+  };
+  const [style, label] = map[status] || map.draft;
+  return `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;${style}">${label}</span>`;
+}
+
+function renderBillingTable(records, year, month) {
+  const container = document.getElementById('billingTable');
+  if (!records.length) {
+    container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text3);font-size:13px">
+      Inga poster för ${monthName(month)} ${year}. Klicka "Generera period" för att skapa.
+    </div>`;
+    return;
+  }
+
+  const grandTotal = records.reduce((n, r) => n + (r.total||0), 0);
+
+  container.innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="border-bottom:0.5px solid var(--border2);background:var(--surface2)">
+            <th style="text-align:left;padding:10px 12px;font-weight:600;white-space:nowrap">Skola</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Uppstart</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Månads</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Elever</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">/elev</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Support</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Övrigt</th>
+            <th style="text-align:right;padding:10px 12px;font-weight:700;white-space:nowrap">Totalt</th>
+            <th style="text-align:left;padding:10px 8px;font-weight:600">Status</th>
+            <th style="padding:10px 8px;font-weight:600">Åtgärd</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${records.map(r => {
+            const locked = r.status === 'paid';
+            const inpStyle = `width:70px;padding:2px 4px;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;text-align:right;font-family:'DM Mono',monospace;background:${locked?'var(--surface2)':'var(--surface)'};color:var(--text)`;
+            return `<tr style="border-bottom:0.5px solid var(--border)" id="brow-${r.id}">
+              <td style="padding:8px 12px;font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.school_name)}">${esc(r.school_name)}</td>
+              <td style="padding:8px 8px;text-align:right">
+                <input type="number" min="0" value="${r.fee_setup||0}" ${locked?'disabled':''}
+                  style="${inpStyle}"
+                  onblur="updateBillingRecord(${r.id},{fee_setup:parseFloat(this.value)||0})"
+                  title="Engångsavgift">
+              </td>
+              <td style="padding:8px 8px;text-align:right">
+                <input type="number" min="0" value="${r.fee_monthly||0}" ${locked?'disabled':''}
+                  style="${inpStyle}"
+                  onblur="updateBillingRecord(${r.id},{fee_monthly:parseFloat(this.value)||0})">
+              </td>
+              <td style="padding:8px 8px;text-align:right;color:var(--text2)">${r.student_count}</td>
+              <td style="padding:8px 8px;text-align:right">
+                <input type="number" min="0" value="${r.fee_per_student||0}" ${locked?'disabled':''}
+                  style="${inpStyle}"
+                  onblur="updateBillingRecord(${r.id},{fee_per_student:parseFloat(this.value)||0,student_count:${r.student_count}})">
+              </td>
+              <td style="padding:8px 8px;text-align:right">
+                <input type="number" min="0" value="${r.fee_support||0}" ${locked?'disabled':''}
+                  style="${inpStyle}"
+                  onblur="updateBillingRecord(${r.id},{fee_support:parseFloat(this.value)||0})">
+              </td>
+              <td style="padding:8px 8px;text-align:right">
+                <input type="number" min="0" value="${r.fee_additional||0}" ${locked?'disabled':''}
+                  style="${inpStyle}"
+                  onblur="updateBillingRecord(${r.id},{fee_additional:parseFloat(this.value)||0})">
+              </td>
+              <td style="padding:8px 12px;text-align:right;font-weight:700;white-space:nowrap">${fmtKr(r.total)}</td>
+              <td style="padding:8px 8px">${statusPillBilling(r.status)}</td>
+              <td style="padding:8px 8px;white-space:nowrap">
+                ${r.status === 'draft' ? `
+                  <button onclick="updateBillingRecord(${r.id},{status:'sent'})"
+                    style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--amber-bg);color:var(--amber);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">
+                    Skicka
+                  </button>` : ''}
+                ${r.status === 'sent' ? `
+                  <button onclick="updateBillingRecord(${r.id},{status:'paid'})"
+                    style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--green-bg);color:var(--green);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">
+                    Betald
+                  </button>
+                  <button onclick="updateBillingRecord(${r.id},{status:'draft'})"
+                    style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:none;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif">
+                    ↩
+                  </button>` : ''}
+                ${r.status === 'paid' ? `
+                  <button onclick="if(confirm('Lås upp betald post?'))updateBillingRecord(${r.id},{status:'sent'})"
+                    style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:none;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif">
+                    Lås upp
+                  </button>` : ''}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--surface2);border-top:1px solid var(--border2)">
+            <td colspan="7" style="padding:10px 12px;font-weight:700;font-size:13px">Totalt ${monthName(month)} ${year}</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:14px;color:var(--text)">${fmtKr(grandTotal)}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+}
+
+function exportBillingCSV() {
+  if (!_billingRecords.length) { alert('Inga poster att exportera'); return; }
+  const year  = document.getElementById('billingYear')?.value;
+  const month = document.getElementById('billingMonth')?.value;
+  const headers = ['Skola','Uppstart (kr)','Månadsavgift (kr)','Antal elever','Per elev (kr)','Supportavgift (kr)','Övrigt (kr)','Totalt (kr)','Status'];
+  const rows = _billingRecords.map(r => [
+    r.school_name, r.fee_setup||0, r.fee_monthly||0, r.student_count,
+    r.fee_per_student||0, r.fee_support||0, r.fee_additional||0,
+    r.total||0, r.status
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lurkollen-fakturering-${year}-${String(month).padStart(2,'0')}.csv`;
+  a.click();
 }
 
 // ── Pricing / fee management ──────────────────────────────────
