@@ -1516,33 +1516,59 @@ function exportBillingCSV() {
 }
 
 // ── Pricing / fee management ──────────────────────────────────
-const _PRICING_PIN = '202609';
-let _pricingUnlocked = false;
+const _PRICING_PIN     = '202609';
+const _PRICING_TIMEOUT = 2 * 60 * 1000; // 2 minutes inactivity
+let _pricingTimer      = null;
+let _openPricingId     = null;
+
+function _clearPricingTimer() {
+  if (_pricingTimer) { clearTimeout(_pricingTimer); _pricingTimer = null; }
+}
+
+function _startPricingTimer(schoolId) {
+  _clearPricingTimer();
+  _pricingTimer = setTimeout(() => {
+    closePricingPanel(schoolId, true);
+  }, _PRICING_TIMEOUT);
+}
+
+function closePricingPanel(schoolId, autoClose) {
+  const panel = document.getElementById('pricing-' + schoolId);
+  if (panel) panel.style.display = 'none';
+  _clearPricingTimer();
+  _openPricingId = null;
+  if (autoClose) toast('🔒 Avgifter stängdes automatiskt');
+}
 
 function togglePricing(schoolId) {
   const panel = document.getElementById('pricing-' + schoolId);
   if (!panel) return;
-  const open = panel.style.display !== 'none';
-  if (open) { panel.style.display = 'none'; return; }
 
-  if (!_pricingUnlocked) {
-    // Show PIN entry inside the panel
-    panel.style.display = 'block';
-    panel.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;padding:12px 14px">
-        <i class="ti ti-lock" style="color:var(--text3);font-size:14px"></i>
-        <input id="pricingPin_${schoolId}" type="password" maxlength="10"
-          placeholder="PIN" onkeydown="if(event.key==='Enter')unlockPricing('${schoolId}')"
-          style="width:90px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.1em;background:var(--surface2);color:var(--text)">
-        <button onclick="unlockPricing('${schoolId}')"
-          style="padding:5px 12px;background:var(--text);color:var(--bg);border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Lås upp</button>
-        <span id="pricingPinErr_${schoolId}" style="font-size:11px;color:var(--red)"></span>
-      </div>`;
-    setTimeout(() => document.getElementById('pricingPin_' + schoolId)?.focus(), 50);
+  // Close if already open
+  if (panel.style.display !== 'none') {
+    closePricingPanel(schoolId);
     return;
   }
-  renderPricingPanel(schoolId);
+
+  // Close any other open pricing panel
+  if (_openPricingId && _openPricingId !== schoolId) {
+    closePricingPanel(_openPricingId);
+  }
+
+  // Always require PIN on open
+  _openPricingId = schoolId;
   panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--surface2);border-top:0.5px solid var(--border)">
+      <i class="ti ti-lock" style="color:var(--text3);font-size:14px"></i>
+      <input id="pricingPin_${schoolId}" type="password" maxlength="10"
+        placeholder="PIN" onkeydown="if(event.key==='Enter')unlockPricing('${schoolId}')"
+        style="width:90px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.1em;background:var(--surface);color:var(--text)">
+      <button onclick="unlockPricing('${schoolId}')"
+        style="padding:5px 12px;background:var(--text);color:var(--bg);border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Lås upp</button>
+      <span id="pricingPinErr_${schoolId}" style="font-size:11px;color:var(--red)"></span>
+    </div>`;
+  setTimeout(() => document.getElementById('pricingPin_' + schoolId)?.focus(), 50);
 }
 
 function unlockPricing(schoolId) {
@@ -1553,8 +1579,8 @@ function unlockPricing(schoolId) {
     if (err) { err.textContent = 'Fel PIN'; inp.value = ''; inp.focus(); }
     return;
   }
-  _pricingUnlocked = true;
   renderPricingPanel(schoolId);
+  _startPricingTimer(schoolId); // start inactivity countdown
 }
 
 function renderPricingPanel(schoolId) {
@@ -1570,6 +1596,7 @@ function renderPricingPanel(schoolId) {
       <div style="display:flex;align-items:center;gap:4px">
         <input type="number" min="0" value="${esc(String(meta[key] || ''))}"
           style="width:90px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:6px;font-size:13px;text-align:right;font-family:'DM Mono',monospace;background:var(--surface2);color:var(--text)"
+          oninput="_startPricingTimer('${schoolId}')"
           onblur="saveMeta('${schoolId}',{${key}:parseFloat(this.value)||0});updatePricingTotal('${schoolId}')">
         <span style="font-size:11px;color:var(--text3);white-space:nowrap">kr</span>
       </div>
