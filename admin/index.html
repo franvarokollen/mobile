@@ -1121,6 +1121,9 @@ function renderCard(school) {
       </div>
     </div>
 
+    <!-- Pricing panel (PIN protected, hidden by default) -->
+    <div id="pricing-${id}" style="display:none"></div>
+
     <div class="card-foot">
       <select class="status-select" onchange="changeStatus('${id}',this.value)">
         <option value="trial"     ${status==='trial'     ?'selected':''}>${t('status_trial')}</option>
@@ -1134,6 +1137,10 @@ function renderCard(school) {
         onblur="saveMeta('${id}',{license_seats:parseInt(this.value)||0})">
       <div style="flex:1"></div>
       <span class="save-indicator" data-save="${id}">${t('saved')}</span>
+      <button class="topbar-btn" style="height:28px;font-size:11px;padding:0 10px;gap:4px"
+        onclick="togglePricing('${id}')" title="Avgifter">
+        <i class="ti ti-receipt"></i>
+      </button>
       <button class="topbar-btn" style="height:28px;font-size:11px;padding:0 10px;gap:4px"
         onclick="adminCreateBackup('${id}')">
         <i class="ti ti-device-floppy"></i>
@@ -1219,6 +1226,103 @@ async function addSchool() {
     await loadSchools();
     toast(d2.not_found ? t('school_registered_no_admin') : t('school_registered'));
   } catch(e) { toast(t('save_failed')); }
+}
+
+// ── Pricing / fee management ──────────────────────────────────
+const _PRICING_PIN = '202609';
+let _pricingUnlocked = false;
+
+function togglePricing(schoolId) {
+  const panel = document.getElementById('pricing-' + schoolId);
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  if (open) { panel.style.display = 'none'; return; }
+
+  if (!_pricingUnlocked) {
+    // Show PIN entry inside the panel
+    panel.style.display = 'block';
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 14px">
+        <i class="ti ti-lock" style="color:var(--text3);font-size:14px"></i>
+        <input id="pricingPin_${schoolId}" type="password" maxlength="10"
+          placeholder="PIN" onkeydown="if(event.key==='Enter')unlockPricing('${schoolId}')"
+          style="width:90px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.1em;background:var(--surface2);color:var(--text)">
+        <button onclick="unlockPricing('${schoolId}')"
+          style="padding:5px 12px;background:var(--text);color:var(--bg);border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Lås upp</button>
+        <span id="pricingPinErr_${schoolId}" style="font-size:11px;color:var(--red)"></span>
+      </div>`;
+    setTimeout(() => document.getElementById('pricingPin_' + schoolId)?.focus(), 50);
+    return;
+  }
+  renderPricingPanel(schoolId);
+  panel.style.display = 'block';
+}
+
+function unlockPricing(schoolId) {
+  const inp = document.getElementById('pricingPin_' + schoolId);
+  const err = document.getElementById('pricingPinErr_' + schoolId);
+  if (!inp) return;
+  if (inp.value !== _PRICING_PIN) {
+    if (err) { err.textContent = 'Fel PIN'; inp.value = ''; inp.focus(); }
+    return;
+  }
+  _pricingUnlocked = true;
+  renderPricingPanel(schoolId);
+}
+
+function renderPricingPanel(schoolId) {
+  const panel = document.getElementById('pricing-' + schoolId);
+  if (!panel) return;
+  const school = (window._lastSchools || []).find(s => s.school_id === schoolId);
+  const meta = school?.meta || {};
+  const fmt = v => v ? Number(v).toLocaleString('sv-SE') : '';
+
+  const feeRow = (label, key, hint) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="flex:1;font-size:12px;color:var(--text2)">${label}<span style="font-size:10px;color:var(--text3);margin-left:4px">${hint}</span></div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <input type="number" min="0" value="${esc(String(meta[key] || ''))}"
+          style="width:90px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:6px;font-size:13px;text-align:right;font-family:'DM Mono',monospace;background:var(--surface2);color:var(--text)"
+          onblur="saveMeta('${schoolId}',{${key}:parseFloat(this.value)||0});updatePricingTotal('${schoolId}')">
+        <span style="font-size:11px;color:var(--text3);white-space:nowrap">kr</span>
+      </div>
+    </div>`;
+
+  const monthlyTotal = (parseFloat(meta.fee_monthly)||0) + (parseFloat(meta.fee_per_student)||0)*(school?.activeStudents||0) + (parseFloat(meta.fee_support)||0) + (parseFloat(meta.fee_additional)||0);
+
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="padding:12px 14px;background:var(--surface2);border-top:0.5px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px">
+        <i class="ti ti-receipt" style="margin-right:4px"></i>Avgifter — ${esc(school?.settings?.schoolName || school?.name || schoolId)}
+      </div>
+      ${feeRow('Uppstartskostnad', 'fee_setup', 'engångs')}
+      ${feeRow('Månadsavgift', 'fee_monthly', '/månad')}
+      ${feeRow('Per elev', 'fee_per_student', '/elev/månad')}
+      ${feeRow('Supportavgift', 'fee_support', '/månad')}
+      ${feeRow('Övrigt tillägg', 'fee_additional', '/månad')}
+      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--text3)">Beräknad månadskostnad (${school?.activeStudents||0} elever)</span>
+        <span id="pricingTotal_${schoolId}" style="font-size:14px;font-weight:700;color:var(--text)">${monthlyTotal.toLocaleString('sv-SE')} kr/mån</span>
+      </div>
+    </div>`;
+}
+
+function updatePricingTotal(schoolId) {
+  // Re-read inputs and update total
+  const school = (window._lastSchools || []).find(s => s.school_id === schoolId);
+  const panel = document.getElementById('pricing-' + schoolId);
+  if (!panel) return;
+  const inputs = panel.querySelectorAll('input[type=number]');
+  const keys = ['fee_monthly','fee_per_student','fee_support','fee_additional'];
+  const vals = {};
+  panel.querySelectorAll('input[type=number]').forEach((inp,i) => {
+    const key = ['fee_setup','fee_monthly','fee_per_student','fee_support','fee_additional'][i];
+    vals[key] = parseFloat(inp.value)||0;
+  });
+  const total = vals.fee_monthly + vals.fee_per_student*(school?.activeStudents||0) + vals.fee_support + vals.fee_additional;
+  const el = document.getElementById('pricingTotal_' + schoolId);
+  if (el) el.textContent = total.toLocaleString('sv-SE') + ' kr/mån';
 }
 
 // ── Quick action: trigger backup for a school ─────────────────
