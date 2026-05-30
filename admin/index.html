@@ -774,6 +774,8 @@ const TR = {
     sa_add_btn: 'Lägg till', sa_added: 'Tillagd', sa_removed: 'Borttagen',
     sa_already: 'Finns redan i listan', sa_self_remove: 'Kan inte ta bort dig själv',
     sa_empty: 'Inga super admins ännu',
+    pricing_unlock: 'Lås upp', pricing_wrong_pin: 'Fel PIN',
+    pricing_auto_closed: 'Avgifter stängdes automatiskt',
   },
   en: {
     schools: 'schools', active: 'active', trial: 'trial',
@@ -895,6 +897,8 @@ const TR = {
     sa_add_btn: 'Add', sa_added: 'Added', sa_removed: 'Removed',
     sa_already: 'Already in list', sa_self_remove: 'Cannot remove yourself',
     sa_empty: 'No super admins yet',
+    pricing_unlock: 'Unlock', pricing_wrong_pin: 'Wrong PIN',
+    pricing_auto_closed: 'Billing closed automatically',
   }
 };
 
@@ -998,6 +1002,9 @@ async function checkAdminAccess(jwt) {
     setInterval(() => {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // Don't re-render while pricing panel is open — it would reset the inactivity timer
+      // renderSchools() will restore it, but the re-render flicker is unpleasant
+      // We skip it; the panel restores itself on the next natural refresh
       loadSchools();
     }, 30000);
   } catch(e) {
@@ -1303,9 +1310,6 @@ function renderCard(school) {
       </div>
     </div>
 
-    <!-- Pricing panel (PIN protected, hidden by default) -->
-    <div id="pricing-${id}" style="display:none"></div>
-
     <div class="card-foot">
       <select class="status-select" onchange="changeStatus('${id}',this.value)">
         <option value="trial"     ${status==='trial'     ?'selected':''}>${t('status_trial')}</option>
@@ -1319,8 +1323,8 @@ function renderCard(school) {
         onblur="saveMeta('${id}',{license_seats:parseInt(this.value)||0})">
       <div style="flex:1"></div>
       <span class="save-indicator" data-save="${id}">${t('saved')}</span>
-      <button class="topbar-btn" style="height:28px;font-size:11px;padding:0 10px;gap:4px"
-        onclick="togglePricing('${id}')" title="Avgifter">
+      <button class="topbar-btn" id="pricingBtn-${id}" style="height:28px;font-size:11px;padding:0 10px;gap:4px;background:var(--green-bg);color:var(--green);border-color:rgba(22,163,74,0.25)"
+        onclick="togglePricing('${id}')" title="${t('fee_section')}">
         <i class="ti ti-receipt"></i>
       </button>
       <button class="topbar-btn" style="height:28px;font-size:11px;padding:0 10px;gap:4px"
@@ -1332,6 +1336,9 @@ function renderCard(school) {
         <i class="ti ti-adjustments-horizontal"></i> ${t('configure')}
       </button>
     </div>
+
+    <!-- Pricing panel (PIN protected) — lives BELOW the footer row -->
+    <div id="pricing-${id}" style="display:none;border-top:0.5px solid var(--border)"></div>
   </div>`;
 }
 
@@ -1342,6 +1349,20 @@ function renderSchools(schools) {
     return;
   }
   grid.innerHTML = schools.map(renderCard).join('');
+
+  // Restore pricing panel if one was open before the re-render
+  if (_openPricingId) {
+    const panel = document.getElementById('pricing-' + _openPricingId);
+    if (panel) {
+      panel.style.display = 'block';
+      renderPricingPanel(_openPricingId);
+      _startPricingTimer(_openPricingId);
+    } else {
+      // Card no longer in DOM — clean up state
+      _openPricingId = null;
+      _clearPricingTimer();
+    }
+  }
 }
 
 // ── Inline interactions ───────────────────────────────────────
@@ -1882,7 +1903,7 @@ function closePricingPanel(schoolId, autoClose) {
   if (panel) panel.style.display = 'none';
   _clearPricingTimer();
   _openPricingId = null;
-  if (autoClose) toast('🔒 Avgifter stängdes automatiskt');
+  if (autoClose) toast('🔒 ' + t('pricing_auto_closed'));
 }
 
 function togglePricing(schoolId) {
@@ -1904,14 +1925,17 @@ function togglePricing(schoolId) {
   _openPricingId = schoolId;
   panel.style.display = 'block';
   panel.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--surface2);border-top:0.5px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--surface2)">
       <i class="ti ti-lock" style="color:var(--text3);font-size:14px"></i>
       <input id="pricingPin_${schoolId}" type="password" maxlength="10"
         placeholder="PIN" onkeydown="if(event.key==='Enter')unlockPricing('${schoolId}')"
         style="width:90px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.1em;background:var(--surface);color:var(--text)">
       <button onclick="unlockPricing('${schoolId}')"
-        style="padding:5px 12px;background:var(--text);color:var(--bg);border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Lås upp</button>
+        style="padding:5px 12px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${t('pricing_unlock')}</button>
       <span id="pricingPinErr_${schoolId}" style="font-size:11px;color:var(--red)"></span>
+      <div style="flex:1"></div>
+      <button onclick="closePricingPanel('${schoolId}')"
+        style="padding:4px 8px;border:0.5px solid var(--border2);border-radius:6px;background:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">✕</button>
     </div>`;
   setTimeout(() => document.getElementById('pricingPin_' + schoolId)?.focus(), 50);
 }
@@ -1921,7 +1945,7 @@ function unlockPricing(schoolId) {
   const err = document.getElementById('pricingPinErr_' + schoolId);
   if (!inp) return;
   if (inp.value !== _PRICING_PIN) {
-    if (err) { err.textContent = 'Fel PIN'; inp.value = ''; inp.focus(); }
+    if (err) { err.textContent = t('pricing_wrong_pin'); inp.value = ''; inp.focus(); }
     return;
   }
   renderPricingPanel(schoolId);
@@ -1952,7 +1976,7 @@ function renderPricingPanel(schoolId) {
 
   panel.style.display = 'block';
   panel.innerHTML = `
-    <div style="padding:12px 14px;background:var(--surface2);border-top:0.5px solid var(--border)">
+    <div style="padding:12px 14px;background:var(--surface2)">
       <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px">
         <i class="ti ti-receipt" style="margin-right:4px"></i>${t('fee_section')} — ${esc(school?.settings?.schoolName || school?.name || schoolId)}
       </div>
