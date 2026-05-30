@@ -402,7 +402,7 @@ body {
 
     <!-- Billing table -->
     <div id="billingTable" style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
-      <div style="padding:2rem;text-align:center;color:var(--text3);font-size:13px">Välj period och klicka Visa</div>
+      <div style="padding:2rem;text-align:center;color:var(--text3);font-size:13px" id="billingPlaceholder">${t('billing_select_period')}</div>
     </div>
   </div>
 </div>
@@ -653,6 +653,29 @@ const TR = {
     admin_email_required: 'En administratörsepost krävs för att skapa en skola.',
     school_registered_no_admin: 'Skola skapad — administratören hittades inte. Lägg till dem via Konfigurera → Användare.',
     tab_schools: 'Skolor', tab_billing: 'Fakturering',
+    fee_section: 'Avgifter', fee_setup: 'Uppstartskostnad', fee_setup_hint: 'engångs',
+    fee_monthly: 'Månadsavgift', fee_monthly_hint: '/månad',
+    fee_per_student: 'Per elev', fee_per_student_hint: '/elev/månad',
+    fee_support: 'Supportavgift', fee_support_hint: '/månad',
+    fee_additional: 'Övrigt tillägg', fee_additional_hint: '/månad',
+    fee_total: 'Beräknad månadskostnad', fee_students: 'elever', fee_per_month: 'kr/mån',
+    billing_select_period: 'Välj period och klicka Visa',
+    billing_no_records: 'Inga poster för {period}. Klicka "Generera period" för att skapa.',
+    billing_generate_confirm: 'Generera faktureringsunderlag för {period}?\n\nBefintliga poster hoppas över.',
+    billing_generating: 'Genererar…', billing_loading: 'Laddar…',
+    billing_generated: '✓ {created} skapade, {skipped} befintliga',
+    billing_error_load: 'Fel vid hämtning', billing_error_generate: 'Fel vid generering',
+    billing_no_export: 'Inga poster att exportera',
+    billing_unlock_confirm: 'Lås upp betald post?',
+    billing_grand_total: 'Totalt {period}',
+    billing_col_school: 'Skola', billing_col_setup: 'Uppstart (kr)',
+    billing_col_monthly: 'Månadsavgift (kr)', billing_col_students: 'Antal elever',
+    billing_col_per_student: 'Per elev (kr)', billing_col_support: 'Supportavgift (kr)',
+    billing_col_additional: 'Övrigt (kr)', billing_col_total: 'Totalt (kr)',
+    billing_col_action: 'Åtgärd',
+    billing_status_draft: 'Utkast', billing_status_sent: 'Skickad', billing_status_paid: 'Betald',
+    billing_btn_send: 'Skicka', billing_btn_paid: 'Betald', billing_btn_unlock: 'Lås upp',
+    months: 'Januari,Februari,Mars,April,Maj,Juni,Juli,Augusti,September,Oktober,November,December',
     no_admin_warning: 'Ingen admin',
     no_students_warning: 'Inga elever',
     hc_no_sa: 'Inget avtal', hc_no_admin: 'Ingen admin', hc_no_students: 'Inga elever', hc_no_dpa: 'DPA ej signerat',
@@ -741,6 +764,29 @@ const TR = {
     admin_email_required: 'An administrator email is required to create a school.',
     school_registered_no_admin: 'School created — administrator not found. Add them via Configure → Users.',
     tab_schools: 'Schools', tab_billing: 'Billing',
+    fee_section: 'Fees', fee_setup: 'Setup fee', fee_setup_hint: 'one-time',
+    fee_monthly: 'Monthly fee', fee_monthly_hint: '/month',
+    fee_per_student: 'Per student', fee_per_student_hint: '/student/month',
+    fee_support: 'Support fee', fee_support_hint: '/month',
+    fee_additional: 'Additional', fee_additional_hint: '/month',
+    fee_total: 'Estimated monthly cost', fee_students: 'students', fee_per_month: 'kr/month',
+    billing_select_period: 'Select a period and click Show',
+    billing_no_records: 'No records for {period}. Click "Generate period" to create.',
+    billing_generate_confirm: 'Generate billing records for {period}?\n\nExisting records will be skipped.',
+    billing_generating: 'Generating…', billing_loading: 'Loading…',
+    billing_generated: '✓ {created} created, {skipped} existing',
+    billing_error_load: 'Error loading', billing_error_generate: 'Error generating',
+    billing_no_export: 'No records to export',
+    billing_unlock_confirm: 'Unlock paid record?',
+    billing_grand_total: 'Total {period}',
+    billing_col_school: 'School', billing_col_setup: 'Setup (kr)',
+    billing_col_monthly: 'Monthly (kr)', billing_col_students: 'Students',
+    billing_col_per_student: 'Per student (kr)', billing_col_support: 'Support (kr)',
+    billing_col_additional: 'Additional (kr)', billing_col_total: 'Total (kr)',
+    billing_col_action: 'Action',
+    billing_status_draft: 'Draft', billing_status_sent: 'Sent', billing_status_paid: 'Paid',
+    billing_btn_send: 'Send', billing_btn_paid: 'Paid', billing_btn_unlock: 'Unlock',
+    months: 'January,February,March,April,May,June,July,August,September,October,November,December',
     no_admin_warning: 'No admin',
     no_students_warning: 'No students',
     hc_no_sa: 'No contract', hc_no_admin: 'No admin', hc_no_students: 'No students', hc_no_dpa: 'DPA unsigned',
@@ -1295,14 +1341,14 @@ async function loadBilling() {
   const year  = document.getElementById('billingYear')?.value;
   const month = document.getElementById('billingMonth')?.value;
   const msg   = document.getElementById('billingMsg');
-  if (msg) msg.textContent = 'Laddar…';
+  if (msg) msg.textContent = t('billing_loading');
   try {
     const r = await apiFetch(`/api/admin/billing?year=${year}&month=${month}`);
     _billingRecords = r.ok ? await r.json() : [];
     renderBillingTable(_billingRecords, parseInt(year), parseInt(month));
     if (msg) msg.textContent = `${_billingRecords.length} skolor`;
   } catch(e) {
-    if (msg) msg.textContent = 'Fel vid hämtning';
+    if (msg) msg.textContent = t('billing_error_load');
   }
 }
 
@@ -1310,18 +1356,19 @@ async function generateBilling() {
   const year  = document.getElementById('billingYear')?.value;
   const month = document.getElementById('billingMonth')?.value;
   const msg   = document.getElementById('billingMsg');
-  if (!confirm(`Generera faktureringsunderlag för ${monthName(parseInt(month))} ${year}?\n\nEfintliga poster hoppas över.`)) return;
-  if (msg) msg.textContent = 'Genererar…';
+  const period = `${monthName(parseInt(month))} ${year}`;
+  if (!confirm(t('billing_generate_confirm').replace('{period}', period))) return;
+  if (msg) msg.textContent = t('billing_generating');
   try {
     const r = await apiFetch('/api/admin/billing', {
       method: 'POST',
       body: JSON.stringify({ year: parseInt(year), month: parseInt(month) })
     });
     const d = await r.json();
-    if (msg) msg.textContent = `✓ ${d.created} skapade, ${d.skipped} befintliga`;
+    if (msg) msg.textContent = t('billing_generated').replace('{created}',d.created).replace('{skipped}',d.skipped);
     await loadBilling();
   } catch(e) {
-    if (msg) msg.textContent = 'Fel vid generering';
+    if (msg) msg.textContent = t('billing_error_generate');
   }
 }
 
@@ -1334,7 +1381,7 @@ async function updateBillingRecord(id, patch) {
 }
 
 function monthName(m) {
-  return ['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'][m-1] || m;
+  return (t('months').split(',')[m-1]) || m;
 }
 
 function fmtKr(v) {
@@ -1343,9 +1390,9 @@ function fmtKr(v) {
 
 function statusPillBilling(status) {
   const map = {
-    draft: ['background:#f0f4f8;color:#4a6080', 'Utkast'],
-    sent:  ['background:rgba(217,119,6,0.1);color:#d97706', 'Skickad'],
-    paid:  ['background:rgba(22,163,74,0.1);color:#16a34a', 'Betald'],
+    draft: ['background:#f0f4f8;color:#4a6080', t('billing_status_draft')],
+    sent:  ['background:rgba(217,119,6,0.1);color:#d97706', t('billing_status_sent')],
+    paid:  ['background:rgba(22,163,74,0.1);color:#16a34a', t('billing_status_paid')],
   };
   const [style, label] = map[status] || map.draft;
   return `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;${style}">${label}</span>`;
@@ -1353,9 +1400,10 @@ function statusPillBilling(status) {
 
 function renderBillingTable(records, year, month) {
   const container = document.getElementById('billingTable');
+  const period = `${monthName(month)} ${year}`;
   if (!records.length) {
     container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text3);font-size:13px">
-      Inga poster för ${monthName(month)} ${year}. Klicka "Generera period" för att skapa.
+      ${t('billing_no_records').replace('{period}', period)}
     </div>`;
     return;
   }
@@ -1367,16 +1415,16 @@ function renderBillingTable(records, year, month) {
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead>
           <tr style="border-bottom:0.5px solid var(--border2);background:var(--surface2)">
-            <th style="text-align:left;padding:10px 12px;font-weight:600;white-space:nowrap">Skola</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Uppstart</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Månads</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Elever</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">/elev</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Support</th>
-            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">Övrigt</th>
-            <th style="text-align:right;padding:10px 12px;font-weight:700;white-space:nowrap">Totalt</th>
+            <th style="text-align:left;padding:10px 12px;font-weight:600;white-space:nowrap">${t('billing_col_school')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">${t('fee_setup')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">${t('fee_monthly')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">${t('fee_students')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">${t('fee_per_student')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">${t('fee_support')}</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:600;white-space:nowrap">${t('fee_additional')}</th>
+            <th style="text-align:right;padding:10px 12px;font-weight:700;white-space:nowrap">${t('billing_col_total')}</th>
             <th style="text-align:left;padding:10px 8px;font-weight:600">Status</th>
-            <th style="padding:10px 8px;font-weight:600">Åtgärd</th>
+            <th style="padding:10px 8px;font-weight:600">${t('billing_col_action')}</th>
           </tr>
         </thead>
         <tbody>
@@ -1418,21 +1466,21 @@ function renderBillingTable(records, year, month) {
                 ${r.status === 'draft' ? `
                   <button onclick="updateBillingRecord(${r.id},{status:'sent'})"
                     style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--amber-bg);color:var(--amber);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">
-                    Skicka
+                    ${t('billing_btn_send')}
                   </button>` : ''}
                 ${r.status === 'sent' ? `
                   <button onclick="updateBillingRecord(${r.id},{status:'paid'})"
                     style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--green-bg);color:var(--green);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">
-                    Betald
+                    ${t('billing_btn_paid')}
                   </button>
                   <button onclick="updateBillingRecord(${r.id},{status:'draft'})"
                     style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:none;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif">
                     ↩
                   </button>` : ''}
                 ${r.status === 'paid' ? `
-                  <button onclick="if(confirm('Lås upp betald post?'))updateBillingRecord(${r.id},{status:'sent'})"
+                  <button onclick="if(confirm(t('billing_unlock_confirm')))updateBillingRecord(${r.id},{status:'sent'})"
                     style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border2);border-radius:4px;background:none;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif">
-                    Lås upp
+                    ${t('billing_btn_unlock')}
                   </button>` : ''}
               </td>
             </tr>`;
@@ -1440,7 +1488,7 @@ function renderBillingTable(records, year, month) {
         </tbody>
         <tfoot>
           <tr style="background:var(--surface2);border-top:1px solid var(--border2)">
-            <td colspan="7" style="padding:10px 12px;font-weight:700;font-size:13px">Totalt ${monthName(month)} ${year}</td>
+            <td colspan="7" style="padding:10px 12px;font-weight:700;font-size:13px">${t('billing_grand_total').replace('{period}', period)}</td>
             <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:14px;color:var(--text)">${fmtKr(grandTotal)}</td>
             <td colspan="2"></td>
           </tr>
@@ -1450,10 +1498,10 @@ function renderBillingTable(records, year, month) {
 }
 
 function exportBillingCSV() {
-  if (!_billingRecords.length) { alert('Inga poster att exportera'); return; }
+  if (!_billingRecords.length) { alert(t('billing_no_export')); return; }
   const year  = document.getElementById('billingYear')?.value;
   const month = document.getElementById('billingMonth')?.value;
-  const headers = ['Skola','Uppstart (kr)','Månadsavgift (kr)','Antal elever','Per elev (kr)','Supportavgift (kr)','Övrigt (kr)','Totalt (kr)','Status'];
+  const headers = [t('billing_col_school'),t('billing_col_setup'),t('billing_col_monthly'),t('billing_col_students'),t('billing_col_per_student'),t('billing_col_support'),t('billing_col_additional'),t('billing_col_total'),'Status'];
   const rows = _billingRecords.map(r => [
     r.school_name, r.fee_setup||0, r.fee_monthly||0, r.student_count,
     r.fee_per_student||0, r.fee_support||0, r.fee_additional||0,
@@ -1516,7 +1564,7 @@ function renderPricingPanel(schoolId) {
   const meta = school?.meta || {};
   const fmt = v => v ? Number(v).toLocaleString('sv-SE') : '';
 
-  const feeRow = (label, key, hint) => `
+  const feeRow = (label, key, hint) => /* html */`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <div style="flex:1;font-size:12px;color:var(--text2)">${label}<span style="font-size:10px;color:var(--text3);margin-left:4px">${hint}</span></div>
       <div style="display:flex;align-items:center;gap:4px">
@@ -1533,16 +1581,16 @@ function renderPricingPanel(schoolId) {
   panel.innerHTML = `
     <div style="padding:12px 14px;background:var(--surface2);border-top:0.5px solid var(--border)">
       <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px">
-        <i class="ti ti-receipt" style="margin-right:4px"></i>Avgifter — ${esc(school?.settings?.schoolName || school?.name || schoolId)}
+        <i class="ti ti-receipt" style="margin-right:4px"></i>${t('fee_section')} — ${esc(school?.settings?.schoolName || school?.name || schoolId)}
       </div>
-      ${feeRow('Uppstartskostnad', 'fee_setup', 'engångs')}
-      ${feeRow('Månadsavgift', 'fee_monthly', '/månad')}
-      ${feeRow('Per elev', 'fee_per_student', '/elev/månad')}
-      ${feeRow('Supportavgift', 'fee_support', '/månad')}
-      ${feeRow('Övrigt tillägg', 'fee_additional', '/månad')}
+      ${feeRow(t('fee_setup'), 'fee_setup', t('fee_setup_hint'))}
+      ${feeRow(t('fee_monthly'), 'fee_monthly', t('fee_monthly_hint'))}
+      ${feeRow(t('fee_per_student'), 'fee_per_student', t('fee_per_student_hint'))}
+      ${feeRow(t('fee_support'), 'fee_support', t('fee_support_hint'))}
+      ${feeRow(t('fee_additional'), 'fee_additional', t('fee_additional_hint'))}
       <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--text3)">Beräknad månadskostnad (${school?.activeStudents||0} elever)</span>
-        <span id="pricingTotal_${schoolId}" style="font-size:14px;font-weight:700;color:var(--text)">${monthlyTotal.toLocaleString('sv-SE')} kr/mån</span>
+        <span style="font-size:12px;color:var(--text3)">${t('fee_total')} (${school?.activeStudents||0} ${t('fee_students')})</span>
+        <span id="pricingTotal_${schoolId}" style="font-size:14px;font-weight:700;color:var(--text)">${monthlyTotal.toLocaleString('sv-SE')} ${t('fee_per_month')}</span>
       </div>
     </div>`;
 }
@@ -1561,7 +1609,7 @@ function updatePricingTotal(schoolId) {
   });
   const total = vals.fee_monthly + vals.fee_per_student*(school?.activeStudents||0) + vals.fee_support + vals.fee_additional;
   const el = document.getElementById('pricingTotal_' + schoolId);
-  if (el) el.textContent = total.toLocaleString('sv-SE') + ' kr/mån';
+  if (el) el.textContent = total.toLocaleString('sv-SE') + ' ' + t('fee_per_month');
 }
 
 // ── Quick action: trigger backup for a school ─────────────────
