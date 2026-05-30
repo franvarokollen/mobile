@@ -353,9 +353,12 @@ body {
   <div class="auth-box">
     <div class="auth-logo"><i class="ti ti-device-mobile" style="color:var(--accent)"></i> Lurkollen</div>
     <div class="auth-sub">Admin — Command Center</div>
-    <input type="password" id="tokenInput" placeholder="Admin token" autocomplete="current-password"
-      onkeydown="if(event.key==='Enter')authenticate()">
-    <button class="auth-btn" onclick="authenticate()" id="loginBtn">Log in</button>
+    <div id="authStatus" style="font-size:13px;color:var(--text3);margin-bottom:1rem">Initierar…</div>
+    <button class="auth-btn" id="googleSignInBtn" onclick="signInWithGoogle()"
+      style="display:none;justify-content:center;align-items:center;gap:10px">
+      <svg width="16" height="16" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.56 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.706c-.18-.54-.282-1.117-.282-1.706s.102-1.166.282-1.706V4.962H.957C.347 6.175 0 7.548 0 9s.348 2.825.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Logga in med Google
+    </button>
     <div class="auth-error" id="authError"></div>
   </div>
 </div>
@@ -371,10 +374,16 @@ body {
     <div class="topbar-stat" id="statStudents"><strong id="cntStudents">–</strong> <span data-t="students_total"></span></div>
     <div class="topbar-stat" style="color:var(--red);display:none"><strong id="cntIssues" style="color:var(--red)">–</strong> <span style="color:var(--red)">⚠ issues</span></div>
     <div class="topbar-spacer"></div>
+    <div class="topbar-stat" id="userChip" style="display:none;background:var(--indigo-bg);border-color:rgba(30,58,95,0.15)">
+      <i class="ti ti-user-circle" style="color:var(--indigo);font-size:14px"></i>
+      <span id="userEmail" style="color:var(--indigo);font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis"></span>
+    </div>
     <button class="topbar-btn" id="tabSchools" onclick="switchAdminTab('schools')" style="color:var(--accent);border-color:var(--accent)"><i class="ti ti-school"></i> <span data-t="tab_schools"></span></button>
     <button class="topbar-btn" id="tabBilling" onclick="switchAdminTab('billing')"><i class="ti ti-receipt"></i> <span data-t="tab_billing"></span></button>
+    <button class="topbar-btn" id="tabUsers" onclick="switchAdminTab('users')"><i class="ti ti-shield-lock"></i> <span data-t="tab_admins"></span></button>
     <button class="topbar-btn" id="addSchoolBtn" onclick="openAddSchool()"><i class="ti ti-plus"></i> <span data-t="add_school"></span></button>
     <button class="topbar-btn" id="refreshBtn" onclick="loadSchools()"><i class="ti ti-refresh"></i> <span data-t="refresh"></span></button>
+    <button class="topbar-btn" onclick="signOut()" title="Logga ut" style="color:var(--text3)"><i class="ti ti-logout"></i></button>
   </div>
 
   <div class="grid-wrap" id="schoolsView">
@@ -403,6 +412,32 @@ body {
     <!-- Billing table -->
     <div id="billingTable" style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
       <div style="padding:2rem;text-align:center;color:var(--text3);font-size:13px" id="billingPlaceholder">${t('billing_select_period')}</div>
+    </div>
+  </div>
+
+  <!-- SUPER ADMINS (Users) VIEW -->
+  <div id="usersView" style="display:none;padding:1.5rem">
+    <div style="max-width:640px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;letter-spacing:-0.01em;display:flex;align-items:center;gap:8px">
+        <i class="ti ti-shield-lock" style="color:var(--accent)"></i>
+        <span data-t="sa_title"></span>
+      </div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:1.5rem" data-t="sa_hint"></div>
+
+      <!-- Add admin row -->
+      <div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap">
+        <input id="newSaEmail" type="email" data-t-placeholder="sa_email_ph"
+          style="flex:2;min-width:180px;padding:8px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+        <input id="newSaName" data-t-placeholder="sa_name_ph"
+          style="flex:1;min-width:120px;padding:8px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif">
+        <button onclick="addSuperAdmin()"
+          style="padding:8px 16px;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;display:flex;align-items:center;gap:5px">
+          <i class="ti ti-plus"></i> <span data-t="sa_add_btn"></span>
+        </button>
+      </div>
+      <div id="superAdminsList" style="display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:13px;color:var(--text3)">Laddar…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -733,6 +768,12 @@ const TR = {
     backup_restore_confirm: 'Återställ från denna säkerhetskopia? ALL nuvarande data för skolan skrivs över permanent.',
     backup_restored: 'Återställning klar',
     no_backups: 'Inga säkerhetskopior ännu', loading_backups: 'Laddar…',
+    tab_admins: 'Admins',
+    sa_title: 'Super Admins', sa_hint: 'Bara användare i den här listan kan logga in på admin-panelen.',
+    sa_email_ph: 'email@foretaget.se', sa_name_ph: 'Namn (valfritt)',
+    sa_add_btn: 'Lägg till', sa_added: 'Tillagd', sa_removed: 'Borttagen',
+    sa_already: 'Finns redan i listan', sa_self_remove: 'Kan inte ta bort dig själv',
+    sa_empty: 'Inga super admins ännu',
   },
   en: {
     schools: 'schools', active: 'active', trial: 'trial',
@@ -848,6 +889,12 @@ const TR = {
     backup_restore_confirm: 'Restore from this backup? ALL current data for this school will be permanently overwritten.',
     backup_restored: 'Restore complete',
     no_backups: 'No backups yet', loading_backups: 'Loading…',
+    tab_admins: 'Admins',
+    sa_title: 'Super Admins', sa_hint: 'Only users listed here can sign in to this admin panel.',
+    sa_email_ph: 'email@company.com', sa_name_ph: 'Name (optional)',
+    sa_add_btn: 'Add', sa_added: 'Added', sa_removed: 'Removed',
+    sa_already: 'Already in list', sa_self_remove: 'Cannot remove yourself',
+    sa_empty: 'No super admins yet',
   }
 };
 
@@ -879,42 +926,96 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Auth ──────────────────────────────────────────────────────
-let TOKEN = sessionStorage.getItem('mk_admin_token') || '';
+let TOKEN = '';           // ADMIN_TOKEN fetched from /api/admin/me after Google auth
+let _sb   = null;         // Supabase client for auth
+let _myEmail = '';        // logged-in super admin email
 
-function authenticate() {
-  const val = document.getElementById('tokenInput').value.trim();
-  if (!val) return;
-  TOKEN = val;
-  loadSchools().then(ok => {
-    if (ok) {
-      sessionStorage.setItem('mk_admin_token', TOKEN);
-      document.getElementById('authGate').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      initRealtimeSync();
-    } else {
-      document.getElementById('authError').textContent = t('wrong_token');
-      TOKEN = '';
+// Initialize Supabase client and handle OAuth callback / existing session
+(async function initAdminAuth() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    _sb = supabase.createClient(cfg.url, cfg.anonKey);
+
+    // Handle OAuth redirect (hash contains access_token)
+    const { data: sessionData } = await _sb.auth.getSession();
+    let session = sessionData?.session;
+
+    if (!session) {
+      // Show Google sign-in button
+      document.getElementById('authStatus').textContent = '';
+      document.getElementById('googleSignInBtn').style.display = 'flex';
+      return;
     }
+
+    // We have a session — check if this person is a super admin
+    await checkAdminAccess(session.access_token);
+  } catch(e) {
+    document.getElementById('authStatus').textContent = 'Kunde inte nå servern.';
+  }
+})();
+
+async function signInWithGoogle() {
+  if (!_sb) return;
+  document.getElementById('googleSignInBtn').style.display = 'none';
+  document.getElementById('authStatus').textContent = 'Omdirigerar…';
+  await _sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href },
   });
 }
 
-if (TOKEN) {
-  loadSchools().then(ok => {
-    if (ok) {
-      document.getElementById('authGate').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      initRealtimeSync();
-      // 30s poll as fallback for missed broadcast messages
-      setInterval(() => {
-        const tag = document.activeElement?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-        loadSchools();
-      }, 30000);
-    } else {
-      sessionStorage.removeItem('mk_admin_token');
-      TOKEN = '';
+async function checkAdminAccess(jwt) {
+  document.getElementById('authStatus').textContent = 'Kontrollerar behörighet…';
+  try {
+    const r = await fetch('/api/admin/me', {
+      headers: { Authorization: 'Bearer ' + jwt }
+    });
+    if (r.status === 403) {
+      const d = await r.json();
+      document.getElementById('authError').textContent = 'Ej behörig: kontakta en befintlig admin.';
+      document.getElementById('authStatus').textContent = '';
+      document.getElementById('googleSignInBtn').style.display = 'flex';
+      document.getElementById('googleSignInBtn').textContent = 'Prova annat konto';
+      await _sb.auth.signOut();
+      return;
     }
-  });
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+
+    TOKEN    = d.token;
+    _myEmail = d.email;
+
+    // Show app
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('userChip').style.display = '';
+    document.getElementById('userEmail').textContent = _myEmail;
+
+    await loadSchools();
+    initRealtimeSync();
+
+    // 30s poll as fallback for missed broadcast messages
+    setInterval(() => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      loadSchools();
+    }, 30000);
+  } catch(e) {
+    document.getElementById('authStatus').textContent = 'Serverfel — försök igen.';
+    document.getElementById('googleSignInBtn').style.display = 'flex';
+  }
+}
+
+async function signOut() {
+  if (_sb) await _sb.auth.signOut();
+  TOKEN = '';
+  _myEmail = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('authGate').style.display = 'flex';
+  document.getElementById('authStatus').textContent = '';
+  document.getElementById('authError').textContent = '';
+  document.getElementById('googleSignInBtn').style.display = 'flex';
+  document.getElementById('userChip').style.display = 'none';
 }
 
 // ── Realtime broadcast sync ───────────────────────────────────
@@ -1316,13 +1417,22 @@ function switchAdminTab(tab) {
   _adminTab = tab;
   document.getElementById('schoolsView').style.display  = tab === 'schools' ? '' : 'none';
   document.getElementById('billingView').style.display  = tab === 'billing' ? '' : 'none';
+  document.getElementById('usersView').style.display    = tab === 'users'   ? '' : 'none';
   document.getElementById('addSchoolBtn').style.display = tab === 'schools' ? '' : 'none';
   document.getElementById('refreshBtn').style.display   = tab === 'schools' ? '' : 'none';
-  document.getElementById('tabSchools').style.color     = tab === 'schools' ? 'var(--accent)' : '';
-  document.getElementById('tabSchools').style.borderColor = tab === 'schools' ? 'var(--accent)' : '';
-  document.getElementById('tabBilling').style.color     = tab === 'billing' ? 'var(--accent)' : '';
-  document.getElementById('tabBilling').style.borderColor = tab === 'billing' ? 'var(--accent)' : '';
+
+  ['tabSchools','tabBilling','tabUsers'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const active = (id === 'tabSchools' && tab === 'schools') ||
+                   (id === 'tabBilling' && tab === 'billing') ||
+                   (id === 'tabUsers'   && tab === 'users');
+    el.style.color       = active ? 'var(--accent)' : '';
+    el.style.borderColor = active ? 'var(--accent)' : '';
+  });
+
   if (tab === 'billing') initBillingView();
+  if (tab === 'users')   loadSuperAdmins();
 }
 
 // ── Billing tab ───────────────────────────────────────────────
@@ -1676,6 +1786,78 @@ function exportBillingCSV() {
   a.href = URL.createObjectURL(blob);
   a.download = `lurkollen-fakturering-${year}-${String(month).padStart(2,'0')}.csv`;
   a.click();
+}
+
+// ── Super admins management ───────────────────────────────────
+async function loadSuperAdmins() {
+  const list = document.getElementById('superAdminsList');
+  list.innerHTML = '<div style="font-size:13px;color:var(--text3)">Laddar…</div>';
+  try {
+    const r = await apiFetch('/api/admin/super-admins');
+    const admins = r.ok ? await r.json() : [];
+    renderSuperAdmins(admins);
+  } catch(e) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--red)">Fel vid hämtning</div>';
+  }
+}
+
+function renderSuperAdmins(admins) {
+  const list = document.getElementById('superAdminsList');
+  if (!admins.length) {
+    list.innerHTML = `<div style="font-size:13px;color:var(--text3)">${t('sa_empty')}</div>`;
+    return;
+  }
+  list.innerHTML = admins.map(a => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius)">
+      <i class="ti ti-shield-check" style="font-size:16px;color:var(--indigo);flex-shrink:0"></i>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name || a.email)}</div>
+        ${a.name ? `<div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.email)}</div>` : ''}
+      </div>
+      <div style="font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0">${a.created_by ? 'Added by ' + esc(a.created_by) : ''}</div>
+      <div style="font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0">${new Date(a.created_at).toLocaleDateString('sv-SE')}</div>
+      ${a.email === _myEmail
+        ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--indigo-bg);color:var(--indigo)">Du</span>`
+        : `<button onclick="removeSuperAdmin('${esc(a.email)}')"
+             style="padding:4px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:color 0.15s,border-color 0.15s"
+             onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'"
+             onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border2)'">
+             <i class="ti ti-trash" style="font-size:12px"></i>
+           </button>`
+      }
+    </div>`).join('');
+}
+
+async function addSuperAdmin() {
+  const emailEl = document.getElementById('newSaEmail');
+  const nameEl  = document.getElementById('newSaName');
+  const email   = emailEl.value.trim();
+  const name    = nameEl.value.trim();
+  if (!email) { toast('E-post krävs'); return; }
+
+  try {
+    const r = await apiFetch('/api/admin/super-admins', {
+      method: 'POST',
+      body: JSON.stringify({ email, name: name || undefined, created_by: _myEmail })
+    });
+    if (r.status === 409) { toast(t('sa_already')); return; }
+    if (!r.ok) { const d = await r.json().catch(()=>({})); toast(d.error || t('save_failed')); return; }
+    emailEl.value = '';
+    nameEl.value  = '';
+    toast('✓ ' + t('sa_added'));
+    await loadSuperAdmins();
+  } catch(e) { toast(t('save_failed')); }
+}
+
+async function removeSuperAdmin(email) {
+  if (email === _myEmail) { toast(t('sa_self_remove')); return; }
+  if (!confirm('Ta bort ' + email + ' från super admins?')) return;
+  try {
+    const r = await apiFetch('/api/admin/super-admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
+    if (!r.ok) { toast(t('save_failed')); return; }
+    toast('✓ ' + t('sa_removed'));
+    await loadSuperAdmins();
+  } catch(e) { toast(t('save_failed')); }
 }
 
 // ── Pricing / fee management ──────────────────────────────────
